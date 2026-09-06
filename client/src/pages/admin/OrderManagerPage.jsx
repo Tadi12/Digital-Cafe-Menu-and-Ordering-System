@@ -45,7 +45,7 @@ const OrderManagerPage = () => {
         setNewOrderAlert(`New Order #${newOrder.orderNumber} placed from Table #${newOrder.tableNumberSnapshot}!`);
 
         if (soundEnabled) {
-          playNotificationSound();
+          playNotificationSound(import.meta.env.VITE_NOTIFICATION_SOUND_URL);
         }
 
         setTimeout(() => setNewOrderAlert(null), 5000);
