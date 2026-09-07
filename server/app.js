@@ -12,31 +12,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'http://localhost:1573',
-  'http://localhost:5173',
-].filter(Boolean);
-
-// Configure CORS with explicit handling for missing CLIENT_URL (development fallback).
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests without an origin (e.g., curl) or whitelisted origins.
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    // If CLIENT_URL is not defined, allow any origin (development mode).
-    if (!process.env.CLIENT_URL) {
-      console.warn('CLIENT_URL not set – allowing all origins for CORS (development fallback)');
-      return callback(null, true);
-    }
-    // Otherwise reject the request.
-    return callback(new Error('Not allowed by CORS'), false);
-  },
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
+app.use(cors({ origin: true, credentials: true }));
 
 // Body Parsing Middlewares
 app.use(express.json());
