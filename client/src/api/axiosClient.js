@@ -4,12 +4,27 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const axiosClient = axios.create({
   baseURL: API_BASE_URL,
-  // Avoid an indefinite loading screen when the API server is unavailable.
-  timeout: 15000,
+  // Increased timeout to 30 seconds to accommodate Render cold starts and OTP email latency.
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Retry once on network timeout / 5xx errors
+axiosClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { config, response } = error;
+    // Retry only once for network errors or server errors (5xx)
+    if (!config.__retry && (!response || response.status >= 500)) {
+      config.__retry = true;
+      console.warn('Retrying request after timeout/5xx...');
+      return axiosClient(config);
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Interceptor to attach Authorization Bearer token
 axiosClient.interceptors.request.use(
