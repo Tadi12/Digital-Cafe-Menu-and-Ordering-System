@@ -22,6 +22,8 @@ const adminSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    resetOtp: String,
+    resetOtpExpires: Date,
     role: {
       type: String,
       default: 'admin',

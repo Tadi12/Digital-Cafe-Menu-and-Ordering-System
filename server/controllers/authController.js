@@ -143,6 +143,48 @@ const forgotPassword = async (req, res, next) => {
   }
 };
 
+const forgotPasswordWithOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const genericResponse = {
+      success: true,
+      message: 'If that email address is registered, a password reset code has been sent.',
+    };
+
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+    if (!admin) return res.json(genericResponse);
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+    admin.resetOtp = otpHash;
+    admin.resetOtpExpires = Date.now() + 15 * 60 * 1000;
+    admin.resetPasswordToken = undefined;
+    admin.resetPasswordExpires = undefined;
+    await admin.save({ validateBeforeSave: false });
+
+    try {
+      await sendEmail({
+        to: admin.email,
+        subject: 'Your Hable Cafe admin password reset code',
+        text: `Your password reset code is ${otp}. It expires in 15 minutes. Do not share this code with anyone.`,
+        html: `<p>Your password reset code is <strong>${otp}</strong>.</p><p>It expires in 15 minutes.</p><p>Do not share this code with anyone.</p>`,
+      });
+    } catch (emailError) {
+      admin.resetOtp = undefined;
+      admin.resetOtpExpires = undefined;
+      await admin.save({ validateBeforeSave: false });
+      throw emailError;
+    }
+
+    return res.json(genericResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const resetPassword = async (req, res, next) => {
   try {
     const { password } = req.body;
@@ -171,4 +213,51 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { loginAdmin, getAdminProfile, updateAdminProfile, forgotPassword, resetPassword };
+const resetPasswordWithOtp = async (req, res, next) => {
+  try {
+    const { email, otp, password } = req.body;
+
+    if (!email || !otp || !password) {
+      return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const admin = await Admin.findOne({
+      email: email.toLowerCase().trim(),
+      resetOtpExpires: { $gt: Date.now() },
+    });
+
+    if (!admin) {
+      return res.status(400).json({ success: false, message: 'This OTP is invalid or has expired' });
+    }
+
+    const otpHash = crypto.createHash('sha256').update(String(otp).trim()).digest('hex');
+    if (admin.resetOtp !== otpHash) {
+      return res.status(400).json({ success: false, message: 'This OTP is invalid or has expired' });
+    }
+
+    admin.password = password;
+    admin.resetOtp = undefined;
+    admin.resetOtpExpires = undefined;
+    admin.resetPasswordToken = undefined;
+    admin.resetPasswordExpires = undefined;
+    await admin.save();
+
+    return res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  loginAdmin,
+  getAdminProfile,
+  updateAdminProfile,
+  forgotPassword,
+  forgotPasswordWithOtp,
+  resetPassword,
+  resetPasswordWithOtp,
+};
