@@ -94,7 +94,7 @@ const DrinkFormModal = ({
     formData.append("available", available);
 
     if (imageFile) {
-      formData.append("image", imageFile);
+      formData.append("image", imageFile, imageFile.name);
     }
 
     onSubmit(formData);

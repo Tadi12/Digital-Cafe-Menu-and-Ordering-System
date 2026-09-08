@@ -30,7 +30,7 @@ const getFoods = async (req, res, next) => {
     }
 
     const foods = await Food.find(query)
-      .populate('category', 'name image')
+      .populate('category', 'name image type')
       .sort({ createdAt: -1 });
 
     return res.json({
@@ -50,7 +50,7 @@ const getFoods = async (req, res, next) => {
  */
 const getFoodById = async (req, res, next) => {
   try {
-    const food = await Food.findById(req.params.id).populate('category', 'name image');
+    const food = await Food.findById(req.params.id).populate('category', 'name image type');
     if (!food) {
       return res.status(404).json({ success: false, message: 'Food item not found' });
     }
@@ -130,7 +130,7 @@ const createFood = async (req, res, next) => {
       available: available !== undefined ? available === 'true' || available === true : true,
     });
 
-    const populatedFood = await Food.findById(food._id).populate('category', 'name image');
+    const populatedFood = await Food.findById(food._id).populate('category', 'name image type');
 
     return res.status(201).json({
       success: true,
@@ -192,7 +192,7 @@ const updateFood = async (req, res, next) => {
     }
 
     const updatedFood = await food.save();
-    const populatedFood = await Food.findById(updatedFood._id).populate('category', 'name image');
+    const populatedFood = await Food.findById(updatedFood._id).populate('category', 'name image type');
 
     return res.json({
       success: true,
