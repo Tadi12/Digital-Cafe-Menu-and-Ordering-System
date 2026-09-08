@@ -36,6 +36,11 @@ const MenuPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFood, setSelectedFood] = useState(null);
 
+  const categoryList = categories.map((category) => ({
+    ...category,
+    itemCount: foods.filter((food) => food.category?._id === category._id).length,
+  }));
+
   const [loading, setLoading] = useState(true);
   const [tableError, setTableError] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -155,7 +160,7 @@ const MenuPage = () => {
 
       {/* Category Pills Filter */}
       <CategoryFilter
-        categories={categories}
+        categories={categoryList}
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
       />
