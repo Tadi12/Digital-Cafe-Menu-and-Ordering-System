@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../common/Modal";
 import { Upload, Image as ImageIcon } from "lucide-react";
@@ -12,9 +12,13 @@ const DrinkFormModal = ({
   isLoading,
 }) => {
   const { t } = useTranslation();
-  const safeCategories = Array.isArray(categories)
-    ? categories.filter((cat) => cat?.type === "drink" || !cat?.type)
-    : [];
+  const safeCategories = useMemo(
+    () =>
+      Array.isArray(categories)
+        ? categories.filter((cat) => cat?.type === "drink" || !cat?.type)
+        : [],
+    [categories],
+  );
 
   const [nameEn, setNameEn] = useState("");
   const [nameAm, setNameAm] = useState("");
@@ -130,7 +134,10 @@ const DrinkFormModal = ({
                 <ImageIcon className="w-8 h-8 text-cafe-400" />
               )}
             </div>
-            <label className="flex-1 cursor-pointer bg-cafe-50 hover:bg-cafe-100 border-2 border-dashed border-cafe-300 rounded-xl p-3 text-center transition-colors">
+            <label
+              htmlFor="drink-image-upload"
+              className="flex-1 cursor-pointer bg-cafe-50 hover:bg-cafe-100 border-2 border-dashed border-cafe-300 rounded-xl p-3 text-center transition-colors"
+            >
               <Upload className="w-5 h-5 text-cafe-600 mx-auto mb-1" />
               <span className="text-xs font-semibold text-cafe-800 block">
                 Choose drink image file
@@ -139,10 +146,12 @@ const DrinkFormModal = ({
                 JPG, PNG, WEBP max 5MB
               </span>
               <input
+                id="drink-image-upload"
                 type="file"
                 accept="image/*"
+                name="image"
                 onChange={handleImageChange}
-                className="hidden"
+                className="sr-only"
               />
             </label>
           </div>
