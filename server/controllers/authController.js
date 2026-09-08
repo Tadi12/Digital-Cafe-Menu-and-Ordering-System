@@ -3,6 +3,26 @@ const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
+const canSendEmail = () => {
+  const provider = (process.env.EMAIL_PROVIDER || '').toLowerCase();
+
+  if (!provider || provider === 'none') {
+    return false;
+  }
+
+  if (provider === 'resend') {
+    return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL);
+  }
+
+  return Boolean(
+    process.env.SMTP_HOST &&
+      process.env.SMTP_PORT &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS &&
+      process.env.EMAIL_FROM
+  );
+};
+
 const allowResetFallback = () =>
   process.env.NODE_ENV === 'development' || process.env.ALLOW_RESET_FALLBACK === 'true';
 
@@ -126,6 +146,15 @@ const forgotPassword = async (req, res, next) => {
     if (!clientUrl) throw new Error('CLIENT_URL must be configured to send password-reset emails');
     const resetUrl = `${clientUrl}/admin/reset-password/${rawToken}`;
 
+    if (!canSendEmail()) {
+      console.warn('[Password Reset] Email delivery is disabled. Returning reset URL directly.');
+      return res.json({
+        success: true,
+        message: 'Email delivery is disabled in this environment. Use this reset link instead.',
+        resetUrl,
+      });
+    }
+
     try {
       await sendEmail({
         to: admin.email,
@@ -177,6 +206,15 @@ const forgotPasswordWithOtp = async (req, res, next) => {
     admin.resetPasswordToken = undefined;
     admin.resetPasswordExpires = undefined;
     await admin.save({ validateBeforeSave: false });
+
+    if (!canSendEmail()) {
+      console.warn('[Password Reset] Email delivery is disabled. Returning OTP directly.');
+      return res.json({
+        success: true,
+        message: 'Email delivery is disabled in this environment. Use this OTP to reset your password.',
+        otp,
+      });
+    }
 
     try {
       await sendEmail({

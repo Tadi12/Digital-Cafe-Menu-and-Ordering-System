@@ -32,8 +32,9 @@ const ForgotPasswordPage = () => {
     try {
       const response = await forgotPasswordOtpApi(email);
       if (response.otp) {
+        setOtp(response.otp);
         setMessage(
-          `Email delivery failed. Use this fallback OTP: ${response.otp}`,
+          `Email delivery is disabled in this environment. Use this OTP: ${response.otp}`,
         );
       } else {
         setMessage(response.message);
