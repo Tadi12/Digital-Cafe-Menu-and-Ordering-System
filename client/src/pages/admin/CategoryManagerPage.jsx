@@ -129,22 +129,22 @@ const CategoryManagerPage = () => {
                 key={cat._id}
                 className="bg-white rounded-2xl border border-cafe-200 p-4 shadow-sm flex items-center justify-between gap-3 hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <img
                     src={cat.image?.url}
                     alt={cat.name.en}
                     className="w-14 h-14 rounded-xl object-cover bg-cafe-100 shrink-0"
                   />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-sm text-cafe-900 truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-sm text-cafe-900 break-words leading-snug">
                         {cat.name.en}
                       </h3>
-                      <span className="rounded-full bg-cafe-100 text-cafe-700 px-2 py-0.5 text-[10px] font-bold uppercase">
+                      <span className="rounded-full bg-cafe-100 text-cafe-700 px-2 py-0.5 text-[10px] font-bold uppercase shrink-0">
                         {cat.type}
                       </span>
                     </div>
-                    <p className="text-xs text-cafe-500 font-medium truncate">
+                    <p className="text-xs text-cafe-500 font-medium break-words leading-snug mt-0.5">
                       {cat.name.am}
                     </p>
                   </div>

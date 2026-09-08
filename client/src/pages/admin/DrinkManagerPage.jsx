@@ -9,7 +9,7 @@ import {
   deleteFoodApi,
 } from "../../api/foodApi";
 import { getCategoriesApi } from "../../api/categoryApi";
-import FoodFormModal from "../../components/admin/FoodFormModal";
+import DrinkFormModal from "../../components/admin/DrinkFormModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import {
@@ -288,12 +288,12 @@ const DrinkManagerPage = () => {
         </div>
       )}
 
-      <FoodFormModal
+      <DrinkFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleFormSubmit}
         categories={drinkCategories}
-        food={editingFood}
+        drink={editingFood}
         isLoading={isSaving}
       />
     </div>

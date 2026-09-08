@@ -49,7 +49,12 @@ const FoodManagerPage = () => {
         getFoodsApi(params),
         getCategoriesApi({ type: "food" }),
       ]);
-      if (foodRes.success) setFoods(foodRes.data);
+
+      const foodItems = foodRes.success
+        ? (foodRes.data || []).filter((food) => food.category?.type === "food")
+        : [];
+
+      if (foodRes.success) setFoods(foodItems);
       if (catRes.success) setCategories(catRes.data);
     } catch (err) {
       console.error("[Food Manager Fetch Error]:", err);

@@ -43,11 +43,26 @@ const MenuPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
 
-  const categoryList = categories.map((category) => ({
-    ...category,
-    itemCount: foods.filter((food) => food.category?._id === category._id)
-      .length,
-  }));
+  const getCategoryType = (category) => category?.type || "food";
+  const foodCategories = categories.filter(
+    (category) => getCategoryType(category) === "food",
+  );
+  const drinkCategories = categories.filter(
+    (category) => getCategoryType(category) === "drink",
+  );
+
+  const buildCategoryList = (items) =>
+    items.map((category) => ({
+      ...category,
+      itemCount: foods.filter(
+        (food) =>
+          food.category?._id === category._id &&
+          (food.category?.type || "food") === getCategoryType(category),
+      ).length,
+    }));
+
+  const foodCategoryList = buildCategoryList(foodCategories);
+  const drinkCategoryList = buildCategoryList(drinkCategories);
 
   const [loading, setLoading] = useState(true);
   const [tableError, setTableError] = useState("");
@@ -175,11 +190,33 @@ const MenuPage = () => {
       <TableHeader table={table} />
 
       {/* Category Pills Filter */}
-      <CategoryFilter
-        categories={categoryList}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-      />
+      <div className="border-b border-cafe-200 bg-cafe-50/80 backdrop-blur">
+        {foodCategoryList.length > 0 && (
+          <div className="px-4 pt-3 pb-1">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+              Food
+            </div>
+            <CategoryFilter
+              categories={foodCategoryList}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+          </div>
+        )}
+
+        {drinkCategoryList.length > 0 && (
+          <div className="px-4 py-1 pb-3">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+              Drinks
+            </div>
+            <CategoryFilter
+              categories={drinkCategoryList}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Search Input */}
       <div className="p-4 bg-cafe-50 sticky top-14 z-20 shadow-xs">
