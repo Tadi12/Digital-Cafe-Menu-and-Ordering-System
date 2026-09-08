@@ -3,6 +3,9 @@ const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
+const allowResetFallback = () =>
+  process.env.NODE_ENV === 'development' || process.env.ALLOW_RESET_FALLBACK === 'true';
+
 /**
  * @desc    Auth Admin & get JWT token
  * @route   POST /api/auth/login
@@ -134,6 +137,16 @@ const forgotPassword = async (req, res, next) => {
       admin.resetPasswordToken = undefined;
       admin.resetPasswordExpires = undefined;
       await admin.save({ validateBeforeSave: false });
+
+      if (allowResetFallback()) {
+        console.warn('[Password Reset Fallback] SMTP email failed. Reset URL fallback enabled.');
+        return res.json({
+          success: true,
+          message: 'Email delivery is unavailable right now. Use the reset link shown in the server logs for this environment.',
+          resetUrl,
+        });
+      }
+
       throw emailError;
     }
 
@@ -176,6 +189,16 @@ const forgotPasswordWithOtp = async (req, res, next) => {
       admin.resetOtp = undefined;
       admin.resetOtpExpires = undefined;
       await admin.save({ validateBeforeSave: false });
+
+      if (allowResetFallback()) {
+        console.warn('[Password Reset Fallback] SMTP email failed. OTP fallback enabled.');
+        return res.json({
+          success: true,
+          message: 'Email delivery is unavailable right now. Use this OTP instead:',
+          otp,
+        });
+      }
+
       throw emailError;
     }
 
