@@ -12,6 +12,9 @@ const DrinkFormModal = ({
   isLoading,
 }) => {
   const { t } = useTranslation();
+  const safeCategories = Array.isArray(categories)
+    ? categories.filter((cat) => cat?.type === "drink" || !cat?.type)
+    : [];
 
   const [nameEn, setNameEn] = useState("");
   const [nameAm, setNameAm] = useState("");
@@ -39,7 +42,7 @@ const DrinkFormModal = ({
       setNameEn("");
       setNameAm("");
       setPrice("");
-      setCategory(categories[0]?._id || "");
+      setCategory(safeCategories[0]?._id || "");
       setIngredientsEn("");
       setIngredientsAm("");
       setAvailable(true);
@@ -47,7 +50,7 @@ const DrinkFormModal = ({
       setImagePreview("");
     }
     setError("");
-  }, [drink, isOpen, categories]);
+  }, [drink, isOpen, safeCategories]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -59,6 +62,13 @@ const DrinkFormModal = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!safeCategories.length) {
+      setError(
+        "Please create at least one drink category before adding a drink item.",
+      );
+      return;
+    }
+
     if (!nameEn.trim() || !nameAm.trim() || !price || !category) {
       setError("Drink name (EN & AM), price, and category are required.");
       return;
@@ -195,7 +205,7 @@ const DrinkFormModal = ({
               <option value="" disabled>
                 Select drink category
               </option>
-              {categories.map((cat) => (
+              {safeCategories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
                   {cat.name.en} ({cat.name.am})
                 </option>

@@ -65,7 +65,12 @@ const DrinkManagerPage = () => {
       ]);
 
       if (foodRes.success) setFoods(foodRes.data || []);
-      if (catRes.success) setCategories(catRes.data || []);
+      if (catRes.success) {
+        const drinkCategoryList = (catRes.data || []).filter(
+          (category) => category.type === "drink" || !category.type,
+        );
+        setCategories(drinkCategoryList);
+      }
     } catch (err) {
       console.error("[Drink Manager Fetch Error]:", err);
     } finally {
