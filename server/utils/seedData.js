@@ -39,6 +39,7 @@ const seedData = async () => {
     console.log('[Seeding]: Creating initial Categories...');
     const categoriesData = [
       {
+        type: 'drink',
         name: { en: 'Coffee & Espresso', am: 'ቡና እና ኤስፕሬሶ' },
         image: {
           url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80',
@@ -46,6 +47,7 @@ const seedData = async () => {
         },
       },
       {
+        type: 'drink',
         name: { en: 'Traditional Drinks', am: 'ባህላዊ መጠጦች' },
         image: {
           url: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=600&auto=format&fit=crop&q=80',
@@ -53,6 +55,7 @@ const seedData = async () => {
         },
       },
       {
+        type: 'food',
         name: { en: 'Burgers & Sandwiches', am: 'በርገር እና ሳንድዊች' },
         image: {
           url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80',
@@ -60,6 +63,7 @@ const seedData = async () => {
         },
       },
       {
+        type: 'food',
         name: { en: 'Breakfast & Pastry', am: 'ቁርስ እና ኬክ' },
         image: {
           url: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&auto=format&fit=crop&q=80',

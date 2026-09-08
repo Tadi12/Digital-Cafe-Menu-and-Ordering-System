@@ -1,18 +1,25 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useTranslation } from 'react-i18next';
-import { LanguageContext } from '../../context/LanguageContext';
+import React, { useState, useEffect, useContext } from "react";
+import { useTranslation } from "react-i18next";
+import { LanguageContext } from "../../context/LanguageContext";
 import {
   getFoodsApi,
   createFoodApi,
   updateFoodApi,
   toggleFoodAvailabilityApi,
   deleteFoodApi,
-} from '../../api/foodApi';
-import { getCategoriesApi } from '../../api/categoryApi';
-import FoodFormModal from '../../components/admin/FoodFormModal';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { formatCurrency } from '../../utils/currencyFormatter';
-import { Plus, Search, Edit2, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+} from "../../api/foodApi";
+import { getCategoriesApi } from "../../api/categoryApi";
+import FoodFormModal from "../../components/admin/FoodFormModal";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { formatCurrency } from "../../utils/currencyFormatter";
+import {
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 
 const FoodManagerPage = () => {
   const { t } = useTranslation();
@@ -20,10 +27,10 @@ const FoodManagerPage = () => {
 
   const [foods, setFoods] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   // New state for availability filter: 'all', 'available', 'unavailable'
-  const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState("all");
 
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,17 +42,17 @@ const FoodManagerPage = () => {
       const params = {};
       if (selectedCategory) params.category = selectedCategory;
       if (searchQuery) params.search = searchQuery;
-      if (availabilityFilter === 'available') params.available = 'true';
-      else if (availabilityFilter === 'unavailable') params.available = 'false';
+      if (availabilityFilter === "available") params.available = "true";
+      else if (availabilityFilter === "unavailable") params.available = "false";
 
       const [foodRes, catRes] = await Promise.all([
         getFoodsApi(params),
-        getCategoriesApi(),
+        getCategoriesApi({ type: "food" }),
       ]);
       if (foodRes.success) setFoods(foodRes.data);
       if (catRes.success) setCategories(catRes.data);
     } catch (err) {
-      console.error('[Food Manager Fetch Error]:', err);
+      console.error("[Food Manager Fetch Error]:", err);
     } finally {
       setLoading(false);
     }
@@ -80,7 +87,7 @@ const FoodManagerPage = () => {
         fetchFoodsAndCategories();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to save food item.');
+      alert(err.response?.data?.message || "Failed to save food item.");
     } finally {
       setIsSaving(false);
     }
@@ -91,11 +98,13 @@ const FoodManagerPage = () => {
       const res = await toggleFoodAvailabilityApi(id);
       if (res.success) {
         setFoods((prev) =>
-          prev.map((f) => (f._id === id ? { ...f, available: res.data.available } : f))
+          prev.map((f) =>
+            f._id === id ? { ...f, available: res.data.available } : f,
+          ),
         );
       }
     } catch (err) {
-      alert('Failed to toggle availability.');
+      alert("Failed to toggle availability.");
     }
   };
 
@@ -108,7 +117,7 @@ const FoodManagerPage = () => {
         setFoods((prev) => prev.filter((f) => f._id !== id));
       }
     } catch (err) {
-      alert('Failed to delete food item.');
+      alert("Failed to delete food item.");
     }
   };
 
@@ -159,7 +168,7 @@ const FoodManagerPage = () => {
           className="bg-cafe-800 hover:bg-cafe-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>{t('add_food')}</span>
+          <span>{t("add_food")}</span>
         </button>
       </div>
 
@@ -183,13 +192,19 @@ const FoodManagerPage = () => {
               <tbody className="divide-y divide-cafe-100 font-medium text-cafe-800">
                 {foods.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-cafe-500 font-medium">
+                    <td
+                      colSpan="6"
+                      className="p-8 text-center text-cafe-500 font-medium"
+                    >
                       No food items found.
                     </td>
                   </tr>
                 ) : (
                   foods.map((food) => (
-                    <tr key={food._id} className="hover:bg-cafe-50/50 transition-colors">
+                    <tr
+                      key={food._id}
+                      className="hover:bg-cafe-50/50 transition-colors"
+                    >
                       <td className="p-3">
                         <img
                           src={food.image.url}
@@ -198,11 +213,15 @@ const FoodManagerPage = () => {
                         />
                       </td>
                       <td className="p-3">
-                        <span className="font-bold text-cafe-900 block">{food.name.en}</span>
-                        <span className="text-cafe-500 text-[11px]">{food.name.am}</span>
+                        <span className="font-bold text-cafe-900 block">
+                          {food.name.en}
+                        </span>
+                        <span className="text-cafe-500 text-[11px]">
+                          {food.name.am}
+                        </span>
                       </td>
                       <td className="p-3 font-semibold text-cafe-700">
-                        {food.category?.name?.en || 'Uncategorized'}
+                        {food.category?.name?.en || "Uncategorized"}
                       </td>
                       <td className="p-3 font-extrabold text-cafe-900">
                         {formatCurrency(food.price, currentLang)}
@@ -212,19 +231,19 @@ const FoodManagerPage = () => {
                           onClick={() => handleToggleAvailability(food._id)}
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
                             food.available
-                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
+                              ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                              : "bg-red-100 text-red-800 hover:bg-red-200"
                           }`}
                         >
                           {food.available ? (
                             <>
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>{t('available')}</span>
+                              <span>{t("available")}</span>
                             </>
                           ) : (
                             <>
                               <XCircle className="w-3.5 h-3.5 text-red-600" />
-                              <span>{t('unavailable')}</span>
+                              <span>{t("unavailable")}</span>
                             </>
                           )}
                         </button>
@@ -239,7 +258,9 @@ const FoodManagerPage = () => {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteFood(food._id, food.name.en)}
+                            onClick={() =>
+                              handleDeleteFood(food._id, food.name.en)
+                            }
                             className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                             title="Delete Food"
                           >

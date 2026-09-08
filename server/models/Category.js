@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema(
   {
+    type: {
+      type: String,
+      enum: ['food', 'drink'],
+      default: 'food',
+      required: [true, 'Category type is required'],
+    },
     name: {
       en: {
         type: String,

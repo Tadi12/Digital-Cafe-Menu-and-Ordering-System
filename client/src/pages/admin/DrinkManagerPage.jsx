@@ -21,27 +21,6 @@ import {
   XCircle,
 } from "lucide-react";
 
-const isDrinkCategory = (category) => {
-  const combinedName = [category?.name?.en, category?.name?.am]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return [
-    "drink",
-    "drinks",
-    "coffee",
-    "espresso",
-    "tea",
-    "juice",
-    "beverage",
-    "smoothie",
-    "milkshake",
-    "latte",
-    "cappuccino",
-  ].some((keyword) => combinedName.includes(keyword));
-};
-
 const DrinkManagerPage = () => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
@@ -57,7 +36,7 @@ const DrinkManagerPage = () => {
   const [editingFood, setEditingFood] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const drinkCategories = categories.filter(isDrinkCategory);
+  const drinkCategories = categories;
   const visibleFoods = foods.filter((food) => {
     const matchesCategory =
       !selectedCategory || food.category?._id === selectedCategory;
@@ -82,7 +61,7 @@ const DrinkManagerPage = () => {
     try {
       const [foodRes, catRes] = await Promise.all([
         getFoodsApi(),
-        getCategoriesApi(),
+        getCategoriesApi({ type: "drink" }),
       ]);
 
       if (foodRes.success) setFoods(foodRes.data || []);

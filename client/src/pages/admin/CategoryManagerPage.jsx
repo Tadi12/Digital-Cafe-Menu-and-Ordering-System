@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   getCategoriesApi,
   createCategoryApi,
   updateCategoryApi,
   deleteCategoryApi,
-} from '../../api/categoryApi';
-import CategoryFormModal from '../../components/admin/CategoryFormModal';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Plus, Edit2, Trash2, Layers } from 'lucide-react';
+} from "../../api/categoryApi";
+import CategoryFormModal from "../../components/admin/CategoryFormModal";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { Plus, Edit2, Trash2, Layers } from "lucide-react";
 
 const CategoryManagerPage = () => {
   const { t } = useTranslation();
 
   const [categories, setCategories] = useState([]);
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -21,10 +22,12 @@ const CategoryManagerPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await getCategoriesApi();
+      const params =
+        categoryTypeFilter === "all" ? {} : { type: categoryTypeFilter };
+      const res = await getCategoriesApi(params);
       if (res.success) setCategories(res.data);
     } catch (err) {
-      console.error('[Category Fetch Error]:', err);
+      console.error("[Category Fetch Error]:", err);
     } finally {
       setLoading(false);
     }
@@ -32,7 +35,7 @@ const CategoryManagerPage = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [categoryTypeFilter]);
 
   const handleOpenAddModal = () => {
     setEditingCategory(null);
@@ -59,14 +62,15 @@ const CategoryManagerPage = () => {
         fetchCategories();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to save category.');
+      alert(err.response?.data?.message || "Failed to save category.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeleteCategory = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete category "${name}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete category "${name}"?`))
+      return;
 
     try {
       const res = await deleteCategoryApi(id);
@@ -74,24 +78,39 @@ const CategoryManagerPage = () => {
         setCategories((prev) => prev.filter((c) => c._id !== id));
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete category.');
+      alert(err.response?.data?.message || "Failed to delete category.");
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Top Bar */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-cafe-200 shadow-sm">
-        <div>
-          <h2 className="font-bold text-cafe-900 text-sm">{t('category_management')}</h2>
-          <p className="text-xs text-cafe-500">Manage food menu categories and bilingual titles</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-cafe-200 shadow-sm">
+        <div className="flex items-center gap-3 flex-1">
+          <div>
+            <h2 className="font-bold text-cafe-900 text-sm">
+              {t("category_management")}
+            </h2>
+            <p className="text-xs text-cafe-500">
+              Manage food and drink categories with bilingual titles
+            </p>
+          </div>
+          <select
+            value={categoryTypeFilter}
+            onChange={(e) => setCategoryTypeFilter(e.target.value)}
+            className="ml-auto px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none"
+          >
+            <option value="all">All Categories</option>
+            <option value="food">Food Categories</option>
+            <option value="drink">Drink Categories</option>
+          </select>
         </div>
         <button
           onClick={handleOpenAddModal}
           className="bg-cafe-800 hover:bg-cafe-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          <span>{t('add_category')}</span>
+          <span>{t("add_category")}</span>
         </button>
       </div>
 
@@ -117,8 +136,17 @@ const CategoryManagerPage = () => {
                     className="w-14 h-14 rounded-xl object-cover bg-cafe-100 shrink-0"
                   />
                   <div className="min-w-0">
-                    <h3 className="font-bold text-sm text-cafe-900 truncate">{cat.name.en}</h3>
-                    <p className="text-xs text-cafe-500 font-medium truncate">{cat.name.am}</p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-sm text-cafe-900 truncate">
+                        {cat.name.en}
+                      </h3>
+                      <span className="rounded-full bg-cafe-100 text-cafe-700 px-2 py-0.5 text-[10px] font-bold uppercase">
+                        {cat.type}
+                      </span>
+                    </div>
+                    <p className="text-xs text-cafe-500 font-medium truncate">
+                      {cat.name.am}
+                    </p>
                   </div>
                 </div>
 

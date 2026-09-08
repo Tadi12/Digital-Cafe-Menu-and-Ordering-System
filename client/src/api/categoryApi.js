@@ -1,7 +1,7 @@
 import axiosClient from './axiosClient';
 
-export const getCategoriesApi = async () => {
-  const response = await axiosClient.get('/categories');
+export const getCategoriesApi = async (params = {}) => {
+  const response = await axiosClient.get('/categories', { params });
   return response.data;
 };
 

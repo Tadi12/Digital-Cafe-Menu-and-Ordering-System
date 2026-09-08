@@ -9,7 +9,9 @@ const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudina
  */
 const getCategories = async (req, res, next) => {
   try {
-    const categories = await Category.find({}).sort({ createdAt: -1 });
+    const { type } = req.query;
+    const filter = type ? { type } : {};
+    const categories = await Category.find(filter).sort({ createdAt: -1 });
     return res.json({
       success: true,
       count: categories.length,
@@ -27,12 +29,19 @@ const getCategories = async (req, res, next) => {
  */
 const createCategory = async (req, res, next) => {
   try {
-    const { nameEn, nameAm } = req.body;
+    const { nameEn, nameAm, type = 'food' } = req.body;
 
     if (!nameEn || !nameAm) {
       return res.status(400).json({
         success: false,
         message: 'Category names in both English and Amharic are required',
+      });
+    }
+
+    if (!['food', 'drink'].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category type must be either food or drink',
       });
     }
 
@@ -43,10 +52,10 @@ const createCategory = async (req, res, next) => {
       });
     }
 
-    // Upload image to Cloudinary / Local
     const imageResult = await uploadToCloudinary(req.file.path, 'categories');
 
     const category = await Category.create({
+      type,
       name: {
         en: nameEn,
         am: nameAm,
@@ -73,7 +82,7 @@ const createCategory = async (req, res, next) => {
  */
 const updateCategory = async (req, res, next) => {
   try {
-    const { nameEn, nameAm } = req.body;
+    const { nameEn, nameAm, type } = req.body;
     const category = await Category.findById(req.params.id);
 
     if (!category) {
@@ -82,10 +91,11 @@ const updateCategory = async (req, res, next) => {
 
     if (nameEn) category.name.en = nameEn;
     if (nameAm) category.name.am = nameAm;
+    if (type && ['food', 'drink'].includes(type)) {
+      category.type = type;
+    }
 
-    // Handle new image upload if provided
     if (req.file) {
-      // Delete previous image
       if (category.image.publicId) {
         await deleteFromCloudinary(category.image.publicId);
       }
@@ -120,12 +130,11 @@ const deleteCategory = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
-    // Check if foods exist in this category
     const associatedFoodsCount = await Food.countDocuments({ category: category._id });
     if (associatedFoodsCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete category: ${associatedFoodsCount} food items are linked to this category`,
+        message: `Cannot delete category: ${associatedFoodsCount} menu items are linked to this category`,
       });
     }
 
