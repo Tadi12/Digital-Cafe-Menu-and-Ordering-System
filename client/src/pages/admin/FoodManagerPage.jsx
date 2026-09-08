@@ -54,8 +54,14 @@ const FoodManagerPage = () => {
         ? (foodRes.data || []).filter((food) => food.category?.type === "food")
         : [];
 
+      const categoryList = catRes.success
+        ? (catRes.data || []).filter(
+            (category) => category.type === "food" || !category.type,
+          )
+        : [];
+
       if (foodRes.success) setFoods(foodItems);
-      if (catRes.success) setCategories(catRes.data);
+      if (catRes.success) setCategories(categoryList);
     } catch (err) {
       console.error("[Food Manager Fetch Error]:", err);
     } finally {

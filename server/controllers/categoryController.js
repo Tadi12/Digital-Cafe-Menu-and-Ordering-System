@@ -10,12 +10,28 @@ const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudina
 const getCategories = async (req, res, next) => {
   try {
     const { type } = req.query;
-    const filter = type ? { type } : {};
+
+    const filter = type
+      ? {
+          $or: [
+            { type },
+            { type: { $exists: false } },
+            { type: null },
+          ],
+        }
+      : {};
+
     const categories = await Category.find(filter).sort({ createdAt: -1 });
+
+    const normalizedCategories = categories.map((category) => ({
+      ...category.toObject(),
+      type: category.type || 'food',
+    }));
+
     return res.json({
       success: true,
-      count: categories.length,
-      data: categories,
+      count: normalizedCategories.length,
+      data: normalizedCategories,
     });
   } catch (error) {
     next(error);
