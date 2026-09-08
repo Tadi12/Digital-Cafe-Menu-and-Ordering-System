@@ -43,6 +43,8 @@
   "login": "Sign In",
   "dashboard": "Dashboard",
   "food_management": "Food Menu",
+  "drink_management": "Drink Menu",
+  "add_drink": "Add New Drink",
   "category_management": "Categories",
   "table_management": "Table & QR Codes",
   "order_management": "Orders Queue",
