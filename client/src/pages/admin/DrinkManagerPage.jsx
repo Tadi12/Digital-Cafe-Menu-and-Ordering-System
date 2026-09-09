@@ -143,153 +143,132 @@ const DrinkManagerPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-cafe-200 shadow-sm">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="w-4 h-4 text-cafe-400 absolute left-3 top-3" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search drinks by name..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-cafe-200 text-xs focus:border-cafe-600 focus:outline-none"
-            />
+      <div className="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-cafe-200 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 w-full md:flex-row md:flex-1 md:items-center">
+            <div className="relative w-full md:max-w-xs">
+              <Search className="w-4 h-4 text-cafe-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search drinks by name..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-cafe-200 text-xs focus:border-cafe-600 focus:outline-none"
+              />
+            </div>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full md:w-auto px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none"
+            >
+              <option value="">All Drink Categories</option>
+              {drinkCategories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name.en} ({cat.name.am})
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={availabilityFilter}
+              onChange={(e) => setAvailabilityFilter(e.target.value)}
+              className="w-full md:w-auto px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none"
+            >
+              <option value="all">All</option>
+              <option value="available">Available</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
           </div>
 
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none"
+          <button
+            onClick={handleOpenAddModal}
+            className="bg-cafe-800 hover:bg-cafe-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 w-full md:w-auto"
           >
-            <option value="">All Drink Categories</option>
-            {drinkCategories.map((cat) => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name.en} ({cat.name.am})
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={availabilityFilter}
-            onChange={(e) => setAvailabilityFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none ml-2"
-          >
-            <option value="all">All</option>
-            <option value="available">Available</option>
-            <option value="unavailable">Unavailable</option>
-          </select>
+            <Plus className="w-4 h-4" />
+            <span>{t("add_drink")}</span>
+          </button>
         </div>
-
-        <button
-          onClick={handleOpenAddModal}
-          className="bg-cafe-800 hover:bg-cafe-900 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t("add_drink")}</span>
-        </button>
       </div>
 
       {loading ? (
         <LoadingSpinner message="Loading drink menu items..." />
       ) : (
-        <div className="bg-white rounded-2xl border border-cafe-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-cafe-50 text-cafe-700 uppercase font-bold text-[10px]">
-                <tr>
-                  <th className="p-3">Image</th>
-                  <th className="p-3">Drink Name (EN / AM)</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Price</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cafe-100 font-medium text-cafe-800">
-                {visibleFoods.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="p-8 text-center text-cafe-500 font-medium"
-                    >
-                      No drink items found.
-                    </td>
-                  </tr>
-                ) : (
-                  visibleFoods.map((food) => (
-                    <tr
-                      key={food._id}
-                      className="hover:bg-cafe-50/50 transition-colors"
-                    >
-                      <td className="p-3">
-                        <img
-                          src={food.image?.url}
-                          alt={food.name?.en}
-                          className="w-12 h-12 rounded-xl object-cover bg-cafe-100"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <span className="font-bold text-cafe-900 block">
-                          {food.name?.en}
-                        </span>
-                        <span className="text-cafe-500 text-[11px]">
-                          {food.name?.am}
-                        </span>
-                      </td>
-                      <td className="p-3 font-semibold text-cafe-700">
-                        {food.category?.name?.en || "Uncategorized"}
-                      </td>
-                      <td className="p-3 font-extrabold text-cafe-900">
-                        {formatCurrency(food.price, currentLang)}
-                      </td>
-                      <td className="p-3">
-                        <button
-                          onClick={() => handleToggleAvailability(food._id)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
-                            food.available
-                              ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                              : "bg-red-100 text-red-800 hover:bg-red-200"
-                          }`}
-                        >
-                          {food.available ? (
-                            <>
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>{t("available")}</span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3.5 h-3.5 text-red-600" />
-                              <span>{t("unavailable")}</span>
-                            </>
-                          )}
-                        </button>
-                      </td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleOpenEditModal(food)}
-                            className="p-1.5 rounded-lg text-cafe-600 hover:text-cafe-900 hover:bg-cafe-100 transition-colors"
-                            title="Edit Drink"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleDeleteFood(food._id, food.name?.en)
-                            }
-                            className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                            title="Delete Drink"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {visibleFoods.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-cafe-500 font-medium">
+              No drink items found.
+            </div>
+          ) : (
+            visibleFoods.map((food) => (
+              <div
+                key={food._id}
+                className="bg-white rounded-2xl border border-cafe-200 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <img
+                    src={food.image?.url}
+                    alt={food.name?.en}
+                    className="w-16 h-16 rounded-xl object-cover bg-cafe-100 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-cafe-900 text-sm break-words leading-snug">
+                      {food.name?.en}
+                    </div>
+                    <div className="text-cafe-500 text-[11px] break-words leading-snug mt-0.5">
+                      {food.name?.am}
+                    </div>
+                    <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-cafe-600">
+                      {food.category?.name?.en || "Uncategorized"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-black text-cafe-900">
+                    {formatCurrency(food.price, currentLang)}
+                  </div>
+                  <button
+                    onClick={() => handleToggleAvailability(food._id)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
+                      food.available
+                        ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                        : "bg-red-100 text-red-800 hover:bg-red-200"
+                    }`}
+                  >
+                    {food.available ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{t("available")}</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-3.5 h-3.5 text-red-600" />
+                        <span>{t("unavailable")}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-cafe-100">
+                  <button
+                    onClick={() => handleOpenEditModal(food)}
+                    className="p-1.5 rounded-lg text-cafe-600 hover:text-cafe-900 hover:bg-cafe-100 transition-colors"
+                    title="Edit Drink"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteFood(food._id, food.name?.en)}
+                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    title="Delete Drink"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
 
