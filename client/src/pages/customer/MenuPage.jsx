@@ -15,7 +15,6 @@ import CategoryFilter from "../../components/customer/CategoryFilter";
 import FoodCard from "../../components/customer/FoodCard";
 import FoodDetailModal from "../../components/customer/FoodDetailModal";
 import CartDrawer from "../../components/customer/CartDrawer";
-import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import {
   mergeCustomerOrderHistory,
@@ -239,72 +238,29 @@ const MenuPage = () => {
 
       {customerName && (
         <div className="px-4 pt-4">
-          <div className="bg-white rounded-2xl border border-cafe-200 shadow-sm p-4 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
-                  My orders
-                </p>
-                <h3 className="text-sm font-black text-cafe-900">
-                  {customerName}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate("/my-orders")}
-                className="text-[10px] font-bold text-cafe-600 bg-cafe-100 px-2 py-1 rounded-full hover:bg-cafe-200 transition-colors"
-              >
-                View all
-              </button>
+          <button
+            type="button"
+            onClick={() => navigate("/my-orders")}
+            className="w-full flex items-center justify-between rounded-2xl border border-cafe-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cafe-300"
+          >
+            <div className="text-left">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+                My orders
+              </p>
+              <h3 className="text-sm font-black text-cafe-900">
+                {customerName}
+              </h3>
             </div>
 
-            {historyLoading ? (
-              <div className="text-xs text-cafe-500">
-                Loading recent orders...
-              </div>
-            ) : customerOrderHistory.length === 0 ? (
-              <div className="text-xs text-cafe-500">
-                No past orders yet. Your new order will appear here.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {customerOrderHistory.slice(0, 4).map((order) => (
-                  <button
-                    key={order._id}
-                    type="button"
-                    onClick={() => navigate(`/order-track/${order._id}`)}
-                    className="w-full text-left rounded-xl border border-cafe-100 bg-cafe-50 p-3 hover:border-cafe-300 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-black text-cafe-900">
-                        {order.orderNumber}
-                      </span>
-                      <OrderStatusBadge
-                        status={order.status}
-                        className="text-[10px]"
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-[10px] text-cafe-600">
-                      <span>
-                        Table #
-                        {order.tableNumberSnapshot ??
-                          order.table?.tableNumber ??
-                          "-"}
-                      </span>
-                      <span>
-                        {new Date(
-                          order.createdAt || Date.now(),
-                        ).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-[11px] font-bold text-cafe-800">
-                      {formatCurrency(order.totalAmount || 0, currentLang)}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex min-w-7 justify-center rounded-full bg-cafe-900 px-2 py-1 text-[10px] font-black text-white">
+                {historyLoading ? "..." : customerOrderHistory.length}
+              </span>
+              <span className="text-[10px] font-bold text-cafe-600">
+                View all
+              </span>
+            </div>
+          </button>
         </div>
       )}
 
