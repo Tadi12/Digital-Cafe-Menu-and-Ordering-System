@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useSocket } from '../../hooks/useSocket';
-import { getOrdersApi, updateOrderStatusApi } from '../../api/orderApi';
-import OrderCard from '../../components/admin/OrderCard';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Search, Volume2, VolumeX, Bell } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useSocket } from "../../hooks/useSocket";
+import { getOrdersApi, updateOrderStatusApi } from "../../api/orderApi";
+import OrderCard from "../../components/admin/OrderCard";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { Search, Volume2, VolumeX, Bell } from "lucide-react";
 
 const OrderManagerPage = () => {
   const { t } = useTranslation();
   const { socket, joinAdminRoom, playNotificationSound } = useSocket();
 
   const [orders, setOrders] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [newOrderAlert, setNewOrderAlert] = useState(null);
@@ -20,12 +20,12 @@ const OrderManagerPage = () => {
   const fetchOrders = async () => {
     try {
       const res = await getOrdersApi({
-        status: selectedStatus === 'All' ? undefined : selectedStatus,
+        status: selectedStatus === "All" ? undefined : selectedStatus,
         search: searchQuery,
       });
       if (res.success) setOrders(res.data);
     } catch (err) {
-      console.error('[Order Queue Fetch Error]:', err);
+      console.error("[Order Queue Fetch Error]:", err);
     } finally {
       setLoading(false);
     }
@@ -42,10 +42,14 @@ const OrderManagerPage = () => {
     if (socket) {
       const handleNewOrder = (newOrder) => {
         setOrders((prev) => [newOrder, ...prev]);
-        setNewOrderAlert(`New Order #${newOrder.orderNumber} placed from Table #${newOrder.tableNumberSnapshot}!`);
+        setNewOrderAlert(
+          `New Order #${newOrder.orderNumber} placed from Table #${newOrder.tableNumberSnapshot}!`,
+        );
 
         if (soundEnabled) {
-          playNotificationSound(import.meta.env.VITE_NOTIFICATION_SOUND_URL);
+          playNotificationSound(
+            import.meta.env.VITE_ADMIN_NOTIFICATION_SOUND_URL,
+          );
         }
 
         setTimeout(() => setNewOrderAlert(null), 5000);
@@ -53,24 +57,28 @@ const OrderManagerPage = () => {
 
       const handleOrderUpdated = (updatedOrder) => {
         setOrders((prev) =>
-          prev.map((ord) => (ord._id === updatedOrder._id ? updatedOrder : ord))
+          prev.map((ord) =>
+            ord._id === updatedOrder._id ? updatedOrder : ord,
+          ),
         );
       };
 
       const handleOrderCancelled = (cancelledOrder) => {
         setOrders((prev) =>
-          prev.map((ord) => (ord._id === cancelledOrder._id ? cancelledOrder : ord))
+          prev.map((ord) =>
+            ord._id === cancelledOrder._id ? cancelledOrder : ord,
+          ),
         );
       };
 
-      socket.on('new_order', handleNewOrder);
-      socket.on('order_updated', handleOrderUpdated);
-      socket.on('order_cancelled', handleOrderCancelled);
+      socket.on("new_order", handleNewOrder);
+      socket.on("order_updated", handleOrderUpdated);
+      socket.on("order_cancelled", handleOrderCancelled);
 
       return () => {
-        socket.off('new_order', handleNewOrder);
-        socket.off('order_updated', handleOrderUpdated);
-        socket.off('order_cancelled', handleOrderCancelled);
+        socket.off("new_order", handleNewOrder);
+        socket.off("order_updated", handleOrderUpdated);
+        socket.off("order_cancelled", handleOrderCancelled);
       };
     }
   }, [socket, soundEnabled, joinAdminRoom, playNotificationSound]);
@@ -80,15 +88,22 @@ const OrderManagerPage = () => {
       const res = await updateOrderStatusApi(id, { status: nextStatus });
       if (res.success) {
         setOrders((prev) =>
-          prev.map((ord) => (ord._id === id ? res.data : ord))
+          prev.map((ord) => (ord._id === id ? res.data : ord)),
         );
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update order status.');
+      alert(err.response?.data?.message || "Failed to update order status.");
     }
   };
 
-  const statusTabs = ['All', 'Pending', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
+  const statusTabs = [
+    "All",
+    "Pending",
+    "Preparing",
+    "Ready",
+    "Completed",
+    "Cancelled",
+  ];
 
   return (
     <div className="space-y-6">
@@ -114,7 +129,7 @@ const OrderManagerPage = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
           {statusTabs.map((tab) => {
             const count =
-              tab === 'All'
+              tab === "All"
                 ? orders.length
                 : orders.filter((o) => o.status === tab).length;
             const isSelected = selectedStatus === tab;
@@ -125,14 +140,16 @@ const OrderManagerPage = () => {
                 onClick={() => setSelectedStatus(tab)}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                   isSelected
-                    ? 'bg-cafe-800 text-white shadow'
-                    : 'bg-cafe-50 text-cafe-700 hover:bg-cafe-100'
+                    ? "bg-cafe-800 text-white shadow"
+                    : "bg-cafe-50 text-cafe-700 hover:bg-cafe-100"
                 }`}
               >
                 <span>{tab}</span>
                 <span
                   className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    isSelected ? 'bg-cafe-600 text-white' : 'bg-cafe-200 text-cafe-800'
+                    isSelected
+                      ? "bg-cafe-600 text-white"
+                      : "bg-cafe-200 text-cafe-800"
                   }`}
                 >
                   {count}
@@ -160,13 +177,23 @@ const OrderManagerPage = () => {
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-bold ${
               soundEnabled
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                : 'bg-gray-100 text-gray-500 border-gray-300'
+                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                : "bg-gray-100 text-gray-500 border-gray-300"
             }`}
-            title={soundEnabled ? 'Order Sound Alert Enabled' : 'Order Sound Alert Muted'}
+            title={
+              soundEnabled
+                ? "Order Sound Alert Enabled"
+                : "Order Sound Alert Muted"
+            }
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            <span className="hidden sm:inline">{soundEnabled ? 'Chime ON' : 'Chime Muted'}</span>
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4" />
+            ) : (
+              <VolumeX className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline">
+              {soundEnabled ? "Chime ON" : "Chime Muted"}
+            </span>
           </button>
         </div>
       </div>

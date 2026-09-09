@@ -7,6 +7,7 @@ import { getCategoriesApi } from "../../api/categoryApi";
 import { getFoodsApi } from "../../api/foodApi";
 import { createOrderApi, getCustomerOrdersApi } from "../../api/orderApi";
 import { useCart } from "../../hooks/useCart";
+import { useSocket } from "../../hooks/useSocket";
 
 import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -32,6 +33,7 @@ const MenuPage = () => {
   // may receive a new reference during a render and would restart menu loading.
   const invalidTableMessage = t("invalid_table_desc");
   const { currentLang } = useContext(LanguageContext);
+  const { socket, joinOrderRoom, playNotificationSound } = useSocket();
   const {
     cartItems,
     addToCart,
@@ -42,6 +44,7 @@ const MenuPage = () => {
     customerSessionId,
   } = useCart();
 
+  const readyOrderIdsRef = useRef(new Set());
   const [table, setTable] = useState(null);
   const [categories, setCategories] = useState([]);
   const [foods, setFoods] = useState([]);
@@ -50,6 +53,8 @@ const MenuPage = () => {
   const [selectedFood, setSelectedFood] = useState(null);
   const [customerOrderHistory, setCustomerOrderHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [readyToastVisible, setReadyToastVisible] = useState(false);
+  const [readyToastOrder, setReadyToastOrder] = useState(null);
 
   const getCategoryType = (category) => category?.type || "food";
   const foodCategories = categories.filter(
@@ -127,6 +132,9 @@ const MenuPage = () => {
   useEffect(() => {
     if (!customerName || !customerName.trim()) {
       setCustomerOrderHistory([]);
+      setReadyToastVisible(false);
+      setReadyToastOrder(null);
+      readyOrderIdsRef.current = new Set();
       return;
     }
 
@@ -160,6 +168,72 @@ const MenuPage = () => {
 
     loadCustomerHistory();
   }, [customerName, customerSessionId]);
+
+  useEffect(() => {
+    if (!socket || !customerName || !customerName.trim()) return;
+
+    customerOrderHistory.forEach((order) => {
+      if (order?._id) joinOrderRoom(order._id);
+    });
+  }, [socket, customerOrderHistory, customerName, joinOrderRoom]);
+
+  useEffect(() => {
+    if (!socket || !customerName || !customerName.trim()) return;
+
+    const handleStatusUpdate = (updatedOrder) => {
+      if (
+        updatedOrder?.customerName !== customerName ||
+        updatedOrder?.customerSessionId !== customerSessionId ||
+        updatedOrder?.status !== "Ready"
+      ) {
+        return;
+      }
+
+      if (readyOrderIdsRef.current.has(updatedOrder._id)) {
+        return;
+      }
+
+      readyOrderIdsRef.current.add(updatedOrder._id);
+      setReadyToastOrder(updatedOrder);
+      setReadyToastVisible(true);
+      playNotificationSound(
+        import.meta.env.VITE_CUSTOMER_NOTIFICATION_SOUND_URL ||
+          "/sounds/customer-notification.m4a",
+      );
+
+      if ("Notification" in window) {
+        if (Notification.permission === "granted") {
+          new Notification("Your order is ready", {
+            body: `Order ${updatedOrder.orderNumber} is ready for pickup.`,
+            tag: `menu-ready-${updatedOrder._id}`,
+            icon: "/favicon-32x32.png",
+          });
+        } else if (Notification.permission === "default") {
+          Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+              new Notification("Your order is ready", {
+                body: `Order ${updatedOrder.orderNumber} is ready for pickup.`,
+                tag: `menu-ready-${updatedOrder._id}`,
+                icon: "/favicon-32x32.png",
+              });
+            }
+          });
+        }
+      }
+
+      const timer = window.setTimeout(() => {
+        setReadyToastVisible(false);
+        setReadyToastOrder(null);
+      }, 6000);
+
+      return () => window.clearTimeout(timer);
+    };
+
+    socket.on("order_status_updated", handleStatusUpdate);
+    return () => {
+      socket.off("order_status_updated", handleStatusUpdate);
+    };
+  }, [socket, customerName, customerSessionId, playNotificationSound]);
 
   // Filter foods by selected category and search query
   const filteredFoods = foods.filter((food) => {
@@ -230,6 +304,30 @@ const MenuPage = () => {
 
   return (
     <div className="min-h-screen bg-cafe-50 pb-24 max-w-md mx-auto relative shadow-xl border-x border-cafe-200">
+      {readyToastVisible && readyToastOrder && (
+        <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-cafe-200 bg-cafe-900 px-4 py-3 text-sm font-bold text-white shadow-xl ring-4 ring-amber-200/40">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-cafe-900">
+                ✓
+              </span>
+              <span className="tracking-[0.12em] uppercase text-[10px] text-amber-200">
+                Ready
+              </span>
+            </div>
+            <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white">
+              Pickup
+            </span>
+          </div>
+          <p className="mt-2 text-base text-white">
+            {readyToastOrder.orderNumber}
+          </p>
+          <p className="mt-1 text-xs text-cafe-200">
+            Your order is ready for pickup.
+          </p>
+        </div>
+      )}
+
       {/* Top Header */}
       <Header />
 

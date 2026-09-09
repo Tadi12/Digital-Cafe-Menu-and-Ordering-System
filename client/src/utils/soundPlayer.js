@@ -2,6 +2,8 @@
  * Play a custom notification sound if configured, otherwise fall back to a
  * built-in chime generated with the Web Audio API.
  */
+const DEFAULT_SOUND_URL = '/sounds/customer-notification.m4a';
+
 const playDefaultChime = () => {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -37,7 +39,12 @@ const playDefaultChime = () => {
 
 export const playNotificationSound = (customSoundUrl) => {
   try {
-    const soundUrl = customSoundUrl || import.meta.env.VITE_NOTIFICATION_SOUND_URL || '/sounds/admin-notification.wav';
+    const soundUrl =
+      customSoundUrl ||
+      import.meta.env.VITE_CUSTOMER_NOTIFICATION_SOUND_URL ||
+      import.meta.env.VITE_ADMIN_NOTIFICATION_SOUND_URL ||
+      import.meta.env.VITE_NOTIFICATION_SOUND_URL ||
+      DEFAULT_SOUND_URL;
 
     if (soundUrl && soundUrl !== 'false') {
       const audio = new Audio(soundUrl);
