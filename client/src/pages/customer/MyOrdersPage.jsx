@@ -7,7 +7,7 @@ import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
 import { formatCurrency } from "../../utils/currencyFormatter";
-import { ArrowLeft, Phone, User, Calendar } from "lucide-react";
+import { ArrowLeft, Fingerprint, User, Calendar } from "lucide-react";
 import {
   mergeCustomerOrderHistory,
   readCustomerOrderHistory,
@@ -89,8 +89,8 @@ const MyOrdersPage = () => {
             </span>
           </div>
           <div className="flex items-center gap-2 text-cafe-600 text-xs">
-            <Phone className="w-3.5 h-3.5" />
-            <span>Session: {customerSessionId || "not available"}</span>
+            <Fingerprint className="w-3.5 h-3.5" />
+            <span>Session ID: {customerSessionId || "not available"}</span>
           </div>
         </div>
 

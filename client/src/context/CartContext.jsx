@@ -2,6 +2,31 @@ import React, { createContext, useState, useEffect } from "react";
 
 export const CartContext = createContext();
 
+const SESSION_ID_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+
+const getOrCreateCustomerSessionId = () => {
+  try {
+    const storedSessionId = localStorage.getItem("cafe_customer_session_id");
+    const expiry = Number(
+      localStorage.getItem("cafe_customer_session_expires_at") || 0,
+    );
+
+    if (storedSessionId && expiry > Date.now()) {
+      return storedSessionId;
+    }
+
+    const generatedId = `cust_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem("cafe_customer_session_id", generatedId);
+    localStorage.setItem(
+      "cafe_customer_session_expires_at",
+      String(Date.now() + SESSION_ID_TTL_MS),
+    );
+    return generatedId;
+  } catch {
+    return `cust_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+};
+
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState(() => {
     try {
@@ -16,14 +41,9 @@ export const CartProvider = ({ children }) => {
     return localStorage.getItem("cafe_customer_name") || "";
   });
 
-  const [customerSessionId, setCustomerSessionId] = useState(() => {
-    const storedSessionId = sessionStorage.getItem("cafe_customer_session_id");
-    if (storedSessionId) return storedSessionId;
-
-    const generatedId = `cust_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-    sessionStorage.setItem("cafe_customer_session_id", generatedId);
-    return generatedId;
-  });
+  const [customerSessionId, setCustomerSessionId] = useState(() =>
+    getOrCreateCustomerSessionId(),
+  );
 
   useEffect(() => {
     localStorage.setItem("cafe_cart_items", JSON.stringify(cartItems));
@@ -34,7 +54,11 @@ export const CartProvider = ({ children }) => {
   }, [customerName]);
 
   useEffect(() => {
-    sessionStorage.setItem("cafe_customer_session_id", customerSessionId);
+    localStorage.setItem("cafe_customer_session_id", customerSessionId);
+    localStorage.setItem(
+      "cafe_customer_session_expires_at",
+      String(Date.now() + SESSION_ID_TTL_MS),
+    );
   }, [customerSessionId]);
 
   const addToCart = (food, quantity = 1) => {
