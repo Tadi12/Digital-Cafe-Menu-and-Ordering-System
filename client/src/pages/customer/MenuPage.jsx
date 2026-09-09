@@ -45,6 +45,33 @@ const MenuPage = () => {
   } = useCart();
 
   const readyOrderIdsRef = useRef(new Set());
+  const getNotifiedReadyOrders = () => {
+    try {
+      const saved = JSON.parse(
+        window.localStorage.getItem("cafe_customer_ready_notifications") ||
+          "[]",
+      );
+      return Array.isArray(saved) ? saved : [];
+    } catch (err) {
+      return [];
+    }
+  };
+
+  const markReadyOrderNotified = (orderId) => {
+    if (!orderId) return;
+
+    try {
+      const notified = new Set(getNotifiedReadyOrders());
+      notified.add(orderId);
+      window.localStorage.setItem(
+        "cafe_customer_ready_notifications",
+        JSON.stringify([...notified]),
+      );
+    } catch (err) {
+      console.error("[Ready Notification Cache Error]:", err);
+    }
+  };
+
   const [table, setTable] = useState(null);
   const [categories, setCategories] = useState([]);
   const [foods, setFoods] = useState([]);
@@ -189,11 +216,16 @@ const MenuPage = () => {
         return;
       }
 
-      if (readyOrderIdsRef.current.has(updatedOrder._id)) {
+      const notifiedOrders = getNotifiedReadyOrders();
+      if (
+        readyOrderIdsRef.current.has(updatedOrder._id) ||
+        notifiedOrders.includes(updatedOrder._id)
+      ) {
         return;
       }
 
       readyOrderIdsRef.current.add(updatedOrder._id);
+      markReadyOrderNotified(updatedOrder._id);
       setReadyToastOrder(updatedOrder);
       setReadyToastVisible(true);
       playNotificationSound(
@@ -335,7 +367,6 @@ const MenuPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                 
                   <button
                     type="button"
                     onClick={dismissReadyToast}

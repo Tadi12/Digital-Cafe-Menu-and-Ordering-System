@@ -26,6 +26,33 @@ const OrderTrackerPage = () => {
   const { socket, joinOrderRoom, playNotificationSound } = useSocket();
 
   const previousReadyStatusRef = useRef(false);
+  const getNotifiedReadyOrders = () => {
+    try {
+      const saved = JSON.parse(
+        window.localStorage.getItem("cafe_customer_ready_notifications") ||
+          "[]",
+      );
+      return Array.isArray(saved) ? saved : [];
+    } catch (err) {
+      return [];
+    }
+  };
+
+  const markReadyOrderNotified = (orderId) => {
+    if (!orderId) return;
+
+    try {
+      const notified = new Set(getNotifiedReadyOrders());
+      notified.add(orderId);
+      window.localStorage.setItem(
+        "cafe_customer_ready_notifications",
+        JSON.stringify([...notified]),
+      );
+    } catch (err) {
+      console.error("[Ready Notification Cache Error]:", err);
+    }
+  };
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -70,6 +97,10 @@ const OrderTrackerPage = () => {
     }
   }, [socket, orderId, joinOrderRoom]);
 
+  const dismissReadyToast = () => {
+    setReadyToastVisible(false);
+  };
+
   useEffect(() => {
     if (!order) {
       previousReadyStatusRef.current = false;
@@ -78,36 +109,44 @@ const OrderTrackerPage = () => {
     }
 
     const isReadyNow = order.status === "Ready";
+    const notifiedOrders = getNotifiedReadyOrders();
+
     if (isReadyNow && !previousReadyStatusRef.current) {
-      const readyMessage = `Your order ${order.orderNumber} is ready!`;
-      setReadyToastVisible(true);
-      playNotificationSound(
-        import.meta.env.VITE_CUSTOMER_NOTIFICATION_SOUND_URL ||
-          "/sounds/customer-notification.m4a",
-      );
+      if (!notifiedOrders.includes(order._id)) {
+        const readyMessage = `Your order ${order.orderNumber} is ready!`;
+        markReadyOrderNotified(order._id);
+        setReadyToastVisible(true);
+        playNotificationSound(
+          import.meta.env.VITE_CUSTOMER_NOTIFICATION_SOUND_URL ||
+            "/sounds/customer-notification.m4a",
+        );
 
-      if ("Notification" in window) {
-        if (Notification.permission === "granted") {
-          new Notification("Your order is ready", {
-            body: readyMessage,
-            tag: `order-ready-${order._id}`,
-            icon: "/favicon-32x32.png",
-          });
-        } else if (Notification.permission === "default") {
-          Notification.requestPermission().then((permission) => {
-            if (permission === "granted") {
-              new Notification("Your order is ready", {
-                body: readyMessage,
-                tag: `order-ready-${order._id}`,
-                icon: "/favicon-32x32.png",
-              });
-            }
-          });
+        if ("Notification" in window) {
+          if (Notification.permission === "granted") {
+            new Notification("Your order is ready", {
+              body: readyMessage,
+              tag: `order-ready-${order._id}`,
+              icon: "/favicon-32x32.png",
+            });
+          } else if (Notification.permission === "default") {
+            Notification.requestPermission().then((permission) => {
+              if (permission === "granted") {
+                new Notification("Your order is ready", {
+                  body: readyMessage,
+                  tag: `order-ready-${order._id}`,
+                  icon: "/favicon-32x32.png",
+                });
+              }
+            });
+          }
         }
-      }
 
-      const timer = window.setTimeout(() => setReadyToastVisible(false), 6000);
-      return () => window.clearTimeout(timer);
+        const timer = window.setTimeout(
+          () => setReadyToastVisible(false),
+          6000,
+        );
+        return () => window.clearTimeout(timer);
+      }
     }
 
     previousReadyStatusRef.current = isReadyNow;
@@ -192,13 +231,23 @@ const OrderTrackerPage = () => {
                   Ready
                 </span>
               </div>
-              <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white">
-                Pickup
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white">
+                  Pickup
+                </span>
+                <button
+                  type="button"
+                  onClick={dismissReadyToast}
+                  aria-label="Close notification"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-cafe-100 transition hover:bg-white/20"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             <p className="mt-2 text-base text-white">{order.orderNumber}</p>
             <p className="mt-1 text-xs text-cafe-200">
-              Your order is ready for pickup.
+              Your order is ready, we will bring you here.
             </p>
           </div>
         )}
