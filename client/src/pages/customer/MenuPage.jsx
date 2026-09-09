@@ -335,9 +335,7 @@ const MenuPage = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white">
-                    Pickup
-                  </span>
+                 
                   <button
                     type="button"
                     onClick={dismissReadyToast}
