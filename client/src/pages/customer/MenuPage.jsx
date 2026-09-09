@@ -5,7 +5,7 @@ import { LanguageContext } from "../../context/LanguageContext";
 import { getTableByIdApi } from "../../api/tableApi";
 import { getCategoriesApi } from "../../api/categoryApi";
 import { getFoodsApi } from "../../api/foodApi";
-import { createOrderApi } from "../../api/orderApi";
+import { createOrderApi, getCustomerOrdersApi } from "../../api/orderApi";
 import { useCart } from "../../hooks/useCart";
 
 import Header from "../../components/common/Header";
@@ -15,7 +15,13 @@ import CategoryFilter from "../../components/customer/CategoryFilter";
 import FoodCard from "../../components/customer/FoodCard";
 import FoodDetailModal from "../../components/customer/FoodDetailModal";
 import CartDrawer from "../../components/customer/CartDrawer";
+import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
 import { formatCurrency } from "../../utils/currencyFormatter";
+import {
+  mergeCustomerOrderHistory,
+  readCustomerOrderHistory,
+  saveCustomerOrderToHistory,
+} from "../../utils/customerOrderHistory";
 
 import { Search, ShoppingBag, AlertCircle } from "lucide-react";
 
@@ -42,6 +48,8 @@ const MenuPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
+  const [customerOrderHistory, setCustomerOrderHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const getCategoryType = (category) => category?.type || "food";
   const foodCategories = categories.filter(
@@ -116,6 +124,36 @@ const MenuPage = () => {
     };
   }, [tableId, invalidTableMessage]);
 
+  useEffect(() => {
+    if (!customerName || !customerName.trim()) {
+      setCustomerOrderHistory([]);
+      return;
+    }
+
+    const loadCustomerHistory = async () => {
+      setHistoryLoading(true);
+      const cachedOrders = readCustomerOrderHistory(customerName);
+
+      try {
+        const response = await getCustomerOrdersApi(customerName);
+        const serverOrders = response?.success ? response.data || [] : [];
+        const mergedHistory = mergeCustomerOrderHistory(
+          customerName,
+          serverOrders,
+          cachedOrders,
+        );
+        setCustomerOrderHistory(mergedHistory);
+      } catch (err) {
+        console.error("[Customer History Error]:", err);
+        setCustomerOrderHistory(cachedOrders);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    loadCustomerHistory();
+  }, [customerName]);
+
   // Filter foods by selected category and search query
   const filteredFoods = foods.filter((food) => {
     const matchesCategory = selectedCategory
@@ -145,6 +183,7 @@ const MenuPage = () => {
 
       const res = await createOrderApi(orderPayload);
       if (res.success) {
+        saveCustomerOrderToHistory(res.data);
         clearCart();
         setIsCartOpen(false);
         navigate(`/order-confirmation/${res.data._id}`);
@@ -188,6 +227,73 @@ const MenuPage = () => {
 
       {/* Table Badge */}
       <TableHeader table={table} />
+
+      {customerName && (
+        <div className="px-4 pt-4">
+          <div className="bg-white rounded-2xl border border-cafe-200 shadow-sm p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+                  My orders
+                </p>
+                <h3 className="text-sm font-black text-cafe-900">
+                  {customerName}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-cafe-600 bg-cafe-100 px-2 py-1 rounded-full">
+                {customerOrderHistory.length} recent
+              </span>
+            </div>
+
+            {historyLoading ? (
+              <div className="text-xs text-cafe-500">
+                Loading recent orders...
+              </div>
+            ) : customerOrderHistory.length === 0 ? (
+              <div className="text-xs text-cafe-500">
+                No past orders yet. Your new order will appear here.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {customerOrderHistory.slice(0, 4).map((order) => (
+                  <button
+                    key={order._id}
+                    type="button"
+                    onClick={() => navigate(`/order-track/${order._id}`)}
+                    className="w-full text-left rounded-xl border border-cafe-100 bg-cafe-50 p-3 hover:border-cafe-300 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-black text-cafe-900">
+                        {order.orderNumber}
+                      </span>
+                      <OrderStatusBadge
+                        status={order.status}
+                        className="text-[10px]"
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-cafe-600">
+                      <span>
+                        Table #
+                        {order.tableNumberSnapshot ??
+                          order.table?.tableNumber ??
+                          "-"}
+                      </span>
+                      <span>
+                        {new Date(
+                          order.createdAt || Date.now(),
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-[11px] font-bold text-cafe-800">
+                      {formatCurrency(order.totalAmount || 0, currentLang)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Category Pills Filter */}
       <div className="border-b border-cafe-200 bg-cafe-50/80 backdrop-blur">

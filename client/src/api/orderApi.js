@@ -15,6 +15,13 @@ export const getOrderByIdApi = async (id) => {
   return response.data;
 };
 
+export const getCustomerOrdersApi = async (customerName) => {
+  const response = await axiosClient.get('/orders/customer', {
+    params: { customerName },
+  });
+  return response.data;
+};
+
 export const updateOrderStatusApi = async (id, statusData) => {
   const response = await axiosClient.patch(`/orders/${id}/status`, statusData);
   return response.data;

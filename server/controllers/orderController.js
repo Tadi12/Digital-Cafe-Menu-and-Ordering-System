@@ -3,6 +3,8 @@ const Table = require('../models/Table');
 const Food = require('../models/Food');
 const { getIO } = require('../sockets/socketHandler');
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // Helper to generate readable Order Number (e.g. ORD-7824)
 const generateOrderNumber = () => {
   const randomDigits = Math.floor(1000 + Math.random() * 9000);
@@ -177,6 +179,41 @@ const getOrders = async (req, res, next) => {
 };
 
 /**
+ * @desc    Get all orders for a specific customer (Public for order tracking history)
+ * @route   GET /api/orders/customer/:customerName
+ * @access  Public
+ */
+const getCustomerOrders = async (req, res, next) => {
+  try {
+    const customerName = req.params.customerName || req.query.customerName;
+    const normalizedName = String(customerName || '').trim();
+
+    if (!normalizedName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Customer name is required to fetch their order history.',
+      });
+    }
+
+    const query = {
+      customerName: new RegExp(`^${escapeRegex(normalizedName)}$`, 'i'),
+    };
+
+    const orders = await Order.find(query)
+      .populate('table', 'tableNumber tableName')
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Get order details by ID (Customer / Admin tracking)
  * @route   GET /api/orders/:id
  * @access  Public
@@ -314,6 +351,7 @@ const cancelOrder = async (req, res, next) => {
 module.exports = {
   createOrder,
   getOrders,
+  getCustomerOrders,
   getOrderById,
   updateOrderStatus,
   cancelOrder,
