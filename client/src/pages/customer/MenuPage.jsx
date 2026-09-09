@@ -314,9 +314,7 @@ const MenuPage = () => {
       <div className="mx-auto flex w-full max-w-[1600px] justify-center">
         <div
           className="pointer-events-none hidden w-[220px] shrink-0 lg:block"
-          style={decorativePanelStyle(
-            "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80",
-          )}
+          style={decorativePanelStyle("/images/burger-side.svg")}
         />
 
         <div className="relative min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 pb-24 shadow-xl">
@@ -498,9 +496,7 @@ const MenuPage = () => {
 
         <div
           className="pointer-events-none hidden w-[220px] shrink-0 lg:block"
-          style={decorativePanelStyle(
-            "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=900&q=80",
-          )}
+          style={decorativePanelStyle("/images/pizza-side.svg")}
         />
       </div>
     </div>
