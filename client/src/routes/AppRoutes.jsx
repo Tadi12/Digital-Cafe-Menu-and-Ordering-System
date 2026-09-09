@@ -10,6 +10,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import MenuPage from "../pages/customer/MenuPage";
 import OrderConfirmationPage from "../pages/customer/OrderConfirmationPage";
 import OrderTrackerPage from "../pages/customer/OrderTrackerPage";
+import MyOrdersPage from "../pages/customer/MyOrdersPage";
 
 // Admin Pages
 import AdminLoginPage from "../pages/admin/AdminLoginPage";
@@ -36,6 +37,7 @@ const AppRoutes = () => {
           element={<OrderConfirmationPage />}
         />
         <Route path="/order-track/:orderId" element={<OrderTrackerPage />} />
+        <Route path="/my-orders" element={<MyOrdersPage />} />
       </Route>
 
       {/* Admin Auth Route */}

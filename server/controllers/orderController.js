@@ -18,7 +18,7 @@ const generateOrderNumber = () => {
  */
 const createOrder = async (req, res, next) => {
   try {
-    const { customerName, tableId, items } = req.body;
+    const { customerName, customerSessionId, tableId, items } = req.body;
 
     if (!customerName || !customerName.trim()) {
       return res.status(400).json({
@@ -26,6 +26,8 @@ const createOrder = async (req, res, next) => {
         message: 'Customer name is required',
       });
     }
+
+    const normalizedSessionId = typeof customerSessionId === 'string' ? customerSessionId.trim() : '';
 
     if (!tableId) {
       return res.status(400).json({
@@ -113,6 +115,7 @@ const createOrder = async (req, res, next) => {
     const order = await Order.create({
       orderNumber,
       customerName: customerName.trim(),
+      customerSessionId: normalizedSessionId,
       table: table._id,
       tableNumberSnapshot: table.tableNumber,
       items: orderItemsSnapshot,
@@ -186,7 +189,9 @@ const getOrders = async (req, res, next) => {
 const getCustomerOrders = async (req, res, next) => {
   try {
     const customerName = req.params.customerName || req.query.customerName;
+    const customerSessionId = req.query.customerSessionId || '';
     const normalizedName = String(customerName || '').trim();
+    const normalizedSessionId = String(customerSessionId || '').trim();
 
     if (!normalizedName) {
       return res.status(400).json({
@@ -198,6 +203,10 @@ const getCustomerOrders = async (req, res, next) => {
     const query = {
       customerName: new RegExp(`^${escapeRegex(normalizedName)}$`, 'i'),
     };
+
+    if (normalizedSessionId) {
+      query.customerSessionId = new RegExp(`^${escapeRegex(normalizedSessionId)}$`, 'i');
+    }
 
     const orders = await Order.find(query)
       .populate('table', 'tableNumber tableName')

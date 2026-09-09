@@ -40,6 +40,7 @@ const MenuPage = () => {
     totalItemsCount,
     subtotal,
     customerName,
+    customerSessionId,
   } = useCart();
 
   const [table, setTable] = useState(null);
@@ -132,13 +133,20 @@ const MenuPage = () => {
 
     const loadCustomerHistory = async () => {
       setHistoryLoading(true);
-      const cachedOrders = readCustomerOrderHistory(customerName);
+      const cachedOrders = readCustomerOrderHistory(
+        customerName,
+        customerSessionId,
+      );
 
       try {
-        const response = await getCustomerOrdersApi(customerName);
+        const response = await getCustomerOrdersApi({
+          customerName,
+          customerSessionId,
+        });
         const serverOrders = response?.success ? response.data || [] : [];
         const mergedHistory = mergeCustomerOrderHistory(
           customerName,
+          customerSessionId,
           serverOrders,
           cachedOrders,
         );
@@ -152,7 +160,7 @@ const MenuPage = () => {
     };
 
     loadCustomerHistory();
-  }, [customerName]);
+  }, [customerName, customerSessionId]);
 
   // Filter foods by selected category and search query
   const filteredFoods = foods.filter((food) => {
@@ -174,6 +182,7 @@ const MenuPage = () => {
     try {
       const orderPayload = {
         customerName,
+        customerSessionId,
         tableId: table._id,
         items: cartItems.map((item) => ({
           foodId: item._id,
@@ -240,9 +249,13 @@ const MenuPage = () => {
                   {customerName}
                 </h3>
               </div>
-              <span className="text-[10px] font-bold text-cafe-600 bg-cafe-100 px-2 py-1 rounded-full">
-                {customerOrderHistory.length} recent
-              </span>
+              <button
+                type="button"
+                onClick={() => navigate("/my-orders")}
+                className="text-[10px] font-bold text-cafe-600 bg-cafe-100 px-2 py-1 rounded-full hover:bg-cafe-200 transition-colors"
+              >
+                View all
+              </button>
             </div>
 
             {historyLoading ? (

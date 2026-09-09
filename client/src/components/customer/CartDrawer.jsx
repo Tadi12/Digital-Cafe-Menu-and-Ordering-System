@@ -1,9 +1,18 @@
-import React, { useState, useContext } from 'react';
-import { useTranslation } from 'react-i18next';
-import { LanguageContext } from '../../context/LanguageContext';
-import { useCart } from '../../hooks/useCart';
-import { formatCurrency } from '../../utils/currencyFormatter';
-import { ShoppingBag, X, Plus, Minus, Trash2, Banknote, User, ChevronRight } from 'lucide-react';
+import React, { useState, useContext } from "react";
+import { useTranslation } from "react-i18next";
+import { LanguageContext } from "../../context/LanguageContext";
+import { useCart } from "../../hooks/useCart";
+import { formatCurrency } from "../../utils/currencyFormatter";
+import {
+  ShoppingBag,
+  X,
+  Plus,
+  Minus,
+  Trash2,
+  Banknote,
+  User,
+  ChevronRight,
+} from "lucide-react";
 
 const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
   const { t } = useTranslation();
@@ -12,23 +21,24 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
     cartItems,
     customerName,
     setCustomerName,
+    customerSessionId,
     updateQuantity,
     removeFromCart,
     totalItemsCount,
     subtotal,
   } = useCart();
 
-  const [nameError, setNameError] = useState('');
+  const [nameError, setNameError] = useState("");
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!customerName || !customerName.trim()) {
-      setNameError(t('customer_name_placeholder'));
+      setNameError(t("customer_name_placeholder"));
       return;
     }
-    setNameError('');
+    setNameError("");
     onPlaceOrder();
   };
 
@@ -42,7 +52,9 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
         <div className="px-5 py-4 bg-cafe-900 text-white flex items-center justify-between shadow">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-gold-500" />
-            <h2 className="text-base font-bold tracking-tight">{t('cart_title')}</h2>
+            <h2 className="text-base font-bold tracking-tight">
+              {t("cart_title")}
+            </h2>
             <span className="bg-cafe-700 text-cafe-100 text-xs px-2 py-0.5 rounded-full font-bold">
               {totalItemsCount}
             </span>
@@ -60,15 +72,19 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center text-cafe-500">
               <ShoppingBag className="w-12 h-12 stroke-[1.5] text-cafe-300 mb-2" />
-              <p className="font-semibold text-sm">{t('cart_empty')}</p>
+              <p className="font-semibold text-sm">{t("cart_empty")}</p>
             </div>
           ) : (
             <>
               {/* Table Info Badge */}
               {table && (
                 <div className="bg-cafe-50 border border-cafe-200 rounded-xl p-3 flex items-center justify-between text-xs font-semibold text-cafe-800">
-                  <span>{t('welcome_table', { number: table.tableNumber })}</span>
-                  <span className="text-cafe-600 font-normal">Auto-Identified</span>
+                  <span>
+                    {t("welcome_table", { number: table.tableNumber })}
+                  </span>
+                  <span className="text-cafe-600 font-normal">
+                    Auto-Identified
+                  </span>
                 </div>
               )}
 
@@ -92,7 +108,10 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                           {itemName}
                         </h4>
                         <p className="text-xs font-extrabold text-cafe-700 mt-0.5">
-                          {formatCurrency(item.price * item.quantity, currentLang)}
+                          {formatCurrency(
+                            item.price * item.quantity,
+                            currentLang,
+                          )}
                         </p>
                       </div>
 
@@ -131,34 +150,41 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
               <div className="pt-2">
                 <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-cafe-600" />
-                  {t('customer_name')} *
+                  {t("customer_name")} *
                 </label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => {
                     setCustomerName(e.target.value);
-                    if (e.target.value.trim()) setNameError('');
+                    if (e.target.value.trim()) setNameError("");
                   }}
-                  placeholder={t('customer_name_placeholder')}
+                  placeholder={t("customer_name_placeholder")}
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none transition-colors bg-white ${
                     nameError
-                      ? 'border-red-500 text-red-900 ring-1 ring-red-500'
-                      : 'border-cafe-200 focus:border-cafe-600 focus:ring-1 focus:ring-cafe-600 text-cafe-900'
+                      ? "border-red-500 text-red-900 ring-1 ring-red-500"
+                      : "border-cafe-200 focus:border-cafe-600 focus:ring-1 focus:ring-cafe-600 text-cafe-900"
                   }`}
                   required
                 />
                 {nameError && (
-                  <p className="text-xs text-red-600 font-medium mt-1">{nameError}</p>
+                  <p className="text-xs text-red-600 font-medium mt-1">
+                    {nameError}
+                  </p>
                 )}
+                <p className="text-[10px] text-cafe-500 mt-1.5">
+                  Your session keeps this customer history secure and private.
+                </p>
               </div>
 
               {/* Payment Method Notice */}
               <div className="bg-cafe-50 border border-cafe-200 rounded-xl p-3 flex items-center gap-3 text-xs">
                 <Banknote className="w-5 h-5 text-emerald-600 shrink-0" />
                 <div>
-                  <span className="font-bold text-cafe-900 block">{t('payment_method')}</span>
-                  <span className="text-cafe-600">{t('cash_on_table')}</span>
+                  <span className="font-bold text-cafe-900 block">
+                    {t("payment_method")}
+                  </span>
+                  <span className="text-cafe-600">{t("cash_on_table")}</span>
                 </div>
               </div>
             </>
@@ -169,14 +195,16 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
         {cartItems.length > 0 && (
           <div className="p-5 border-t border-cafe-100 bg-cafe-50 space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold text-cafe-700">{t('subtotal')}</span>
+              <span className="font-semibold text-cafe-700">
+                {t("subtotal")}
+              </span>
               <span className="font-bold text-cafe-900">
                 {formatCurrency(subtotal, currentLang)}
               </span>
             </div>
 
             <div className="flex items-center justify-between text-base border-t border-cafe-200 pt-2">
-              <span className="font-extrabold text-cafe-900">{t('total')}</span>
+              <span className="font-extrabold text-cafe-900">{t("total")}</span>
               <span className="font-black text-lg text-cafe-900">
                 {formatCurrency(subtotal, currentLang)}
               </span>
@@ -191,7 +219,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>{t('place_order')}</span>
+                  <span>{t("place_order")}</span>
                   <ChevronRight className="w-4 h-4" />
                 </>
               )}

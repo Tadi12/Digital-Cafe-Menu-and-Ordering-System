@@ -15,9 +15,9 @@ export const getOrderByIdApi = async (id) => {
   return response.data;
 };
 
-export const getCustomerOrdersApi = async (customerName) => {
+export const getCustomerOrdersApi = async ({ customerName, customerSessionId } = {}) => {
   const response = await axiosClient.get('/orders/customer', {
-    params: { customerName },
+    params: { customerName, customerSessionId },
   });
   return response.data;
 };

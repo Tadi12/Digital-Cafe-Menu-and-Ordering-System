@@ -35,6 +35,11 @@ const orderSchema = new mongoose.Schema(
       required: [true, 'Customer name is required'],
       trim: true,
     },
+    customerSessionId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     table: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Table',

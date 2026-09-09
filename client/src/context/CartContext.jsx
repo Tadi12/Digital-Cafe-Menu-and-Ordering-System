@@ -1,11 +1,11 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from "react";
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState(() => {
     try {
-      const savedCart = localStorage.getItem('cafe_cart_items');
+      const savedCart = localStorage.getItem("cafe_cart_items");
       return savedCart ? JSON.parse(savedCart) : [];
     } catch {
       return [];
@@ -13,20 +13,35 @@ export const CartProvider = ({ children }) => {
   });
 
   const [customerName, setCustomerName] = useState(() => {
-    return localStorage.getItem('cafe_customer_name') || '';
+    return localStorage.getItem("cafe_customer_name") || "";
+  });
+
+  const [customerSessionId, setCustomerSessionId] = useState(() => {
+    const storedSessionId = sessionStorage.getItem("cafe_customer_session_id");
+    if (storedSessionId) return storedSessionId;
+
+    const generatedId = `cust_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    sessionStorage.setItem("cafe_customer_session_id", generatedId);
+    return generatedId;
   });
 
   useEffect(() => {
-    localStorage.setItem('cafe_cart_items', JSON.stringify(cartItems));
+    localStorage.setItem("cafe_cart_items", JSON.stringify(cartItems));
   }, [cartItems]);
 
   useEffect(() => {
-    localStorage.setItem('cafe_customer_name', customerName);
+    localStorage.setItem("cafe_customer_name", customerName);
   }, [customerName]);
+
+  useEffect(() => {
+    sessionStorage.setItem("cafe_customer_session_id", customerSessionId);
+  }, [customerSessionId]);
 
   const addToCart = (food, quantity = 1) => {
     setCartItems((prevItems) => {
-      const existingIndex = prevItems.findIndex((item) => item._id === food._id);
+      const existingIndex = prevItems.findIndex(
+        (item) => item._id === food._id,
+      );
       if (existingIndex > -1) {
         const updated = [...prevItems];
         updated[existingIndex].quantity += quantity;
@@ -51,18 +66,23 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (foodId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item._id !== foodId));
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item._id !== foodId),
+    );
   };
 
   const clearCart = () => {
     setCartItems([]);
   };
 
-  const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const totalItemsCount = cartItems.reduce(
+    (acc, item) => acc + item.quantity,
+    0,
+  );
 
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
-    0
+    0,
   );
 
   return (
@@ -71,6 +91,8 @@ export const CartProvider = ({ children }) => {
         cartItems,
         customerName,
         setCustomerName,
+        customerSessionId,
+        setCustomerSessionId,
         addToCart,
         updateQuantity,
         removeFromCart,
