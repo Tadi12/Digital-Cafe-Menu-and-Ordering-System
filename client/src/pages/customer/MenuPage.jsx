@@ -309,6 +309,11 @@ const MenuPage = () => {
     backgroundRepeat: "no-repeat",
   });
 
+  const dismissReadyToast = () => {
+    setReadyToastVisible(false);
+    setReadyToastOrder(null);
+  };
+
   return (
     <div className="min-h-screen bg-cafe-50 lg:bg-[#f3eee6]">
       <div className="mx-auto flex w-full max-w-[1600px] justify-center">
@@ -329,15 +334,25 @@ const MenuPage = () => {
                     Ready
                   </span>
                 </div>
-                <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white">
-                  Pickup
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white">
+                    Pickup
+                  </span>
+                  <button
+                    type="button"
+                    onClick={dismissReadyToast}
+                    aria-label="Close notification"
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-cafe-100 transition hover:bg-white/20"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
               <p className="mt-2 text-base text-white">
                 {readyToastOrder.orderNumber}
               </p>
               <p className="mt-1 text-xs text-cafe-200">
-                Your order is ready for pickup.
+                Your order is ready, we will bring you here.
               </p>
             </div>
           )}
