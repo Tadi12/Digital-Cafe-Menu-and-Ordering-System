@@ -14,18 +14,8 @@ export const updateAdminProfileApi = async (data) => {
   return response.data;
 };
 
-export const forgotPasswordApi = async (email) => {
-  const response = await axiosClient.post('/auth/forgot-password', { email });
-  return response.data;
-};
-
 export const forgotPasswordOtpApi = async (email) => {
   const response = await axiosClient.post('/auth/forgot-otp', { email });
-  return response.data;
-};
-
-export const resetPasswordApi = async (token, password) => {
-  const response = await axiosClient.post(`/auth/reset-password/${token}`, { password });
   return response.data;
 };
 

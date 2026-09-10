@@ -1,62 +1,31 @@
-const nodemailer = require('nodemailer');
+const MAILERSEND_EMAIL_ENDPOINT = 'https://api.mailersend.com/v1/email';
 
-const sendWithResend = async ({ to, subject, text, html }) => {
-  const { RESEND_API_KEY, RESEND_FROM_EMAIL, EMAIL_FROM } = process.env;
+const sendEmail = async ({ to, subject, text, html }) => {
+  const { MAILERSEND_API_KEY, MAILERSEND_FROM_EMAIL, MAILERSEND_FROM_NAME } = process.env;
 
-  if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) {
-    throw new Error('Resend is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL in server/.env.');
+  if (!MAILERSEND_API_KEY || !MAILERSEND_FROM_EMAIL) {
+    throw new Error('MailerSend is not configured. Set MAILERSEND_API_KEY and MAILERSEND_FROM_EMAIL in server/.env.');
   }
 
-  const response = await fetch('https://api.resend.com/emails', {
+  const response = await fetch(MAILERSEND_EMAIL_ENDPOINT, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { Authorization: `Bearer ${MAILERSEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: RESEND_FROM_EMAIL,
-      to: [to],
+      from: { email: MAILERSEND_FROM_EMAIL, ...(MAILERSEND_FROM_NAME ? { name: MAILERSEND_FROM_NAME } : {}) },
+      to: [{ email: to }],
       subject,
       text,
       html,
     }),
   });
 
-  const payload = await response.json().catch(() => ({}));
-
+  // MailerSend queues a successful message with HTTP 202 and supplies x-message-id.
   if (!response.ok) {
-    const message = payload?.message || 'Failed to send email via Resend.';
-    throw new Error(message);
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload?.message || 'MailerSend could not queue the email.');
   }
 
-  return payload;
-};
-
-const sendWithSmtp = async ({ to, subject, text, html }) => {
-  const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, EMAIL_FROM } = process.env;
-
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !EMAIL_FROM) {
-    throw new Error('Email service is not configured. Add SMTP settings or Resend credentials to server/.env.');
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: SMTP_SECURE === 'true',
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
-
-  await transporter.sendMail({ from: EMAIL_FROM, to, subject, text, html });
-};
-
-const sendEmail = async ({ to, subject, text, html }) => {
-  const provider = (process.env.EMAIL_PROVIDER || 'smtp').toLowerCase();
-
-  if (provider === 'resend') {
-    return sendWithResend({ to, subject, text, html });
-  }
-
-  return sendWithSmtp({ to, subject, text, html });
+  return { messageId: response.headers.get('x-message-id') };
 };
 
 module.exports = sendEmail;

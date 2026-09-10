@@ -20,8 +20,6 @@ const adminSchema = new mongoose.Schema(
       required: [true, 'Password is required'],
       minlength: 6,
     },
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
     resetOtp: String,
     resetOtpExpires: Date,
     role: {

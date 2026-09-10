@@ -15,7 +15,6 @@ import MyOrdersPage from "../pages/customer/MyOrdersPage";
 // Admin Pages
 import AdminLoginPage from "../pages/admin/AdminLoginPage";
 import ForgotPasswordPage from "../pages/admin/ForgotPasswordPage";
-import ResetPasswordPage from "../pages/admin/ResetPasswordPage";
 import DashboardPage from "../pages/admin/DashboardPage";
 import FoodManagerPage from "../pages/admin/FoodManagerPage";
 import DrinkManagerPage from "../pages/admin/DrinkManagerPage";
@@ -43,10 +42,6 @@ const AppRoutes = () => {
       {/* Admin Auth Route */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
-      <Route
-        path="/admin/reset-password/:token"
-        element={<ResetPasswordPage />}
-      />
 
       {/* Protected Admin Routes */}
       <Route element={<ProtectedRoute />}>
