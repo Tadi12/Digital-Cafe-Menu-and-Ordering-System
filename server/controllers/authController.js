@@ -4,7 +4,12 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
 const canSendEmail = () => {
-  return Boolean(process.env.MAILERSEND_API_KEY && process.env.MAILERSEND_FROM_EMAIL);
+  return Boolean(
+    process.env.SMTP_HOST &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS &&
+    process.env.SMTP_FROM_EMAIL
+  );
 };
 
 /**
@@ -114,7 +119,7 @@ const forgotPasswordWithOtp = async (req, res, next) => {
 
     if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
     if (!canSendEmail()) {
-      console.error('[Password Reset] MailerSend is not configured.');
+      console.error('[Password Reset] SMTP is not configured.');
       return res.status(503).json({
         success: false,
         message: 'Password-reset email is not configured. Please contact the administrator.',
@@ -142,7 +147,7 @@ const forgotPasswordWithOtp = async (req, res, next) => {
       admin.resetOtp = undefined;
       admin.resetOtpExpires = undefined;
       await admin.save({ validateBeforeSave: false });
-      console.error('[Password Reset] MailerSend delivery failed:', emailError.message);
+      console.error('[Password Reset] SMTP delivery failed:', emailError.message);
       return res.status(503).json({
         success: false,
         message: 'We could not send the reset email. Please try again shortly.',
