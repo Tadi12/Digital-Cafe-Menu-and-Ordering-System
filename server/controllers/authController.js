@@ -115,7 +115,10 @@ const forgotPasswordWithOtp = async (req, res, next) => {
     if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
     if (!canSendEmail()) {
       console.error('[Password Reset] MailerSend is not configured.');
-      return res.json(genericResponse);
+      return res.status(503).json({
+        success: false,
+        message: 'Password-reset email is not configured. Please contact the administrator.',
+      });
     }
 
     const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
@@ -140,7 +143,10 @@ const forgotPasswordWithOtp = async (req, res, next) => {
       admin.resetOtpExpires = undefined;
       await admin.save({ validateBeforeSave: false });
       console.error('[Password Reset] MailerSend delivery failed:', emailError.message);
-      return res.json(genericResponse);
+      return res.status(503).json({
+        success: false,
+        message: 'We could not send the reset email. Please try again shortly.',
+      });
     }
 
     return res.json(genericResponse);
