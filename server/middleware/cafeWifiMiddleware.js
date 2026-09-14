@@ -70,6 +70,12 @@ const requireCafeWifi = (req, res, next) => {
 
   if (clientIp && clientIp === approvedIp) return next();
 
+  // Keep the real value in server logs only. This makes deployment/network
+  // mismatches diagnosable without returning either IP to the browser.
+  console.warn(
+    `[Cafe Wi-Fi] Denied ${req.method} ${req.originalUrl || req.url} from ${clientIp || 'unknown IP'}`,
+  );
+
   return res.status(403).json({
     success: false,
     code: 'CAFE_WIFI_REQUIRED',
