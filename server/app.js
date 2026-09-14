@@ -13,13 +13,17 @@ const { requireCafeWifi } = require('./middleware/cafeWifiMiddleware');
 
 const app = express();
 
-// Render forwards the originating client in X-Forwarded-For. In production,
-// trust only its immediately connected proxy. Locally, leave proxy headers
-// untrusted unless TRUST_PROXY is explicitly configured.
-const trustProxy = process.env.TRUST_PROXY;
-app.set('trust proxy', trustProxy === undefined
-  ? process.env.NODE_ENV === 'production'
-  : trustProxy === 'true' ? 1 : Number(trustProxy) || false);
+// Render forwards the originating client through its internal proxy chain. Its
+// service is not directly reachable, so trusting that chain lets req.ip resolve
+// to the left-most client address rather than a private 10.x Render hop.
+// Locally, proxy headers remain untrusted unless explicitly enabled.
+const trustProxy = String(process.env.TRUST_PROXY || '').toLowerCase();
+app.set(
+  'trust proxy',
+  trustProxy
+    ? ['true', '1'].includes(trustProxy) || Number(trustProxy) || false
+    : process.env.NODE_ENV === 'production',
+);
 
 app.use(cors({ origin: true, credentials: true }));
 
