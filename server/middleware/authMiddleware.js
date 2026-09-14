@@ -29,4 +29,25 @@ const protectAdmin = async (req, res, next) => {
   }
 };
 
-module.exports = { protectAdmin };
+// Shared read endpoints are used by both customers and the admin UI. This
+// silently attaches a valid admin user when present so the Wi-Fi middleware can
+// leave admin management access unaffected; protected admin routes still use
+// protectAdmin and continue to reject missing/invalid tokens.
+const attachAdminIfAuthenticated = async (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization || !authorization.startsWith('Bearer ')) return next();
+
+  try {
+    const token = authorization.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const admin = await Admin.findById(decoded.id).select('-password');
+    if (admin) req.user = admin;
+  } catch (error) {
+    // This route can also be a customer route. Do not turn a bad admin token
+    // into an authorization bypass; the Wi-Fi middleware will still run.
+  }
+
+  return next();
+};
+
+module.exports = { protectAdmin, attachAdminIfAuthenticated };

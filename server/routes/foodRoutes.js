@@ -8,17 +8,18 @@ const {
   toggleFoodAvailability,
   deleteFood,
 } = require('../controllers/foodController');
-const { protectAdmin } = require('../middleware/authMiddleware');
+const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
+const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 router
   .route('/')
-  .get(getFoods)
+  .get(attachAdminIfAuthenticated, requireCafeWifi, getFoods)
   .post(protectAdmin, upload.single('image'), createFood);
 
 router
   .route('/:id')
-  .get(getFoodById)
+  .get(attachAdminIfAuthenticated, requireCafeWifi, getFoodById)
   .put(protectAdmin, upload.single('image'), updateFood)
   .delete(protectAdmin, deleteFood);
 

@@ -6,12 +6,13 @@ const {
   updateCategory,
   deleteCategory,
 } = require('../controllers/categoryController');
-const { protectAdmin } = require('../middleware/authMiddleware');
+const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
+const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 router
   .route('/')
-  .get(getCategories)
+  .get(attachAdminIfAuthenticated, requireCafeWifi, getCategories)
   .post(protectAdmin, upload.single('image'), createCategory);
 
 router

@@ -8,7 +8,8 @@ const {
   deleteTable,
   getTableQR,
 } = require('../controllers/tableController');
-const { protectAdmin } = require('../middleware/authMiddleware');
+const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
+const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
 
 router
   .route('/')
@@ -17,7 +18,7 @@ router
 
 router
   .route('/:id')
-  .get(getTableById)
+  .get(attachAdminIfAuthenticated, requireCafeWifi, getTableById)
   .put(protectAdmin, updateTable)
   .delete(protectAdmin, deleteTable);
 

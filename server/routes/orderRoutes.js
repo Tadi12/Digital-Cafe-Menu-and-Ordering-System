@@ -8,17 +8,18 @@ const {
   updateOrderStatus,
   cancelOrder,
 } = require('../controllers/orderController');
-const { protectAdmin } = require('../middleware/authMiddleware');
+const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
+const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
 
 router
   .route('/')
-  .post(createOrder)
+  .post(requireCafeWifi, createOrder)
   .get(protectAdmin, getOrders);
 
-router.get('/customer', getCustomerOrders);
-router.get('/customer/:customerName', getCustomerOrders);
-router.get('/:id', getOrderById);
+router.get('/customer', requireCafeWifi, getCustomerOrders);
+router.get('/customer/:customerName', requireCafeWifi, getCustomerOrders);
+router.get('/:id', attachAdminIfAuthenticated, requireCafeWifi, getOrderById);
 router.patch('/:id/status', protectAdmin, updateOrderStatus);
-router.patch('/:id/cancel', cancelOrder);
+router.patch('/:id/cancel', requireCafeWifi, cancelOrder);
 
 module.exports = router;
