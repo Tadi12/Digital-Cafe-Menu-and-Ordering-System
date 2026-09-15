@@ -14,12 +14,14 @@ export const updateAdminProfileApi = async (data) => {
   return response.data;
 };
 
-export const forgotPasswordOtpApi = async (email) => {
-  const response = await axiosClient.post('/auth/forgot-otp', { email });
+export const forgotPasswordApi = async (email) => {
+  const response = await axiosClient.post('/auth/forgot-password', {
+    email: String(email || '').trim(),
+  });
   return response.data;
 };
 
-export const resetPasswordWithOtpApi = async (email, otp, password) => {
-  const response = await axiosClient.post('/auth/reset-with-otp', { email, otp, password });
+export const resetPasswordApi = async (token, password) => {
+  const response = await axiosClient.post('/auth/reset-password', { token, password });
   return response.data;
 };

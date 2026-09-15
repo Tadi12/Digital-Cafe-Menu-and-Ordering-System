@@ -18,10 +18,10 @@ const adminSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: 6,
+      minlength: 8,
     },
-    resetOtp: String,
-    resetOtpExpires: Date,
+    resetTokenHash: String,
+    resetTokenExpires: Date,
     role: {
       type: String,
       default: 'admin',

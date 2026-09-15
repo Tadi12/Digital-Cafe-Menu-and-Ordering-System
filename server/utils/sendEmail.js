@@ -1,29 +1,30 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async ({ to, subject, text, html }) => {
-  const {
-    SMTP_HOST,
-    SMTP_PORT,
-    SMTP_SECURE,
-    SMTP_USER,
-    SMTP_PASS,
-    SMTP_FROM_EMAIL,
-    SMTP_FROM_NAME,
-  } = process.env;
+  const BREVO_SMTP_USER = process.env.BREVO_SMTP_USER?.trim();
+  const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY?.trim();
+  const SENDER_EMAIL = process.env.SENDER_EMAIL?.trim();
 
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !SMTP_FROM_EMAIL) {
-    throw new Error('SMTP is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS, and SMTP_FROM_EMAIL in server/.env.');
+  if (!BREVO_SMTP_USER || !BREVO_SMTP_KEY || !SENDER_EMAIL) {
+    throw new Error('SMTP is not configured. Set BREVO_SMTP_USER, BREVO_SMTP_KEY, and SENDER_EMAIL in server/.env.');
   }
 
   const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT) || 587,
-    secure: SMTP_SECURE === 'true',
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false, // TLS via STARTTLS
+    requireTLS: true,
+    connectionTimeout: 15000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    auth: {
+      user: BREVO_SMTP_USER,
+      pass: BREVO_SMTP_KEY,
+    },
   });
 
   const result = await transporter.sendMail({
-    from: SMTP_FROM_NAME ? { name: SMTP_FROM_NAME, address: SMTP_FROM_EMAIL } : SMTP_FROM_EMAIL,
+    from: { name: 'Hable Cafe', address: SENDER_EMAIL },
     to,
     subject,
     text,

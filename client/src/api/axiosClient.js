@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://digital-cafe-menu-and-ordering-system.onrender.com/api';
+const API_BASE_URL = import.meta.env.DEV
+  ? '/api'
+  : import.meta.env.VITE_API_BASE_URL ||
+    'https://digital-cafe-menu-and-ordering-system.onrender.com/api';
 
 const axiosClient = axios.create({
   baseURL: API_BASE_URL,
@@ -16,8 +19,18 @@ axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config, response } = error;
+    if (!config) {
+      return Promise.reject(error);
+    }
     // Retry only once for network errors or server errors (5xx)
-    if (!config.__retry && (!response || response.status >= 500)) {
+    const url = `${config.baseURL || ''}${config.url || ''}`;
+    const isPasswordReset =
+      url.includes('/auth/forgot-password') || url.includes('/auth/reset-password');
+    if (
+      !isPasswordReset &&
+      !config.__retry &&
+      (!response || response.status >= 500)
+    ) {
       config.__retry = true;
       console.warn('Retrying request after timeout/5xx...');
       return axiosClient(config);

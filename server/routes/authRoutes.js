@@ -4,14 +4,15 @@ const {
   loginAdmin,
   getAdminProfile,
   updateAdminProfile,
-  forgotPasswordWithOtp,
-  resetPasswordWithOtp,
+  forgotPassword,
+  resetPassword,
 } = require('../controllers/authController');
 const { protectAdmin } = require('../middleware/authMiddleware');
+const resetRateLimiter = require('../middleware/resetRateLimiter');
 
 router.post('/login', loginAdmin);
-router.post('/forgot-otp', forgotPasswordWithOtp);
-router.post('/reset-with-otp', resetPasswordWithOtp);
+router.post('/forgot-password', resetRateLimiter, forgotPassword);
+router.post('/reset-password', resetPassword);
 router.get('/me', protectAdmin, getAdminProfile);
 
 router.put('/me', protectAdmin, updateAdminProfile);

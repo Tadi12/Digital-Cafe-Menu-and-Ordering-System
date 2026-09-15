@@ -3,15 +3,6 @@ const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
-const canSendEmail = () => {
-  return Boolean(
-    process.env.SMTP_HOST &&
-    process.env.SMTP_USER &&
-    process.env.SMTP_PASS &&
-    process.env.SMTP_FROM_EMAIL
-  );
-};
-
 /**
  * @desc    Auth Admin & get JWT token
  * @route   POST /api/auth/login
@@ -109,45 +100,67 @@ const updateAdminProfile = async (req, res, next) => {
   }
 };
 
-const forgotPasswordWithOtp = async (req, res, next) => {
+const getClientBaseUrl = () => {
+  const raw = (process.env.CLIENT_URL || 'http://localhost:5173').trim();
+  return raw.replace(/\/+$/, '');
+};
+
+const isDevelopment = () =>
+  String(process.env.NODE_ENV || 'development').toLowerCase() !== 'production';
+
+const forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const email = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
     const genericResponse = {
       success: true,
-      message: 'If that email address is registered, a password reset code has been sent.',
+      message: 'If that email address is registered, a password reset link has been sent.',
     };
 
     if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
-    if (!canSendEmail()) {
-      console.error('[Password Reset] SMTP is not configured.');
-      return res.status(503).json({
-        success: false,
-        message: 'Password-reset email is not configured. Please contact the administrator.',
-      });
-    }
 
-    const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+    const admin = await Admin.findOne({ email });
     if (!admin) return res.json(genericResponse);
 
-    const otp = crypto.randomInt(100000, 1000000).toString();
-    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    admin.resetOtp = otpHash;
-    admin.resetOtpExpires = Date.now() + 15 * 60 * 1000;
+    admin.resetTokenHash = resetTokenHash;
+    admin.resetTokenExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 mins
     await admin.save({ validateBeforeSave: false });
+
+    const resetUrl = `${getClientBaseUrl()}/admin/reset-password/${resetToken}`;
 
     try {
       await sendEmail({
         to: admin.email,
-        subject: 'Your Hable Cafe admin password reset code',
-        text: `Your password reset code is ${otp}. It expires in 15 minutes. Do not share this code with anyone.`,
-        html: `<p>Your password reset code is <strong>${otp}</strong>.</p><p>It expires in 15 minutes.</p><p>Do not share this code with anyone.</p>`,
+        subject: 'Reset your Hable Cafe Admin Password',
+        text: `You requested a password reset. Click the link to reset your password: ${resetUrl} \n\nThis link expires in 30 minutes. If you didn't request this, please ignore this email.`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Password Reset Request</h2>
+            <p>You requested a password reset for your Hable Cafe admin account.</p>
+            <p>Click the button below to reset your password:</p>
+            <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #3D2314; color: #fff; text-decoration: none; border-radius: 5px; margin: 20px 0;">Reset Password</a>
+            <p>This link expires in 30 minutes.</p>
+            <p style="color: #666; font-size: 12px;">If you didn't request a password reset, you can safely ignore this email.</p>
+          </div>
+        `,
       });
     } catch (emailError) {
-      admin.resetOtp = undefined;
-      admin.resetOtpExpires = undefined;
-      await admin.save({ validateBeforeSave: false });
       console.error('[Password Reset] SMTP delivery failed:', emailError.message);
+
+      if (isDevelopment()) {
+        console.warn('[Password Reset] Development fallback link (valid for 30 minutes):', resetUrl);
+        return res.json({
+          success: true,
+          message:
+            'Email delivery is unavailable. Use the reset link printed in the server console (valid for 30 minutes).',
+        });
+      }
+
+      admin.resetTokenHash = undefined;
+      admin.resetTokenExpires = undefined;
+      await admin.save({ validateBeforeSave: false });
       return res.status(503).json({
         success: false,
         message: 'We could not send the reset email. Please try again shortly.',
@@ -160,35 +173,33 @@ const forgotPasswordWithOtp = async (req, res, next) => {
   }
 };
 
-const resetPasswordWithOtp = async (req, res, next) => {
+const resetPassword = async (req, res, next) => {
   try {
-    const { email, otp, password } = req.body;
+    const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
-    if (!email || !otp || !password) {
-      return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
+    if (!token || !password) {
+      return res.status(400).json({ success: false, message: 'Token and new password are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
+    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    
     const admin = await Admin.findOne({
-      email: email.toLowerCase().trim(),
-      resetOtpExpires: { $gt: Date.now() },
+      resetTokenHash,
+      resetTokenExpires: { $gt: Date.now() },
     });
 
     if (!admin) {
-      return res.status(400).json({ success: false, message: 'This OTP is invalid or has expired' });
-    }
-
-    const otpHash = crypto.createHash('sha256').update(String(otp).trim()).digest('hex');
-    if (admin.resetOtp !== otpHash) {
-      return res.status(400).json({ success: false, message: 'This OTP is invalid or has expired' });
+      return res.status(400).json({ success: false, message: 'This password reset link is invalid or has expired' });
     }
 
     admin.password = password;
-    admin.resetOtp = undefined;
-    admin.resetOtpExpires = undefined;
+    admin.resetTokenHash = undefined;
+    admin.resetTokenExpires = undefined;
     await admin.save();
 
     return res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
@@ -201,6 +212,6 @@ module.exports = {
   loginAdmin,
   getAdminProfile,
   updateAdminProfile,
-  forgotPasswordWithOtp,
-  resetPasswordWithOtp,
+  forgotPassword,
+  resetPassword,
 };
