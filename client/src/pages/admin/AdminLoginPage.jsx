@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
-import { Coffee, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Coffee, Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ const AdminLoginPage = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -69,7 +70,7 @@ const AdminLoginPage = () => {
                 autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@cafe.com"
+                placeholder="enter your email"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none font-medium bg-white text-cafe-900"
                 required
               />
@@ -83,14 +84,24 @@ const AdminLoginPage = () => {
             <div className="relative">
               <Lock className="w-4 h-4 text-cafe-400 absolute left-3.5 top-3" />
               <input
-                type="password"
-                autoComplete="new-password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none font-medium bg-white text-cafe-900"
+                className="w-full pl-10 pr-11 py-2.5 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none font-medium bg-white text-cafe-900"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="absolute right-3 top-2.5 rounded-md p-0.5 text-cafe-500 hover:text-cafe-800 focus:outline-none focus:ring-2 focus:ring-cafe-600"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 
