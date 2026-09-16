@@ -1,37 +1,39 @@
-const nodemailer = require('nodemailer');
+const BREVO_EMAIL_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
 const sendEmail = async ({ to, subject, text, html }) => {
-  const BREVO_SMTP_USER = process.env.BREVO_SMTP_USER?.trim();
-  const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY?.trim();
-  const SENDER_EMAIL = process.env.SENDER_EMAIL?.trim();
+  const apiKey = process.env.BREVO_API_KEY?.trim();
+  const senderEmail = process.env.SENDER_EMAIL?.trim();
+  const senderName = process.env.SENDER_NAME?.trim() || 'Hable Cafe';
 
-  if (!BREVO_SMTP_USER || !BREVO_SMTP_KEY || !SENDER_EMAIL) {
-    throw new Error('SMTP is not configured. Set BREVO_SMTP_USER, BREVO_SMTP_KEY, and SENDER_EMAIL in server/.env.');
+  if (!apiKey || !senderEmail) {
+    throw new Error('Email API is not configured. Set BREVO_API_KEY and SENDER_EMAIL in server/.env.');
   }
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false, // TLS via STARTTLS
-    requireTLS: true,
-    connectionTimeout: 15000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-    auth: {
-      user: BREVO_SMTP_USER,
-      pass: BREVO_SMTP_KEY,
+  const response = await fetch(BREVO_EMAIL_API_URL, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'api-key': apiKey,
+      'content-type': 'application/json',
     },
+    body: JSON.stringify({
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      textContent: text,
+      htmlContent: html,
+    }),
+    signal: AbortSignal.timeout(15_000),
   });
 
-  const result = await transporter.sendMail({
-    from: { name: 'Hable Cafe', address: SENDER_EMAIL },
-    to,
-    subject,
-    text,
-    html,
-  });
+  const body = await response.json().catch(() => ({}));
 
-  return { messageId: result.messageId };
+  if (!response.ok) {
+    const detail = body.message || body.code || `HTTP ${response.status}`;
+    throw new Error(`Brevo email API request failed: ${detail}`);
+  }
+
+  return { messageId: body.messageId };
 };
 
 module.exports = sendEmail;

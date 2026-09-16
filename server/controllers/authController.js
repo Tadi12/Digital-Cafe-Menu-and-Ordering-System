@@ -147,7 +147,7 @@ const forgotPassword = async (req, res, next) => {
         `,
       });
     } catch (emailError) {
-      console.error('[Password Reset] SMTP delivery failed:', emailError.message);
+      console.error('[Password Reset] Email API delivery failed:', emailError.message);
 
       if (isDevelopment()) {
         console.warn('[Password Reset] Development fallback link (valid for 30 minutes):', resetUrl);
