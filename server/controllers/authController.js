@@ -1,7 +1,18 @@
 const Admin = require('../models/Admin');
+const AdminSession = require('../models/AdminSession');
+const mongoose = require('mongoose');
 const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
+
+const getDeviceName = (userAgent = '') => {
+  const ua = userAgent.toLowerCase();
+  const browser = ua.includes('edg/') ? 'Microsoft Edge' : ua.includes('firefox/') ? 'Firefox' : ua.includes('chrome/') ? 'Chrome' : ua.includes('safari/') ? 'Safari' : 'Browser';
+  const platform = ua.includes('iphone') || ua.includes('ipad') ? 'iPhone / iPad' : ua.includes('android') ? 'Android' : ua.includes('windows') ? 'Windows' : ua.includes('mac os') ? 'Mac' : ua.includes('linux') ? 'Linux' : 'Unknown device';
+  return `${browser} on ${platform}`;
+};
+
+const getRequestIp = (req) => String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim();
 
 /**
  * @desc    Auth Admin & get JWT token
@@ -22,6 +33,15 @@ const loginAdmin = async (req, res, next) => {
     const admin = await Admin.findOne({ email: email.toLowerCase() });
 
     if (admin && (await admin.matchPassword(password))) {
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const userAgent = String(req.get('user-agent') || '');
+      const session = await AdminSession.create({
+        admin: admin._id,
+        deviceName: getDeviceName(userAgent),
+        userAgent,
+        ipAddress: getRequestIp(req),
+        expiresAt,
+      });
       return res.json({
         success: true,
         data: {
@@ -29,7 +49,7 @@ const loginAdmin = async (req, res, next) => {
           name: admin.name,
           email: admin.email,
           role: admin.role,
-          token: generateToken(admin._id),
+          token: generateToken(admin._id, session._id.toString()),
         },
       });
     } else {
@@ -38,6 +58,40 @@ const loginAdmin = async (req, res, next) => {
         message: 'Invalid email or password',
       });
     }
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAdminSessions = async (req, res, next) => {
+  try {
+    const sessions = await AdminSession.find({
+      admin: req.user._id,
+      isActive: true,
+      expiresAt: { $gt: new Date() },
+    }).sort({ lastActiveAt: -1 }).lean();
+    return res.json({
+      success: true,
+      data: sessions.map((session) => ({ ...session, isCurrent: session._id.toString() === req.session._id.toString() })),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const terminateAdminSession = async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    if (!mongoose.isValidObjectId(sessionId)) {
+      return res.status(400).json({ success: false, message: 'Invalid device session' });
+    }
+    const session = await AdminSession.findOneAndUpdate(
+      { _id: sessionId, admin: req.user._id, isActive: true },
+      { isActive: false, revokedAt: new Date() },
+      { new: true }
+    );
+    if (!session) return res.status(404).json({ success: false, message: 'Active device session not found' });
+    return res.json({ success: true, message: 'Device session terminated', data: { isCurrent: session._id.toString() === req.session._id.toString() } });
   } catch (error) {
     next(error);
   }
@@ -201,6 +255,7 @@ const resetPassword = async (req, res, next) => {
     admin.resetTokenHash = undefined;
     admin.resetTokenExpires = undefined;
     await admin.save();
+    await AdminSession.updateMany({ admin: admin._id, isActive: true }, { isActive: false, revokedAt: new Date() });
 
     return res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
   } catch (error) {
@@ -212,6 +267,8 @@ module.exports = {
   loginAdmin,
   getAdminProfile,
   updateAdminProfile,
+  getAdminSessions,
+  terminateAdminSession,
   forgotPassword,
   resetPassword,
 };

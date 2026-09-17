@@ -24,6 +24,7 @@ import TableManagerPage from "../pages/admin/TableManagerPage";
 import OrderManagerPage from "../pages/admin/OrderManagerPage";
 import AnalyticsPage from "../pages/admin/AnalyticsPage";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
+import AdminDevicesPage from "../pages/admin/AdminDevicesPage";
 import StatusErrorPage from "../pages/errors/StatusErrorPage";
 // Profile route will be added inside admin routes below
 
@@ -61,6 +62,7 @@ const AppRoutes = () => {
           <Route path="/admin/tables" element={<TableManagerPage />} />
           <Route path="/admin/analytics" element={<AnalyticsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
+          <Route path="/admin/devices" element={<AdminDevicesPage />} />
         </Route>
       </Route>
 

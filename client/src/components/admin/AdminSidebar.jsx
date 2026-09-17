@@ -10,6 +10,7 @@ import {
   ClipboardList,
   BarChart3,
   User,
+  MonitorSmartphone,
   X,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     { path: "/admin/tables", label: t("table_management"), icon: QrCode },
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3 },
     { path: "/admin/profile", label: t("profile"), icon: User },
+    { path: "/admin/devices", label: "Signed-in devices", icon: MonitorSmartphone },
   ];
 
   return (

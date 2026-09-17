@@ -25,6 +25,8 @@ const AdminLayout = () => {
         return t("admin_page_tables");
       case "/admin/analytics":
         return t("admin_page_analytics");
+      case "/admin/devices":
+        return "Signed-in devices";
       default:
         return t("admin_portal");
     }

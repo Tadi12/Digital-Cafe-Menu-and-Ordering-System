@@ -14,6 +14,16 @@ export const updateAdminProfileApi = async (data) => {
   return response.data;
 };
 
+export const getAdminSessionsApi = async () => {
+  const response = await axiosClient.get('/auth/sessions');
+  return response.data;
+};
+
+export const terminateAdminSessionApi = async (sessionId) => {
+  const response = await axiosClient.delete(`/auth/sessions/${sessionId}`);
+  return response.data;
+};
+
 export const forgotPasswordApi = async (email) => {
   const response = await axiosClient.post('/auth/forgot-password', {
     email: String(email || '').trim(),

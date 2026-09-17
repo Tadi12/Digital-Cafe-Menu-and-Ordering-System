@@ -4,6 +4,8 @@ const {
   loginAdmin,
   getAdminProfile,
   updateAdminProfile,
+  getAdminSessions,
+  terminateAdminSession,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -14,6 +16,8 @@ router.post('/login', loginAdmin);
 router.post('/forgot-password', resetRateLimiter, forgotPassword);
 router.post('/reset-password', resetPassword);
 router.get('/me', protectAdmin, getAdminProfile);
+router.get('/sessions', protectAdmin, getAdminSessions);
+router.delete('/sessions/:sessionId', protectAdmin, terminateAdminSession);
 
 router.put('/me', protectAdmin, updateAdminProfile);
 module.exports = router;
