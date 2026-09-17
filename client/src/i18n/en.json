@@ -70,5 +70,6 @@
   "view_qr": "View QR Code",
   "download_qr": "Download QR",
   "update_status": "Update Status",
+   "logout_action": "Logout",
   "new_order_alert": "New incoming order!"
 }

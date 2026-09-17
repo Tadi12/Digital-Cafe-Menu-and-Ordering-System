@@ -20,7 +20,9 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="text-base font-bold text-cafe-900 tracking-tight">{pageTitle}</h1>
+          <h1 className="text-base font-bold text-cafe-900 tracking-tight">
+            {pageTitle}
+          </h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -28,13 +30,19 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
           <div
             className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
               connected
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : 'bg-red-50 text-red-700 border-red-200'
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-red-50 text-red-700 border-red-200"
             }`}
-            title={connected ? 'Real-time WebSocket Live' : 'Real-time Socket Disconnected'}
+            title={
+              connected
+                ? "Real-time WebSocket Live"
+                : "Real-time Socket Disconnected"
+            }
           >
-            <Radio className={`w-3 h-3 ${connected ? 'animate-pulse text-emerald-600' : ''}`} />
-            <span>{connected ? 'Live Sync' : 'Offline'}</span>
+            <Radio
+              className={`w-3 h-3 ${connected ? "animate-pulse text-emerald-600" : ""}`}
+            />
+            <span>{connected ? "Live Sync" : "Offline"}</span>
           </div>
 
           <LanguageSwitcher />
@@ -46,10 +54,11 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
             </span>
             <button
               onClick={logout}
-              className="p-1.5 rounded-lg text-cafe-600 hover:text-red-600 hover:bg-red-50 transition-colors"
-              title={t('logout')}
+              className="p-2 rounded-lg text-cafe-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title={t("logout")}
             >
-              <LogOut className="w-4 h-4" />Logout
+              <LogOut className="w-5 h-4" />
+              {t("logout_action")}
             </button>
           </div>
         </div>
