@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, CheckCircle2, KeyRound, Mail } from "lucide-react";
 import { forgotPasswordApi } from "../../api/authApi";
 
 const ForgotPasswordPage = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +23,7 @@ const ForgotPasswordPage = () => {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Unable to send a reset link. Please try again.",
+          t("send_reset_failed"),
       );
     } finally {
       setLoading(false);
@@ -36,10 +38,10 @@ const ForgotPasswordPage = () => {
             <KeyRound className="w-7 h-7" />
           </div>
           <h1 className="text-xl font-black text-cafe-900 tracking-tight">
-            Reset your password
+            {t("reset_password")}
           </h1>
           <p className="text-xs text-cafe-500 font-medium">
-            Enter your admin email and we’ll send a secure reset link.
+            {t("reset_password_help")}
           </p>
         </div>
 
@@ -59,7 +61,7 @@ const ForgotPasswordPage = () => {
         <form onSubmit={handleSendLink} autoComplete="off" className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1.5">
-              Email
+              {t("email")}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-cafe-400 absolute left-3.5 top-3" />
@@ -84,7 +86,7 @@ const ForgotPasswordPage = () => {
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>
-                <span>Send reset link</span>
+                <span>{t("send_reset_link")}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -95,7 +97,7 @@ const ForgotPasswordPage = () => {
           to="/admin/login"
           className="block text-center text-xs font-bold text-cafe-600 hover:text-cafe-900"
         >
-          Back to sign in
+          {t("back_to_sign_in")}
         </Link>
       </div>
     </div>

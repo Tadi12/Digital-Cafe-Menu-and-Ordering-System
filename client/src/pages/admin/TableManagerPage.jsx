@@ -64,7 +64,7 @@ const TableManagerPage = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!tableNumber || Number(tableNumber) <= 0) {
-      setError('Valid table number is required.');
+      setError(t('valid_table_number'));
       return;
     }
 
@@ -91,14 +91,14 @@ const TableManagerPage = () => {
         fetchTables();
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save table.');
+      setError(err.response?.data?.message || t('failed_save_table'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteTable = async (id, num) => {
-    if (!window.confirm(`Are you sure you want to delete Table #${num}?`)) return;
+    if (!window.confirm(t('delete_table_confirm', { number: num }))) return;
 
     try {
       const res = await deleteTableApi(id);
@@ -106,7 +106,7 @@ const TableManagerPage = () => {
         setTables((prev) => prev.filter((t) => t._id !== id));
       }
     } catch (err) {
-      alert('Failed to delete table.');
+      alert(t('failed_delete'));
     }
   };
 
@@ -116,9 +116,7 @@ const TableManagerPage = () => {
       <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-cafe-200 shadow-sm">
         <div>
           <h2 className="font-bold text-cafe-900 text-sm">{t('table_management')}</h2>
-          <p className="text-xs text-cafe-500">
-            Generate and manage unique QR code URLs for cafe tables
-          </p>
+         
         </div>
         <button
           onClick={handleOpenAdd}
@@ -131,12 +129,12 @@ const TableManagerPage = () => {
 
       {/* Tables Grid */}
       {loading ? (
-        <LoadingSpinner message="Loading cafe tables & QR codes..." />
+        <LoadingSpinner message={t('loading_tables')} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tables.length === 0 ? (
             <div className="col-span-full py-12 text-center text-cafe-500 font-medium">
-              No tables configured yet.
+              {t('no_tables')}
             </div>
           ) : (
             tables.map((tbl) => (
@@ -160,11 +158,11 @@ const TableManagerPage = () => {
                       >
                         {tbl.active ? (
                           <>
-                            <CheckCircle2 className="w-3 h-3" /> Active
+                            <CheckCircle2 className="w-3 h-3" /> {t('active')}
                           </>
                         ) : (
                           <>
-                            <XCircle className="w-3 h-3" /> Out of Service
+                            <XCircle className="w-3 h-3" /> {t('out_of_service')}
                           </>
                         )}
                       </span>
@@ -175,7 +173,7 @@ const TableManagerPage = () => {
                     <button
                       onClick={() => handleOpenEdit(tbl)}
                       className="p-1.5 rounded-lg text-cafe-600 hover:text-cafe-900 hover:bg-cafe-100 transition-colors"
-                      title="Edit Table"
+                      title={t('edit_table')}
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -195,7 +193,7 @@ const TableManagerPage = () => {
                   className="w-full bg-cafe-50 hover:bg-cafe-100 text-cafe-800 border border-cafe-200 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
                 >
                   <QrCode className="w-4 h-4 text-cafe-600" />
-                  <span>View / Download QR Code</span>
+                  <span>{t('view_download_qr')}</span>
                 </button>
               </div>
             ))
@@ -207,7 +205,7 @@ const TableManagerPage = () => {
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={editingTable ? 'Edit Table' : t('add_table')}
+        title={editingTable ? t('edit_table') : t('add_table')}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleFormSubmit} className="space-y-4">
@@ -246,8 +244,8 @@ const TableManagerPage = () => {
 
           <div className="flex items-center justify-between p-3 bg-cafe-50 rounded-xl border border-cafe-200">
             <div>
-              <span className="font-bold text-xs text-cafe-900 block">Table Active Status</span>
-              <span className="text-[11px] text-cafe-500">Allow customers to scan & order from this table</span>
+              <span className="font-bold text-xs text-cafe-900 block">{t('table_active_status')}</span>
+              <span className="text-[11px] text-cafe-500">{t('allow_table_orders')}</span>
             </div>
             <button
               type="button"
@@ -270,14 +268,14 @@ const TableManagerPage = () => {
               onClick={() => setIsFormOpen(false)}
               className="px-4 py-2 rounded-xl text-xs font-bold text-cafe-700 hover:bg-cafe-100 transition-colors"
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="bg-cafe-800 hover:bg-cafe-900 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-md transition-all disabled:opacity-50"
             >
-              {saving ? 'Saving...' : editingTable ? 'Update Table' : 'Create Table'}
+              {saving ? t('updating') : editingTable ? t('update') : t('create')}
             </button>
           </div>
         </form>

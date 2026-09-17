@@ -107,7 +107,7 @@ const DrinkManagerPage = () => {
         fetchDrinksAndCategories();
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to save drink item.");
+      alert(err.response?.data?.message || t("failed_save_drink"));
     } finally {
       setIsSaving(false);
     }
@@ -124,7 +124,7 @@ const DrinkManagerPage = () => {
         );
       }
     } catch (err) {
-      alert("Failed to toggle drink availability.");
+      alert(t("update_failed"));
     }
   };
 
@@ -137,7 +137,7 @@ const DrinkManagerPage = () => {
         setFoods((prev) => prev.filter((item) => item._id !== id));
       }
     } catch (err) {
-      alert("Failed to delete drink item.");
+      alert(t("failed_delete"));
     }
   };
 
@@ -192,12 +192,12 @@ const DrinkManagerPage = () => {
       </div>
 
       {loading ? (
-        <LoadingSpinner message="Loading drink menu items..." />
+        <LoadingSpinner message={t("loading_drinks")} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {visibleFoods.length === 0 ? (
             <div className="col-span-full py-12 text-center text-cafe-500 font-medium">
-              No drink items found.
+              {t("no_drink_items")}
             </div>
           ) : (
             visibleFoods.map((food) => (
@@ -254,7 +254,7 @@ const DrinkManagerPage = () => {
                   <button
                     onClick={() => handleOpenEditModal(food)}
                     className="p-1.5 rounded-lg text-cafe-600 hover:text-cafe-900 hover:bg-cafe-100 transition-colors"
-                    title="Edit Drink"
+                    title={t("edit_drink")}
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>

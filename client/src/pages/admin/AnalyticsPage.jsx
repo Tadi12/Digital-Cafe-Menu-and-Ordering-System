@@ -50,7 +50,7 @@ const AnalyticsPage = () => {
   }, [timeRange]);
 
   if (loading) {
-    return <LoadingSpinner message="Calculating analytics reports..." />;
+    return <LoadingSpinner message={t("loading_analytics")} />;
   }
 
   const totalPeriodRevenue = revenueData.reduce((acc, item) => acc + item.revenue, 0);
@@ -63,13 +63,13 @@ const AnalyticsPage = () => {
         <div>
           <h2 className="font-bold text-cafe-900 text-sm flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-cafe-700" />
-            <span>Café Financial & Menu Performance</span>
+            <span>{t("cafe_financial_menu_performance")}</span>
           </h2>
-          <p className="text-xs text-cafe-500">Historical revenue trends and menu popularity</p>
+
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-cafe-700">Period:</span>
+          <span className="text-xs font-bold text-cafe-700">{t("period")}:</span>
           <button
             onClick={() => setTimeRange(7)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
@@ -78,7 +78,7 @@ const AnalyticsPage = () => {
                 : 'bg-cafe-100 text-cafe-800 hover:bg-cafe-200'
             }`}
           >
-            Last 7 Days
+            {t("last_7_days")}
           </button>
           <button
             onClick={() => setTimeRange(30)}
@@ -88,7 +88,7 @@ const AnalyticsPage = () => {
                 : 'bg-cafe-100 text-cafe-800 hover:bg-cafe-200'
             }`}
           >
-            Last 30 Days
+            {t("last_30_days")}
           </button>
         </div>
       </div>
@@ -98,7 +98,7 @@ const AnalyticsPage = () => {
         <div className="bg-white rounded-2xl p-4 border border-cafe-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs text-cafe-500 font-bold uppercase">
-              Total Revenue ({timeRange} Days)
+              {t("total_revenue_period", { days: timeRange })}
             </span>
             <h3 className="text-2xl font-black text-cafe-900 mt-1">
               {formatCurrency(totalPeriodRevenue, currentLang)}
@@ -112,9 +112,9 @@ const AnalyticsPage = () => {
         <div className="bg-white rounded-2xl p-4 border border-cafe-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs text-cafe-500 font-bold uppercase">
-              Total Completed Orders ({timeRange} Days)
+              {t("total_completed_orders_period", { days: timeRange })}
             </span>
-            <h3 className="text-2xl font-black text-cafe-900 mt-1">{totalPeriodOrders} Orders</h3>
+            <h3 className="text-2xl font-black text-cafe-900 mt-1">{t("orders_count", { count: totalPeriodOrders })}</h3>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-cafe-100 text-cafe-800 flex items-center justify-center">
             <BarChart3 className="w-6 h-6" />
@@ -124,7 +124,7 @@ const AnalyticsPage = () => {
 
       {/* Revenue Area Chart */}
       <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4">
-        <h3 className="font-bold text-cafe-900 text-sm">Revenue Trend Over Time</h3>
+        <h3 className="font-bold text-cafe-900 text-sm">{t("revenue_trend")}</h3>
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={revenueData}>
@@ -158,24 +158,24 @@ const AnalyticsPage = () => {
       <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <Award className="w-5 h-5 text-gold-600" />
-          <h3 className="font-bold text-cafe-900 text-sm">Most Popular Food & Drink Items</h3>
+          <h3 className="font-bold text-cafe-900 text-sm">{t("popular_items")}</h3>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-cafe-50 text-cafe-700 uppercase font-bold text-[10px]">
               <tr>
-                <th className="p-3">Rank</th>
-                <th className="p-3">Food Item Name</th>
-                <th className="p-3">Quantity Sold</th>
-                <th className="p-3">Total Sales Generated</th>
+                <th className="p-3">{t("rank")}</th>
+                <th className="p-3">{t("food_item_name")}</th>
+                <th className="p-3">{t("quantity_sold")}</th>
+                <th className="p-3">{t("total_sales_generated")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-cafe-100 font-medium text-cafe-800">
               {popularFoods.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="p-4 text-center text-cafe-500">
-                    No item sales records found.
+                    {t("no_sales_records")}
                   </td>
                 </tr>
               ) : (

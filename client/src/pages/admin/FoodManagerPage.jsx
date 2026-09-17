@@ -98,7 +98,7 @@ const FoodManagerPage = () => {
         fetchFoodsAndCategories();
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to save food item.");
+      alert(err.response?.data?.message || t("failed_save_food"));
     } finally {
       setIsSaving(false);
     }
@@ -115,7 +115,7 @@ const FoodManagerPage = () => {
         );
       }
     } catch (err) {
-      alert("Failed to toggle availability.");
+      alert(t("update_failed"));
     }
   };
 
@@ -128,7 +128,7 @@ const FoodManagerPage = () => {
         setFoods((prev) => prev.filter((f) => f._id !== id));
       }
     } catch (err) {
-      alert("Failed to delete food item.");
+      alert(t("failed_delete"));
     }
   };
 
@@ -184,12 +184,12 @@ const FoodManagerPage = () => {
       </div>
 
       {loading ? (
-        <LoadingSpinner message="Loading food menu items..." />
+        <LoadingSpinner message={t("loading_foods")} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {foods.length === 0 ? (
             <div className="col-span-full py-12 text-center text-cafe-500 font-medium">
-              No food items found.
+              {t("no_food_items")}
             </div>
           ) : (
             foods.map((food) => (
@@ -246,7 +246,7 @@ const FoodManagerPage = () => {
                   <button
                     onClick={() => handleOpenEditModal(food)}
                     className="p-1.5 rounded-lg text-cafe-600 hover:text-cafe-900 hover:bg-cafe-100 transition-colors"
-                    title="Edit Food"
+                    title={t("edit_food")}
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>

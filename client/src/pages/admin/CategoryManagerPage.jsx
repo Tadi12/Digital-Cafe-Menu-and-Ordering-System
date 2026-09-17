@@ -62,7 +62,7 @@ const CategoryManagerPage = () => {
         fetchCategories();
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to save category.");
+      alert(err.response?.data?.message || t("failed_save_category"));
     } finally {
       setIsSaving(false);
     }
@@ -78,7 +78,7 @@ const CategoryManagerPage = () => {
         setCategories((prev) => prev.filter((c) => c._id !== id));
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete category.");
+      alert(err.response?.data?.message || t("failed_delete"));
     }
   };
 
@@ -91,9 +91,7 @@ const CategoryManagerPage = () => {
             <h2 className="font-bold text-cafe-900 text-sm">
               {t("category_management")}
             </h2>
-            <p className="text-xs text-cafe-500">
-              Manage food and drink categories with bilingual titles
-            </p>
+           
           </div>
           <select
             value={categoryTypeFilter}
@@ -116,12 +114,12 @@ const CategoryManagerPage = () => {
 
       {/* Categories Grid */}
       {loading ? (
-        <LoadingSpinner message="Loading food categories..." />
+        <LoadingSpinner message={t("loading_categories")} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.length === 0 ? (
             <div className="col-span-full py-12 text-center text-cafe-500 font-medium">
-              No categories created yet.
+              {t("no_categories")}
             </div>
           ) : (
             categories.map((cat) => (
@@ -154,7 +152,7 @@ const CategoryManagerPage = () => {
                   <button
                     onClick={() => handleOpenEditModal(cat)}
                     className="p-1.5 rounded-lg text-cafe-600 hover:text-cafe-900 hover:bg-cafe-100 transition-colors"
-                    title="Edit Category"
+                    title={t("edit_category")}
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>

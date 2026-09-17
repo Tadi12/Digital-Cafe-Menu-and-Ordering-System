@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, CheckCircle2, Lock, ShieldCheck } from "lucide-react";
 import { resetPasswordApi } from "../../api/authApi";
 
 const ResetPasswordPage = () => {
+  const { t } = useTranslation();
   const { token } = useParams();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
@@ -23,15 +25,15 @@ const ResetPasswordPage = () => {
   const handleResetPassword = async (event) => {
     event.preventDefault();
     if (!hasToken) {
-      setError("This password reset link is invalid.");
+      setError(t("reset_link_invalid"));
       return;
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("password_min_length"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("passwords_do_not_match"));
       return;
     }
 
@@ -45,7 +47,7 @@ const ResetPasswordPage = () => {
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(err.response?.data?.message || "Unable to reset your password.");
+      setError(err.response?.data?.message || t("reset_password_failed"));
     } finally {
       setLoading(false);
     }
@@ -59,12 +61,12 @@ const ResetPasswordPage = () => {
             <ShieldCheck className="w-7 h-7" />
           </div>
           <h1 className="text-xl font-black text-cafe-900 tracking-tight">
-            Create new password
+            {t("create_new_password")}
           </h1>
           <p className="text-xs text-cafe-500 font-medium">
             {hasToken
-              ? "Enter your new secure password below."
-              : "This reset link is missing or incomplete."}
+              ? t("new_password_help")
+              : t("reset_link_incomplete")}
           </p>
         </div>
 
@@ -83,7 +85,7 @@ const ResetPasswordPage = () => {
 
         {!hasToken && !error && (
           <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl font-medium text-center border border-red-200">
-            This password reset link is invalid. Request a new one from the sign-in page.
+            {t("reset_link_invalid_help")}
           </div>
         )}
 
@@ -91,7 +93,7 @@ const ResetPasswordPage = () => {
         <form onSubmit={handleResetPassword} autoComplete="off" className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1.5">
-              New password
+              {t("new_password")}
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-cafe-400 absolute left-3.5 top-3" />
@@ -110,7 +112,7 @@ const ResetPasswordPage = () => {
 
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1.5">
-              Confirm password
+              {t("confirm_password")}
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-cafe-400 absolute left-3.5 top-3" />
@@ -136,7 +138,7 @@ const ResetPasswordPage = () => {
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>
-                <span>Reset password</span>
+                <span>{t("reset_password")}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -148,7 +150,7 @@ const ResetPasswordPage = () => {
           to="/admin/login"
           className="block text-center text-xs font-bold text-cafe-600 hover:text-cafe-900"
         >
-          Back to sign in
+          {t("back_to_sign_in")}
         </Link>
       </div>
     </div>

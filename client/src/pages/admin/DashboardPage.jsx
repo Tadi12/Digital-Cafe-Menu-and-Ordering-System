@@ -58,7 +58,7 @@ const DashboardPage = () => {
   }, []);
 
   if (loading) {
-    return <LoadingSpinner message="Loading dashboard analytics..." />;
+    return <LoadingSpinner message={t("loading_dashboard")} />;
   }
 
   const PIE_COLORS = ['#D97706', '#2563EB', '#059669', '#4B5563', '#DC2626'];
@@ -105,7 +105,7 @@ const DashboardPage = () => {
             <div>
               <h3 className="font-bold text-cafe-900 text-sm flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                Revenue Analytics (Last 7 Days)
+                {t("revenue_analytics")}
               </h3>
               <p className="text-xs text-cafe-500">Daily total revenue breakdown in ETB</p>
             </div>
@@ -172,7 +172,7 @@ const DashboardPage = () => {
 
       {/* Recent Orders List Table */}
       <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4">
-        <h3 className="font-bold text-cafe-900 text-sm">Recent Incoming Orders</h3>
+        <h3 className="font-bold text-cafe-900 text-sm">{t("recent_orders")}</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-cafe-50 text-cafe-700 uppercase font-bold text-[10px]">
@@ -180,7 +180,7 @@ const DashboardPage = () => {
                 <th className="p-3">Order #</th>
                 <th className="p-3">Customer</th>
                 <th className="p-3">Table</th>
-                <th className="p-3">Total Amount</th>
+                <th className="p-3">{t("total_amount")}</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Time</th>
               </tr>
@@ -189,7 +189,7 @@ const DashboardPage = () => {
               {metrics?.recentOrders?.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="p-4 text-center text-cafe-500">
-                    No orders recorded yet.
+                    {t("no_orders_recorded")}
                   </td>
                 </tr>
               ) : (

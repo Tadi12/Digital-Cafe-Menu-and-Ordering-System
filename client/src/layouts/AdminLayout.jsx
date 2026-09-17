@@ -1,30 +1,32 @@
 import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminNavbar from "../components/admin/AdminNavbar";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { t } = useTranslation();
 
   const getPageTitle = () => {
     switch (location.pathname) {
       case "/admin/dashboard":
-        return "Dashboard Overview";
+        return t("admin_page_dashboard");
       case "/admin/orders":
-        return "Live Orders Queue";
+        return t("admin_page_orders");
       case "/admin/foods":
-        return "Food Menu Management";
+        return t("admin_page_foods");
       case "/admin/drinks":
-        return "Drink Menu Management";
+        return t("admin_page_drinks");
       case "/admin/categories":
-        return "Category Management";
+        return t("admin_page_categories");
       case "/admin/tables":
-        return "Tables & QR Codes";
+        return t("admin_page_tables");
       case "/admin/analytics":
-        return "Analytics & Reports";
+        return t("admin_page_analytics");
       default:
-        return "Admin Portal";
+        return t("admin_portal");
     }
   };
 
