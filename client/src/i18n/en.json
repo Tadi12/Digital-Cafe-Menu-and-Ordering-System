@@ -71,5 +71,7 @@
   "download_qr": "Download QR",
   "update_status": "Update Status",
    "logout_action": "Logout",
+  "forgot_password": "forgot password?",
+  "admin_work":"Sign in to manage café orders & digital menu",
   "new_order_alert": "New incoming order!"
 }

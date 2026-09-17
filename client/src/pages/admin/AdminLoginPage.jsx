@@ -48,7 +48,7 @@ const AdminLoginPage = () => {
             {t('admin_login_title')}
           </h1>
           <p className="text-xs text-cafe-500 font-medium">
-            Sign in to manage café orders & digital menu
+            {t('admin_work')}
           </p>
         </div>
 
@@ -107,7 +107,7 @@ const AdminLoginPage = () => {
 
           <div className="text-right -mt-1">
             <Link to="/admin/forgot-password" className="text-xs font-bold text-cafe-600 hover:text-cafe-900">
-              Forgot password?
+              {t('forgot_password')}
             </Link>
           </div>
 

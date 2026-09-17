@@ -71,5 +71,7 @@
   "download_qr": "QR አውርድ",
   "update_status": "ሁኔታ ቀይር",
   "logout_action": "ዉጣ",
+  "forgot_password": "የይለፍ ቃል ረሱ?",
+  "admin_work":"የካፌ ትዕዛዞችን እና ዲጂታል ሜኑን ለመቆጣጠር ይግቡ",
   "new_order_alert": "አዲስ ትዕዛዝ ደርሷል!"
 }
