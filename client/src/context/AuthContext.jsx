@@ -30,6 +30,16 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    const handleSessionTermination = () => {
+      localStorage.removeItem('cafe_admin_token');
+      setAdmin(null);
+      setError('This device session was terminated. Please sign in again.');
+    };
+    window.addEventListener('admin-session-terminated', handleSessionTermination);
+    return () => window.removeEventListener('admin-session-terminated', handleSessionTermination);
+  }, []);
+
   const login = async (credentials) => {
     setError(null);
     try {
@@ -38,6 +48,7 @@ export const AuthProvider = ({ children }) => {
         const { token, ...adminProfile } = res.data;
         localStorage.setItem('cafe_admin_token', token);
         setAdmin(adminProfile);
+        window.dispatchEvent(new Event('admin-session-changed'));
         return { success: true };
       }
       return { success: false, message: res.message };
@@ -51,6 +62,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('cafe_admin_token');
     setAdmin(null);
+    window.dispatchEvent(new Event('admin-session-changed'));
   };
 
 // Refresh admin profile

@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
+const { getIO } = require('../sockets/socketHandler');
 
 const getDeviceName = (userAgent = '') => {
   const ua = userAgent.toLowerCase();
@@ -91,6 +92,7 @@ const terminateAdminSession = async (req, res, next) => {
       { new: true }
     );
     if (!session) return res.status(404).json({ success: false, message: 'Active device session not found' });
+    getIO().to(`admin_session_${session._id.toString()}`).emit('admin_session_terminated');
     return res.json({ success: true, message: 'Device session terminated', data: { isCurrent: session._id.toString() === req.session._id.toString() } });
   } catch (error) {
     next(error);
