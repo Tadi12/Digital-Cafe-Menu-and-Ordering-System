@@ -8,6 +8,7 @@ import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
 import { formatCurrency } from "../../utils/currencyFormatter";
+import StatusErrorPage, { getErrorPageType } from "../errors/StatusErrorPage";
 import {
   Clock,
   ChefHat,
@@ -57,6 +58,7 @@ const OrderTrackerPage = () => {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [pageErrorType, setPageErrorType] = useState("");
   const [readyToastVisible, setReadyToastVisible] = useState(false);
 
   useEffect(() => {
@@ -65,9 +67,12 @@ const OrderTrackerPage = () => {
         const res = await getOrderByIdApi(orderId);
         if (res.success) {
           setOrder(res.data);
+        } else {
+          setPageErrorType("notFound");
         }
       } catch (err) {
         console.error("[Tracker Fetch Error]:", err);
+        setPageErrorType(getErrorPageType(err));
       } finally {
         setLoading(false);
       }
@@ -84,8 +89,16 @@ const OrderTrackerPage = () => {
 
     if (socket) {
       const handleStatusUpdate = (updatedOrder) => {
-        if (updatedOrder._id === orderId) {
-          setOrder(updatedOrder);
+        if (updatedOrder?._id === orderId) {
+          // A socket event can be a smaller document than the initial API response.
+          // Preserve existing fields so a status notification cannot break the view.
+          setOrder((currentOrder) => ({
+            ...currentOrder,
+            ...updatedOrder,
+            items: Array.isArray(updatedOrder.items)
+              ? updatedOrder.items
+              : currentOrder?.items || [],
+          }));
         }
       };
 
@@ -116,12 +129,14 @@ const OrderTrackerPage = () => {
         const readyMessage = `Your order ${order.orderNumber} is ready!`;
         markReadyOrderNotified(order._id);
         setReadyToastVisible(true);
+        previousReadyStatusRef.current = true;
         playNotificationSound(
           import.meta.env.VITE_CUSTOMER_NOTIFICATION_SOUND_URL ||
             "/sounds/customer-notification.m4a",
         );
 
         if ("Notification" in window) {
+          try {
           if (Notification.permission === "granted") {
             new Notification("Your order is ready", {
               body: readyMessage,
@@ -129,15 +144,22 @@ const OrderTrackerPage = () => {
               icon: "/favicon-32x32.png",
             });
           } else if (Notification.permission === "default") {
-            Notification.requestPermission().then((permission) => {
-              if (permission === "granted") {
-                new Notification("Your order is ready", {
-                  body: readyMessage,
-                  tag: `order-ready-${order._id}`,
-                  icon: "/favicon-32x32.png",
-                });
-              }
-            });
+            Notification.requestPermission()
+              .then((permission) => {
+                if (permission === "granted") {
+                  new Notification("Your order is ready", {
+                    body: readyMessage,
+                    tag: `order-ready-${order._id}`,
+                    icon: "/favicon-32x32.png",
+                  });
+                }
+              })
+              .catch((notificationError) => {
+                console.warn("[Ready Notification Error]:", notificationError);
+              });
+          }
+          } catch (notificationError) {
+            console.warn("[Ready Notification Error]:", notificationError);
           }
         }
 
@@ -178,13 +200,7 @@ const OrderTrackerPage = () => {
   }
 
   if (!order) {
-    return (
-      <div className="min-h-screen bg-cafe-50 flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-sm font-semibold text-cafe-700">
-          Order tracking details not found.
-        </p>
-      </div>
-    );
+    return <StatusErrorPage type={pageErrorType || "notFound"} />;
   }
 
   const steps = [
@@ -354,8 +370,8 @@ const OrderTrackerPage = () => {
             Items in this order
           </h4>
           <div className="space-y-2">
-            {order.items.map((item, idx) => {
-              const name = item.foodName[currentLang] || item.foodName.en;
+            {(Array.isArray(order.items) ? order.items : []).map((item, idx) => {
+              const name = item.foodName?.[currentLang] || item.foodName?.en || "Food item";
               return (
                 <div
                   key={idx}

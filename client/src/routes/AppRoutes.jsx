@@ -24,6 +24,7 @@ import TableManagerPage from "../pages/admin/TableManagerPage";
 import OrderManagerPage from "../pages/admin/OrderManagerPage";
 import AnalyticsPage from "../pages/admin/AnalyticsPage";
 import AdminProfilePage from "../pages/admin/AdminProfilePage";
+import StatusErrorPage from "../pages/errors/StatusErrorPage";
 // Profile route will be added inside admin routes below
 
 const AppRoutes = () => {
@@ -64,7 +65,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* Default Catch-all */}
-      <Route path="*" element={<Navigate to="/admin/login" replace />} />
+      <Route path="*" element={<StatusErrorPage type="notFound" />} />
     </Routes>
   );
 };

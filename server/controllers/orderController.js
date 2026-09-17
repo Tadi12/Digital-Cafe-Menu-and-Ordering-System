@@ -294,12 +294,14 @@ const updateOrderStatus = async (req, res, next) => {
     }
 
     const updatedOrder = await order.save();
+    const populatedUpdatedOrder = await Order.findById(updatedOrder._id)
+      .populate('table', 'tableNumber tableName');
 
     // Real-time Socket.IO broadcast to both customer order room and admin room
     try {
       const io = getIO();
-      io.to(`order_${updatedOrder._id}`).emit('order_status_updated', updatedOrder);
-      io.to('admin_room').emit('order_updated', updatedOrder);
+      io.to(`order_${updatedOrder._id}`).emit('order_status_updated', populatedUpdatedOrder);
+      io.to('admin_room').emit('order_updated', populatedUpdatedOrder);
     } catch (socketErr) {
       console.warn('[Socket Warning]: Could not emit status update:', socketErr.message);
     }
@@ -307,7 +309,7 @@ const updateOrderStatus = async (req, res, next) => {
     return res.json({
       success: true,
       message: `Order status updated to ${updatedOrder.status}`,
-      data: updatedOrder,
+      data: populatedUpdatedOrder,
     });
   } catch (error) {
     next(error);
@@ -337,12 +339,14 @@ const cancelOrder = async (req, res, next) => {
 
     order.status = 'Cancelled';
     const cancelledOrder = await order.save();
+    const populatedCancelledOrder = await Order.findById(cancelledOrder._id)
+      .populate('table', 'tableNumber tableName');
 
     // Broadcast cancellation via Socket.IO
     try {
       const io = getIO();
-      io.to(`order_${cancelledOrder._id}`).emit('order_status_updated', cancelledOrder);
-      io.to('admin_room').emit('order_cancelled', cancelledOrder);
+      io.to(`order_${cancelledOrder._id}`).emit('order_status_updated', populatedCancelledOrder);
+      io.to('admin_room').emit('order_cancelled', populatedCancelledOrder);
     } catch (socketErr) {
       console.warn('[Socket Warning]: Could not emit cancellation:', socketErr.message);
     }
@@ -350,7 +354,7 @@ const cancelOrder = async (req, res, next) => {
     return res.json({
       success: true,
       message: 'Order cancelled successfully',
-      data: cancelledOrder,
+      data: populatedCancelledOrder,
     });
   } catch (error) {
     next(error);
