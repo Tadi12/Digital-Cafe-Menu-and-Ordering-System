@@ -59,7 +59,7 @@ const AdminDevicesPage = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-cafe-900">Signed-in devices</h2>
-            <p className="mt-1 text-sm text-cafe-700">Review every device with access to this admin account and end sessions you do not recognize.</p>
+            
           </div>
         </div>
       </div>

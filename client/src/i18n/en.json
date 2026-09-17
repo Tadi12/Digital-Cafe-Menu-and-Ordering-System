@@ -192,5 +192,7 @@
   "error_server_title": "Something went wrong on our side",
   "error_server_message": "The cafe service had a problem. Please try again in a moment.",
   "error_unexpected_title": "Something went wrong",
+  "review_every_device": "Review every device with access to this admin account and end sessions you do not recognize.",
+  "admin_page_devices": "Signed-in devices",
   "error_unexpected_message": "The page ran into an unexpected problem. You can safely try again."
 }
