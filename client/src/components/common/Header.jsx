@@ -18,7 +18,7 @@ const Header = () => {
               {t('app_name')}
             </h1>
             <p className="text-[10px] text-cafe-300 uppercase tracking-widest font-medium">
-              Digital Menu
+              {t('app_subname')}
             </p>
           </div>
         </div>

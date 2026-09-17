@@ -1,10 +1,11 @@
 {
   "app_name": "Hable Cafe",
-  "welcome_table": "Table #{{number}}",
+  "app_subname": "Digital Menu",
+  "welcome_table": "Table  {{number}}",
   "invalid_table_title": "Invalid Table QR Code",
   "invalid_table_desc": "We could not identify a valid café table. Please scan the QR code located on your table.",
   "inactive_table_title": "Table Out of Service",
-  "inactive_table_desc": "Table #{{number}} is currently inactive. Please contact café staff for assistance.",
+  "inactive_table_desc": "Table  {{number}} is currently inactive. Please contact café staff for assistance.",
   "search_placeholder": "Search foods or drinks...",
   "all_categories": "All Items",
   "available": "Available",

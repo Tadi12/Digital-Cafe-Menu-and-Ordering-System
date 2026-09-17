@@ -49,7 +49,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
               className="p-1.5 rounded-lg text-cafe-600 hover:text-red-600 hover:bg-red-50 transition-colors"
               title={t('logout')}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4" />Logout
             </button>
           </div>
         </div>
