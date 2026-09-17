@@ -54,11 +54,11 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
             </span>
             <button
               onClick={logout}
-              className="p-2 rounded-lg text-cafe-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-cafe-600 transition-colors hover:bg-red-50 hover:text-red-600"
               title={t("logout")}
             >
-              <LogOut className="w-5 h-4" />
-              {t("logout_action")}
+              <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{t("logout_action")}</span>
             </button>
           </div>
         </div>
