@@ -25,6 +25,14 @@ app.set(
     : process.env.NODE_ENV === 'production',
 );
 
+// Temporary Render deployment diagnostic: remove this after confirming that
+// x-forwarded-for and req.ip show the expected originating client address.
+app.use((req, res, next) => {
+  console.log('x-forwarded-for:', req.headers['x-forwarded-for']);
+  console.log('req.ip:', req.ip);
+  next();
+});
+
 app.use(cors({ origin: true, credentials: true }));
 
 // Body Parsing Middlewares

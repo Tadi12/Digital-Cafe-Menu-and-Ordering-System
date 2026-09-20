@@ -1,4 +1,13 @@
 const net = require('net');
+const dns = require('dns').promises;
+
+// Keep DNS traffic low while allowing a DDNS provider time to publish an IP
+// change. Increase or decrease this if your provider's update/TTL policy calls
+// for it.
+const DDNS_CACHE_TTL_MS = 5 * 60 * 1000;
+let cachedApprovedIp = null;
+let lastLookupAttemptAt = 0;
+let lookupInFlight = null;
 
 const LOCALHOST_ADDRESSES = new Set([
   '127.0.0.1',
@@ -7,7 +16,7 @@ const LOCALHOST_ADDRESSES = new Set([
 
 // Express can return IPv4, IPv6, or IPv4-mapped IPv6 values depending on the
 // host and reverse proxy. Convert them to one stable representation before
-// comparing them with CAFE_PUBLIC_IP.
+// comparing them with the address currently returned by CAFE_DDNS_HOST.
 const normalizeIp = (address) => {
   if (!address || typeof address !== 'string') return null;
 
@@ -46,21 +55,65 @@ const normalizeIp = (address) => {
 
 const isLocalhost = (ip) => LOCALHOST_ADDRESSES.has(ip);
 
-const requireCafeWifi = (req, res, next) => {
+const resolveApprovedIp = async () => {
+  const ddnsHost = process.env.CAFE_DDNS_HOST?.trim();
+
+  if (!ddnsHost) {
+    console.error('[Cafe Wi-Fi] CAFE_DDNS_HOST is not configured. Customer request denied.');
+    return cachedApprovedIp;
+  }
+
+  // This timestamp also throttles retries during a DNS outage. The most
+  // recently successful address remains usable while those retries fail.
+  if (cachedApprovedIp && Date.now() - lastLookupAttemptAt < DDNS_CACHE_TTL_MS) {
+    return cachedApprovedIp;
+  }
+
+  if (lookupInFlight) return lookupInFlight;
+
+  lastLookupAttemptAt = Date.now();
+  lookupInFlight = dns.lookup(ddnsHost)
+    .then(({ address }) => {
+      const resolvedIp = normalizeIp(address);
+      if (!resolvedIp) {
+        throw new Error(`CAFE_DDNS_HOST resolved to an invalid IP address: ${address}`);
+      }
+
+      cachedApprovedIp = resolvedIp;
+      return cachedApprovedIp;
+    })
+    .catch((error) => {
+      // Do not discard a known-good address because a transient DNS lookup
+      // failed. Requests only fail closed until the first successful lookup.
+      console.error(
+        `[Cafe Wi-Fi] Could not resolve CAFE_DDNS_HOST (${ddnsHost}): ${error.message}. ${
+          cachedApprovedIp ? 'Using the last successfully resolved IP.' : 'Customer request denied.'
+        }`,
+      );
+      return cachedApprovedIp;
+    })
+    .finally(() => {
+      lookupInFlight = null;
+    });
+
+  return lookupInFlight;
+};
+
+const requireCafeWifi = async (req, res, next) => {
   // A successfully authenticated administrator may use shared read endpoints
   // from another network without turning those endpoints into customer access.
   if (req.user) return next();
 
   const clientIp = normalizeIp(req.ip || req.socket?.remoteAddress);
-  const approvedIp = normalizeIp(process.env.CAFE_PUBLIC_IP);
   const allowLocalhost = process.env.ALLOW_LOCALHOST_MENU_ACCESS === 'true';
 
   if (allowLocalhost && isLocalhost(clientIp)) return next();
 
+  const approvedIp = await resolveApprovedIp();
+
   if (!approvedIp) {
     // Fail closed outside the explicit local-development bypass. This avoids
     // accidentally publishing the menu when production configuration is absent.
-    console.error('[Cafe Wi-Fi] CAFE_PUBLIC_IP is not configured. Customer request denied.');
     return res.status(403).json({
       success: false,
       code: 'CAFE_WIFI_REQUIRED',
