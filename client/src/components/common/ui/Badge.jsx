@@ -1,0 +1,3 @@
+import React from "react";
+const tones = { Pending: "bg-amber-100 text-amber-800", Preparing: "bg-blue-100 text-blue-800", Ready: "bg-emerald-100 text-emerald-800", Completed: "bg-cafe-100 text-cafe-700", Cancelled: "bg-red-100 text-red-700", success: "bg-emerald-100 text-emerald-800", warning: "bg-amber-100 text-amber-800", danger: "bg-red-100 text-red-700", neutral: "bg-cafe-100 text-cafe-700" };
+export default function Badge({ status, tone, className = "", children }) { return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${tones[status] || tones[tone] || tones.neutral} ${className}`}>{children ?? status}</span>; }

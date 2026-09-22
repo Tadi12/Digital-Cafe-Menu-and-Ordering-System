@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { LanguageContext } from "../../context/LanguageContext";
 import { useCart } from "../../hooks/useCart";
@@ -15,6 +15,13 @@ import {
 } from "lucide-react";
 
 const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
+  const [mounted, setMounted] = useState(isOpen);
+  useEffect(() => {
+    let timer;
+    if (isOpen) setMounted(true);
+    else timer = window.setTimeout(() => setMounted(false), 220);
+    return () => window.clearTimeout(timer);
+  }, [isOpen]);
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
   const {
@@ -30,7 +37,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
 
   const [nameError, setNameError] = useState("");
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,9 +50,9 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className={`fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}>
       <div
-        className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden"
+        className={`w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden transition-transform duration-200 ${isOpen ? "translate-x-0" : "translate-x-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

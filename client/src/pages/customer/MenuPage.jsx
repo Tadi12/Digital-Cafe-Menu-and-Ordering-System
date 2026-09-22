@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import { LanguageContext } from "../../context/LanguageContext";
 import { getTableByIdApi } from "../../api/tableApi";
 import { getCategoriesApi } from "../../api/categoryApi";
@@ -10,10 +11,10 @@ import { useCart } from "../../hooks/useCart";
 import { useSocket } from "../../hooks/useSocket";
 
 import Header from "../../components/common/Header";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 import TableHeader from "../../components/customer/TableHeader";
 import CategoryFilter from "../../components/customer/CategoryFilter";
 import FoodCard from "../../components/customer/FoodCard";
+import { MenuListSkeleton } from "../../components/customer/MenuItemSkeleton";
 import FoodDetailModal from "../../components/customer/FoodDetailModal";
 import DrinkDetailModal from "../../components/customer/DrinkDetailModal";
 import CartDrawer from "../../components/customer/CartDrawer";
@@ -313,7 +314,7 @@ const MenuPage = () => {
         navigate(`/order-confirmation/${res.data._id}`);
       }
     } catch (err) {
-      alert(
+      toast.error(
         err.response?.data?.message ||
           "Failed to submit order. Please try again.",
       );
@@ -324,8 +325,16 @@ const MenuPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cafe-50 flex flex-col justify-center">
-        <LoadingSpinner message="Scanning table QR code & loading menu..." />
+      <div className="min-h-screen bg-cafe-50">
+        <div className="mx-auto min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 shadow-xl">
+          <Header />
+          <div className="h-20 animate-pulse bg-cafe-100" />
+          <div className="space-y-3 border-b border-cafe-200 px-4 py-4">
+            <div className="flex gap-2">{[1, 2, 3, 4].map((item) => <div key={item} className="h-8 w-20 animate-pulse rounded-full bg-cafe-100" />)}</div>
+          </div>
+          <div className="p-4"><div className="h-10 animate-pulse rounded-full bg-white shadow-sm" /></div>
+          <div className="px-4"><MenuListSkeleton /></div>
+        </div>
       </div>
     );
   }
@@ -488,13 +497,14 @@ const MenuPage = () => {
                 <p className="text-sm font-semibold">No food items found.</p>
               </div>
             ) : (
-              filteredFoods.map((food) => (
-                <FoodCard
-                  key={food._id}
-                  food={food}
-                  onSelectFood={handleSelectItem}
-                  onQuickAdd={(item) => addToCart(item, 1)}
-                />
+              filteredFoods.map((food, index) => (
+                <div key={food._id} className="animate-fadeInUp" style={{ animationDelay: `${Math.min(index, 10) * 45}ms` }}>
+                  <FoodCard
+                    food={food}
+                    onSelectFood={handleSelectItem}
+                    onQuickAdd={(item) => addToCart(item, 1)}
+                  />
+                </div>
               ))
             )}
           </div>
@@ -525,7 +535,7 @@ const MenuPage = () => {
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <ShoppingBag className="w-5 h-5 text-gold-500" />
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">
+                    <span key={totalItemsCount} className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center animate-pop">
                       {totalItemsCount}
                     </span>
                   </div>

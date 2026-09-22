@@ -1,7 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
 const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
+  const [mounted, setMounted] = useState(isOpen);
+  useEffect(() => {
+    let timer;
+    if (isOpen) setMounted(true);
+    else timer = window.setTimeout(() => setMounted(false), 200);
+    return () => window.clearTimeout(timer);
+  }, [isOpen]);
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -16,12 +23,12 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}>
       <div
-        className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all border border-cafe-100 max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-200 border border-cafe-100 max-h-[90vh] flex flex-col ${isOpen ? "translate-y-0 scale-100" : "translate-y-3 scale-95"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}

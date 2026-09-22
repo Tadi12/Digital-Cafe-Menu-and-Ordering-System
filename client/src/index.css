@@ -11,7 +11,7 @@
 
   /* Handle WebKit browser autofill background */
   input:-webkit-autofill,
-  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   textarea:-webkit-autofill,
   textarea:-webkit-autofill:hover,
@@ -37,6 +37,15 @@
   }
 }
 
+@layer components {
+  .form-field {
+    @apply w-full rounded-xl border border-cafe-200 bg-white px-3 py-2 text-sm text-cafe-900 outline-none transition focus:border-cafe-600 focus:ring-2 focus:ring-cafe-200;
+  }
+  .card { @apply rounded-2xl border border-cafe-100 bg-white shadow-sm; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl font-bold transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-50; }
+  button { @apply transition-transform active:scale-95; }
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.98); }
@@ -45,4 +54,24 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.4); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInUp { animation: fadeInUp 0.35s ease-out both; }
+.animate-pop { animation: pop 0.3s ease-out; }
+.animate-slideUp { animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }

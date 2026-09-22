@@ -167,7 +167,7 @@ const DrinkFormModal = ({
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
               placeholder="e.g. Ethiopian Coffee"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
               required
             />
           </div>
@@ -180,7 +180,7 @@ const DrinkFormModal = ({
               value={nameAm}
               onChange={(e) => setNameAm(e.target.value)}
               placeholder="ምሳሌ፡ ኢትዮጵያዊ ቡና"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
               required
             />
           </div>
@@ -197,7 +197,7 @@ const DrinkFormModal = ({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="120"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
               required
             />
           </div>
@@ -208,7 +208,7 @@ const DrinkFormModal = ({
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none bg-white"
+              className="form-field"
               required
             >
               <option value="" disabled>
@@ -233,7 +233,7 @@ const DrinkFormModal = ({
               value={ingredientsEn}
               onChange={(e) => setIngredientsEn(e.target.value)}
               placeholder="Coffee, Milk, Sugar"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
             />
           </div>
           <div>
@@ -245,7 +245,7 @@ const DrinkFormModal = ({
               value={ingredientsAm}
               onChange={(e) => setIngredientsAm(e.target.value)}
               placeholder="ቡና, ወተት, ስኳር"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
             />
           </div>
         </div>

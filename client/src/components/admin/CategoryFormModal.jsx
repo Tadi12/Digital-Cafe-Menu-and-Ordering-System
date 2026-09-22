@@ -120,7 +120,7 @@ const CategoryFormModal = ({
           <select
             value={categoryType}
             onChange={(e) => setCategoryType(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none bg-white"
+            className="form-field"
           >
             <option value="food">Food</option>
             <option value="drink">Drink</option>
@@ -137,7 +137,7 @@ const CategoryFormModal = ({
             value={nameEn}
             onChange={(e) => setNameEn(e.target.value)}
             placeholder="e.g. Coffee & Drinks"
-            className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+            className="form-field"
             required
           />
         </div>
@@ -152,7 +152,7 @@ const CategoryFormModal = ({
             value={nameAm}
             onChange={(e) => setNameAm(e.target.value)}
             placeholder="ምሳሌ፡ ቡና እና መጠጥ"
-            className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+            className="form-field"
             required
           />
         </div>

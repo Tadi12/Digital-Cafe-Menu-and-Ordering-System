@@ -157,7 +157,7 @@ const FoodFormModal = ({
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
               placeholder="e.g. Chicken Burger"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
               required
             />
           </div>
@@ -170,7 +170,7 @@ const FoodFormModal = ({
               value={nameAm}
               onChange={(e) => setNameAm(e.target.value)}
               placeholder="ምሳሌ፡ የዶሮ በርገር"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
               required
             />
           </div>
@@ -188,7 +188,7 @@ const FoodFormModal = ({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="250"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
               required
             />
           </div>
@@ -199,7 +199,7 @@ const FoodFormModal = ({
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none bg-white"
+              className="form-field"
               required
               disabled={!categories.length}
             >
@@ -228,7 +228,7 @@ const FoodFormModal = ({
               value={ingredientsEn}
               onChange={(e) => setIngredientsEn(e.target.value)}
               placeholder="Chicken, Cheese, Mayo"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
             />
           </div>
           <div>
@@ -240,7 +240,7 @@ const FoodFormModal = ({
               value={ingredientsAm}
               onChange={(e) => setIngredientsAm(e.target.value)}
               placeholder="ዶሮ, አይብ, ማዮኔዝ"
-              className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
+              className="form-field"
             />
           </div>
         </div>

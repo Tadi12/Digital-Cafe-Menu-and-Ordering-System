@@ -14,7 +14,7 @@ const FoodCard = ({ food, onSelectFood, onQuickAdd }) => {
   return (
     <div
       onClick={() => onSelectFood(food)}
-      className={`bg-white rounded-2xl p-3 border border-cafe-100 shadow-sm hover:shadow-md transition-all flex gap-3 cursor-pointer group relative overflow-hidden ${
+      className={`bg-white rounded-2xl p-3 border border-cafe-100 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex gap-3 cursor-pointer group relative overflow-hidden ${
         !isAvailable ? 'opacity-60 bg-gray-50' : ''
       }`}
     >
