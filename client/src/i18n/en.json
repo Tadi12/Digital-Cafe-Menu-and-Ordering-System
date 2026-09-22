@@ -194,5 +194,7 @@
   "error_unexpected_title": "Something went wrong",
   "review_every_device": "Review every device with access to this admin account and end sessions you do not recognize.",
   "admin_page_devices": "Signed-in devices",
+  "food_unavailable_message": "This food item is currently unavailable. Please check the menu for available food items.",
+  "drink_unavailable_message": "This drink is currently unavailable. Please check the menu for available drinks.",
   "error_unexpected_message": "The page ran into an unexpected problem. You can safely try again."
 }

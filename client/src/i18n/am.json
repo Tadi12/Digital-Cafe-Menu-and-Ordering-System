@@ -137,5 +137,7 @@
   "food_item_name": "የምግብ አይነት ስም",
   "quantity_sold": "የተሸጠ ብዛት",
   "admin_page_devices": "የአስተዳዳሪ ዲቫይሶች",
+  "food_unavailable_message": "ይህ ምግብ በአሁኑ ጊዜ አይገኝም። እባክዎ በሜኑ ውስጥ ያሉ ሌሎች ምግቦችን ይመልከቱ።",
+  "drink_unavailable_message": "ይህ መጠጥ በአሁኑ ጊዜ አይገኝም። እባክዎ በሜኑ ውስጥ ያሉ ሌሎች መጠጦችን ይመልከቱ።",
   "total_amount": "ጠቅላላ መጠን"
 }

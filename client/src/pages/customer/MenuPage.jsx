@@ -15,6 +15,7 @@ import TableHeader from "../../components/customer/TableHeader";
 import CategoryFilter from "../../components/customer/CategoryFilter";
 import FoodCard from "../../components/customer/FoodCard";
 import FoodDetailModal from "../../components/customer/FoodDetailModal";
+import DrinkDetailModal from "../../components/customer/DrinkDetailModal";
 import CartDrawer from "../../components/customer/CartDrawer";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import {
@@ -78,12 +79,21 @@ const MenuPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
+  const [selectedDrink, setSelectedDrink] = useState(null);
   const [customerOrderHistory, setCustomerOrderHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [readyToastVisible, setReadyToastVisible] = useState(false);
   const [readyToastOrder, setReadyToastOrder] = useState(null);
 
   const getCategoryType = (category) => category?.type || "food";
+  const handleSelectItem = (item) => {
+    if (getCategoryType(item.category) === "drink") {
+      setSelectedDrink(item);
+      return;
+    }
+
+    setSelectedFood(item);
+  };
   const foodCategories = categories.filter(
     (category) => getCategoryType(category) === "food",
   );
@@ -482,7 +492,7 @@ const MenuPage = () => {
                 <FoodCard
                   key={food._id}
                   food={food}
-                  onSelectFood={setSelectedFood}
+                  onSelectFood={handleSelectItem}
                   onQuickAdd={(item) => addToCart(item, 1)}
                 />
               ))
@@ -494,6 +504,14 @@ const MenuPage = () => {
             food={selectedFood}
             isOpen={!!selectedFood}
             onClose={() => setSelectedFood(null)}
+            onAddToCart={addToCart}
+          />
+
+          {/* Drink Details Modal */}
+          <DrinkDetailModal
+            food={selectedDrink}
+            isOpen={!!selectedDrink}
+            onClose={() => setSelectedDrink(null)}
             onAddToCart={addToCart}
           />
 

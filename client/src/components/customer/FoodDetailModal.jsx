@@ -5,7 +5,7 @@ import Modal from '../common/Modal';
 import { formatCurrency } from '../../utils/currencyFormatter';
 import { Plus, Minus, ShoppingBag, CheckCircle, XCircle } from 'lucide-react';
 
-const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart }) => {
+const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food" }) => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
   const [quantity, setQuantity] = useState(1);
@@ -42,12 +42,12 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart }) => {
             {isAvailable ? (
               <span className="inline-flex items-center gap-1 bg-green-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
                 <CheckCircle className="w-3.5 h-3.5" />
-                {t('available')}
+                {t("available")}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
                 <XCircle className="w-3.5 h-3.5" />
-                {t('unavailable')}
+                {t("unavailable")}
               </span>
             )}
           </div>
@@ -56,7 +56,9 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart }) => {
         {/* Title & Price */}
         <div className="flex items-start justify-between gap-2 border-b border-cafe-100 pb-3">
           <div>
-            <h2 className="text-lg font-bold text-cafe-900 leading-snug">{name}</h2>
+            <h2 className="text-lg font-bold text-cafe-900 leading-snug">
+              {name}
+            </h2>
             {food.category?.name && (
               <p className="text-xs text-cafe-500 font-medium">
                 {food.category.name[currentLang] || food.category.name.en}
@@ -72,7 +74,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart }) => {
         {ingredientsList && ingredientsList.length > 0 && (
           <div>
             <h4 className="text-xs font-bold text-cafe-700 uppercase tracking-wider mb-1.5">
-              {t('ingredients')}
+              {t("ingredients")}
             </h4>
             <div className="flex flex-wrap gap-1.5">
               {ingredientsList.map((ing, idx) => (
@@ -115,13 +117,18 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart }) => {
             >
               <ShoppingBag className="w-4 h-4" />
               <span>
-                {t('add_to_cart')} - {formatCurrency(food.price * quantity, currentLang)}
+                {t("add_to_cart")} -{" "}
+                {formatCurrency(food.price * quantity, currentLang)}
               </span>
             </button>
           </div>
         ) : (
           <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl font-medium text-center border border-red-200">
-            {t('cannot_cancel_notice')}
+            {t(
+              itemType === "drink"
+                ? "drink_unavailable_message"
+                : "food_unavailable_message",
+            )}
           </div>
         )}
       </div>
