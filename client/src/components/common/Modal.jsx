@@ -1,10 +1,12 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(isOpen);
   const panelRef = useRef(null);
   const previouslyFocusedRef = useRef(null);
@@ -89,7 +91,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
           </h3>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('close')}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-cafe-500 hover:text-cafe-900 hover:bg-cafe-200 transition-colors"
           >
             <X className="w-5 h-5" />

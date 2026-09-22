@@ -1,8 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Modal from '../common/Modal';
 import { Download, Printer, ExternalLink } from 'lucide-react';
 
 const TableQRModal = ({ isOpen, onClose, table }) => {
+  const { t } = useTranslation();
+
   if (!table) return null;
 
   const menuUrl = `${window.location.origin}/menu/table/${table._id}`;
@@ -23,7 +26,7 @@ const TableQRModal = ({ isOpen, onClose, table }) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Table #${table.tableNumber} QR Code</title>
+          <title>${t('qr_modal_title', { number: table.tableNumber })}</title>
           <style>
             body {
               font-family: 'Inter', sans-serif;
@@ -47,10 +50,10 @@ const TableQRModal = ({ isOpen, onClose, table }) => {
         </head>
         <body>
           <div class="card">
-            <h1>Hable Cafe Menu</h1>
-            <h2>Table #${table.tableNumber} ${table.tableName ? `(${table.tableName})` : ''}</h2>
+            <h1>${t('qr_print_heading')}</h1>
+            <h2>${t('table_number_label', { number: table.tableNumber })} ${table.tableName ? `(${table.tableName})` : ''}</h2>
             <img src="${table.qrCodeUrl}" alt="QR Code" />
-            <p>Scan with your phone to view menu & place orders</p>
+            <p>${t('qr_print_instruction')}</p>
           </div>
           <script>
             window.onload = function() { window.print(); window.close(); }
@@ -65,7 +68,7 @@ const TableQRModal = ({ isOpen, onClose, table }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Table #${table.tableNumber} QR Code`}
+      title={t('qr_modal_title', { number: table.tableNumber })}
       maxWidth="max-w-sm"
     >
       <div className="flex flex-col items-center text-center space-y-4">
@@ -73,7 +76,7 @@ const TableQRModal = ({ isOpen, onClose, table }) => {
         <div className="p-4 bg-cafe-50 border-2 border-cafe-800 rounded-2xl shadow-inner">
           <img
             src={table.qrCodeUrl}
-            alt={`Table ${table.tableNumber} QR`}
+            alt={t('qr_modal_title', { number: table.tableNumber })}
             className="w-56 h-56 object-contain rounded-lg"
           />
         </div>
@@ -81,7 +84,7 @@ const TableQRModal = ({ isOpen, onClose, table }) => {
         {/* Info */}
         <div>
           <h4 className="font-bold text-cafe-900 text-base">
-            Table #{table.tableNumber}
+            {t('table_number_label', { number: table.tableNumber })}
           </h4>
           {table.tableName && (
             <p className="text-xs text-cafe-600 font-medium">{table.tableName}</p>
@@ -104,14 +107,14 @@ const TableQRModal = ({ isOpen, onClose, table }) => {
             className="flex items-center justify-center gap-2 bg-cafe-800 hover:bg-cafe-900 text-white py-2.5 px-3 rounded-xl font-bold text-xs shadow transition-all"
           >
             <Download className="w-4 h-4" />
-            <span>Download</span>
+            <span>{t('download')}</span>
           </button>
           <button
             onClick={handlePrint}
             className="flex items-center justify-center gap-2 bg-cafe-100 hover:bg-cafe-200 text-cafe-800 border border-cafe-300 py-2.5 px-3 rounded-xl font-bold text-xs transition-colors"
           >
             <Printer className="w-4 h-4" />
-            <span>Print</span>
+            <span>{t('print')}</span>
           </button>
         </div>
       </div>

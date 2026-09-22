@@ -72,28 +72,28 @@ const DashboardPage = () => {
           value={formatCurrency(metrics?.todayRevenue || 0, currentLang)}
           icon={Banknote}
           tone="emerald"
-          subtext="Today's total sales"
+          subtext={t("subtext_revenue_today")}
         />
         <MetricCard
           title={t('orders_today')}
           value={metrics?.ordersToday || 0}
           icon={ShoppingBag}
           tone="cafe"
-          subtext="New customer orders"
+          subtext={t("subtext_orders_today")}
         />
         <MetricCard
           title={t('pending_orders')}
           value={metrics?.pendingOrders || 0}
           icon={Clock}
           tone="amber"
-          subtext="Awaiting preparation"
+          subtext={t("subtext_pending_orders")}
         />
         <MetricCard
           title={t('preparing_orders')}
           value={metrics?.preparingOrders || 0}
           icon={ChefHat}
           tone="blue"
-          subtext="Currently in kitchen"
+          subtext={t("subtext_preparing_orders")}
         />
       </div>
 
@@ -107,7 +107,7 @@ const DashboardPage = () => {
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
                 {t("revenue_analytics")}
               </h3>
-              <p className="text-xs text-cafe-500">Daily total revenue breakdown in ETB</p>
+              <p className="text-xs text-cafe-500">{t("revenue_breakdown_subtitle")}</p>
             </div>
           </div>
 
@@ -118,7 +118,7 @@ const DashboardPage = () => {
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6B7280' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} />
                 <Tooltip
-                  formatter={(value) => [`${value} ETB`, 'Revenue']}
+                  formatter={(value) => [`${value} ${t("currency")}`, t("revenue")]}
                   contentStyle={{ borderRadius: '12px', borderColor: '#E5E7EB' }}
                 />
                 <Bar dataKey="revenue" fill="#8B5A2B" radius={[6, 6, 0, 0]} />
@@ -130,8 +130,8 @@ const DashboardPage = () => {
         {/* Order Status Pie Chart (1 Col) */}
         <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4 flex flex-col justify-between">
           <div>
-            <h3 className="font-display font-semibold text-cafe-900 text-base">Order Status Breakdown</h3>
-            <p className="text-xs text-cafe-500">Distribution of all cafe orders</p>
+            <h3 className="font-display font-semibold text-cafe-900 text-base">{t("order_status_breakdown")}</h3>
+            <p className="text-xs text-cafe-500">{t("order_distribution_subtitle")}</p>
           </div>
 
           <div className="h-52 w-full">
@@ -177,12 +177,12 @@ const DashboardPage = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-cafe-50 text-cafe-700 uppercase font-bold text-[10px]">
               <tr>
-                <th className="p-3">Order #</th>
-                <th className="p-3">Customer</th>
-                <th className="p-3">Table</th>
+                <th className="p-3">{t("order_number_short")}</th>
+                <th className="p-3">{t("customer")}</th>
+                <th className="p-3">{t("table")}</th>
                 <th className="p-3">{t("total_amount")}</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Time</th>
+                <th className="p-3">{t("status")}</th>
+                <th className="p-3">{t("time")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-cafe-100 font-medium text-cafe-800">

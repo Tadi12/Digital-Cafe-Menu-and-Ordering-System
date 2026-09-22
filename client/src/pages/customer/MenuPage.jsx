@@ -395,14 +395,14 @@ const MenuPage = () => {
                     ✓
                   </span>
                   <span className="tracking-[0.12em] uppercase text-[10px] text-amber-200">
-                    Ready
+                    {t('ready')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={dismissReadyToast}
-                    aria-label="Close notification"
+                    aria-label={t('close_notification')}
                     className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-cafe-100 transition hover:bg-white/20"
                   >
                     ×
@@ -433,7 +433,7 @@ const MenuPage = () => {
               >
                 <div className="text-left">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
-                    My orders
+                    {t('my_orders')}
                   </p>
                   <h3 className="text-sm font-black text-cafe-900">
                     {customerName}
@@ -445,7 +445,7 @@ const MenuPage = () => {
                     {historyLoading ? "..." : customerOrderHistory.length}
                   </span>
                   <span className="text-[10px] font-bold text-cafe-600">
-                    View all
+                    {t('view_all')}
                   </span>
                 </div>
               </button>
@@ -457,7 +457,7 @@ const MenuPage = () => {
             {foodCategoryList.length > 0 && (
               <div className="px-4 pt-3 pb-1">
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
-                  Food
+                  {t('food')}
                 </div>
                 <CategoryFilter
                   categories={foodCategoryList}
@@ -470,7 +470,7 @@ const MenuPage = () => {
             {drinkCategoryList.length > 0 && (
               <div className="px-4 py-1 pb-3">
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
-                  Drinks
+                  {t('drinks')}
                 </div>
                 <CategoryFilter
                   categories={drinkCategoryList}
@@ -565,7 +565,7 @@ const MenuPage = () => {
                     {formatCurrency(subtotal, currentLang)}
                   </span>
                   <span className="bg-cafe-700 text-cafe-100 text-xs px-2 py-1 rounded-lg font-bold">
-                    View
+                    {t('view')}
                   </span>
                 </div>
               </button>

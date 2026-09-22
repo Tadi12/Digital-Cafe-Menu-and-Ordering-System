@@ -144,7 +144,7 @@ const FoodManagerPage = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search food by name..."
+                placeholder={t("search_food_placeholder")}
                 className="w-full pl-9 pr-3 py-2 rounded-xl border border-cafe-200 text-xs focus:border-cafe-600 focus:outline-none"
               />
             </div>
@@ -154,7 +154,7 @@ const FoodManagerPage = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full md:w-auto px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none"
             >
-              <option value="">All Categories</option>
+              <option value="">{t("all_categories_filter")}</option>
               {categories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
                   {cat.name.en} ({cat.name.am})
@@ -167,9 +167,9 @@ const FoodManagerPage = () => {
               onChange={(e) => setAvailabilityFilter(e.target.value)}
               className="w-full md:w-auto px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none"
             >
-              <option value="all">All</option>
-              <option value="available">Available</option>
-              <option value="unavailable">Unavailable</option>
+              <option value="all">{t("all_filter")}</option>
+              <option value="available">{t("available")}</option>
+              <option value="unavailable">{t("unavailable")}</option>
             </select>
           </div>
 
@@ -253,7 +253,7 @@ const FoodManagerPage = () => {
                   <button
                     onClick={() => handleDeleteFood(food._id, food.name.en)}
                     className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                    title="Delete Food"
+                    title={t("delete_food_title")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

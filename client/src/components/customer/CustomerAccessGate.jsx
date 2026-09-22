@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertCircle, RefreshCw, WifiOff } from "lucide-react";
 import axiosClient from "../../api/axiosClient";
 import LoadingSpinner from "../common/LoadingSpinner";
 
-const WIFI_MESSAGE =
-  "Please connect to the cafe’s Wi-Fi to access the menu and place an order.";
-
 const CustomerAccessGate = ({ children }) => {
+  const { t } = useTranslation();
   const [state, setState] = useState("checking");
 
   const checkAccess = useCallback(async () => {
@@ -28,7 +27,7 @@ const CustomerAccessGate = ({ children }) => {
   if (state === "checking") {
     return (
       <div className="min-h-screen bg-cafe-50 flex flex-col justify-center">
-        <LoadingSpinner message="Checking menu access..." />
+        <LoadingSpinner message={t("checking_menu_access")} />
       </div>
     );
   }
@@ -41,12 +40,12 @@ const CustomerAccessGate = ({ children }) => {
           {denied ? <WifiOff className="h-8 w-8" /> : <AlertCircle className="h-8 w-8" />}
         </div>
         <h1 className="font-display text-xl font-bold text-cafe-900">
-          {denied ? "Cafe Wi-Fi required" : "Menu temporarily unavailable"}
+          {denied ? t("wifi_required_title") : t("menu_unavailable_title")}
         </h1>
         <p className="mt-3 text-sm leading-6 text-cafe-600">
           {denied
-            ? WIFI_MESSAGE
-            : "We couldn’t reach the cafe menu right now. Check your connection and try again."}
+            ? t("wifi_required_message")
+            : t("menu_unavailable_message")}
         </p>
         {!denied && (
           <button
@@ -55,7 +54,7 @@ const CustomerAccessGate = ({ children }) => {
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-cafe-900"
           >
             <RefreshCw className="h-4 w-4" />
-            Try again
+            {t("try_again")}
           </button>
         )}
       </div>

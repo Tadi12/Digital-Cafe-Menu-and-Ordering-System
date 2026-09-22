@@ -194,7 +194,7 @@ const OrderTrackerPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-cafe-50 flex flex-col justify-center">
-        <LoadingSpinner message="Connecting to live order status..." />
+        <LoadingSpinner message={t('loading_order_status')} />
       </div>
     );
   }
@@ -254,7 +254,7 @@ const OrderTrackerPage = () => {
                 <button
                   type="button"
                   onClick={dismissReadyToast}
-                  aria-label="Close notification"
+                  aria-label={t('close_notification')}
                   className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-cafe-100 transition hover:bg-white/20"
                 >
                   ×
@@ -350,9 +350,9 @@ const OrderTrackerPage = () => {
         ) : (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-center text-red-700 space-y-2">
             <Ban className="w-10 h-10 mx-auto text-red-500" />
-            <h3 className="font-bold text-base">Order Has Been Cancelled</h3>
+            <h3 className="font-bold text-base">{t('order_cancelled_title')}</h3>
             <p className="text-xs">
-              This order was cancelled and will not be prepared by the kitchen.
+              {t('order_cancelled_message')}
             </p>
           </div>
         )}
@@ -367,11 +367,11 @@ const OrderTrackerPage = () => {
         {/* Ordered Items Summary */}
         <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-3">
           <h4 className="text-xs font-bold text-cafe-800 uppercase tracking-wider">
-            Items in this order
+            {t('items_in_order')}
           </h4>
           <div className="space-y-2">
             {(Array.isArray(order.items) ? order.items : []).map((item, idx) => {
-              const name = item.foodName?.[currentLang] || item.foodName?.en || "Food item";
+              const name = item.foodName?.[currentLang] || item.foodName?.en || t('food');
               return (
                 <div
                   key={idx}

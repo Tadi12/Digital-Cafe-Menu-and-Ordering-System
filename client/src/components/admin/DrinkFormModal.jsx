@@ -108,7 +108,7 @@ const DrinkFormModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={drink ? "Edit Drink" : t("add_drink")}
+      title={drink ? t("edit_drink") : t("add_drink")}
       maxWidth="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,10 +140,10 @@ const DrinkFormModal = ({
             >
               <Upload className="w-5 h-5 text-cafe-600 mx-auto mb-1" />
               <span className="text-xs font-semibold text-cafe-800 block">
-                Choose drink image file
+                {t("choose_drink_image_file")}
               </span>
               <span className="text-[10px] text-cafe-500">
-                JPG, PNG, WEBP max 5MB
+                {t("image_file_hint")}
               </span>
               <input
                 id="drink-image-upload"
@@ -160,20 +160,20 @@ const DrinkFormModal = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Drink Name (English) *
+              {t("drink_name_en")} *
             </label>
             <input
               type="text"
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
-              placeholder="e.g. Ethiopian Coffee"
+              placeholder={t("drink_name_en_placeholder")}
               className="form-field"
               required
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Drink Name (Amharic) *
+              {t("drink_name_am")} *
             </label>
             <input
               type="text"
@@ -189,7 +189,7 @@ const DrinkFormModal = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Price (ETB) *
+              {t("price")} (ETB) *
             </label>
             <input
               type="number"
@@ -203,7 +203,7 @@ const DrinkFormModal = ({
           </div>
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Drink Category *
+              {t("drink_category")} *
             </label>
             <select
               value={category}
@@ -212,7 +212,7 @@ const DrinkFormModal = ({
               required
             >
               <option value="" disabled>
-                Select drink category
+                {t("select_drink_category")}
               </option>
               {safeCategories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
@@ -226,19 +226,19 @@ const DrinkFormModal = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Ingredients (English, comma separated)
+              {t("ingredients_en_label")}
             </label>
             <input
               type="text"
               value={ingredientsEn}
               onChange={(e) => setIngredientsEn(e.target.value)}
-              placeholder="Coffee, Milk, Sugar"
+              placeholder={t("ingredients_drink_placeholder")}
               className="form-field"
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Ingredients (Amharic, comma separated)
+              {t("ingredients_am_label")}
             </label>
             <input
               type="text"
@@ -253,10 +253,10 @@ const DrinkFormModal = ({
         <div className="flex items-center justify-between p-3 bg-cafe-50 rounded-xl border border-cafe-200">
           <div>
             <span className="font-bold text-xs text-cafe-900 block">
-              Drink Availability
+              {t("drink_availability")}
             </span>
             <span className="text-[11px] text-cafe-500">
-              Toggle whether customers can order this drink
+              {t("toggle_drink_availability")}
             </span>
           </div>
           <button
@@ -280,14 +280,14 @@ const DrinkFormModal = ({
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-xs font-bold text-cafe-700 hover:bg-cafe-100 transition-colors"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="submit"
             disabled={isLoading}
             className="bg-cafe-800 hover:bg-cafe-900 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-md transition-all disabled:opacity-50"
           >
-            {isLoading ? "Saving..." : drink ? "Update Drink" : "Create Drink"}
+            {isLoading ? t("saving") : drink ? t("update_drink") : t("create_drink")}
           </button>
         </div>
       </form>

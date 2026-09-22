@@ -98,9 +98,9 @@ const CategoryManagerPage = () => {
             onChange={(e) => setCategoryTypeFilter(e.target.value)}
             className="ml-auto px-3 py-2 rounded-xl border border-cafe-200 text-xs font-semibold text-cafe-800 bg-white focus:outline-none"
           >
-            <option value="all">All Categories</option>
-            <option value="food">Food Categories</option>
-            <option value="drink">Drink Categories</option>
+            <option value="all">{t("all_categories_filter")}</option>
+            <option value="food">{t("food_categories")}</option>
+            <option value="drink">{t("drink_categories")}</option>
           </select>
         </div>
         <button
@@ -159,7 +159,7 @@ const CategoryManagerPage = () => {
                   <button
                     onClick={() => handleDeleteCategory(cat._id, cat.name.en)}
                     className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                    title="Delete Category"
+                    title={t("delete_category_title")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

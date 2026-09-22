@@ -17,7 +17,7 @@ const TableHeader = ({ table }) => {
         </span>
       </div>
       <span className="bg-cafe-800 text-cafe-200 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold border border-cafe-600">
-        Verified QR
+        {t('verified_qr')}
       </span>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useCart } from "../../hooks/useCart";
 import { getCustomerOrdersApi } from "../../api/orderApi";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -16,6 +17,7 @@ import {
 const MyOrdersPage = () => {
   const navigate = useNavigate();
   const { customerName, customerSessionId } = useCart();
+  const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ const MyOrdersPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-cafe-50 flex flex-col justify-center">
-        <LoadingSpinner message="Loading your order history..." />
+        <LoadingSpinner message={t("loading_orders")} />
       </div>
     );
   }
@@ -75,9 +77,9 @@ const MyOrdersPage = () => {
           className="flex items-center gap-1.5 text-xs text-cafe-200 hover:text-white font-bold"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t("back")}
         </button>
-        <div className="text-xs font-bold text-emerald-400">My Orders</div>
+        <div className="text-xs font-bold text-emerald-400">{t("my_orders")}</div>
       </div>
 
       <div className="flex-1 p-4 space-y-4">
@@ -85,22 +87,22 @@ const MyOrdersPage = () => {
           <div className="flex items-center gap-2 text-cafe-700">
             <User className="w-4 h-4" />
             <span className="text-sm font-bold">
-              {customerName || "Unknown customer"}
+              {customerName || t("unknown_customer")}
             </span>
           </div>
           <div className="flex items-center gap-2 text-cafe-600 text-xs">
             <Fingerprint className="w-3.5 h-3.5" />
-            <span>Session ID: {customerSessionId || "not available"}</span>
+            <span>{t("session_id_label", { id: customerSessionId || t("session_id_unavailable") })}</span>
           </div>
         </div>
 
         {!customerName ? (
           <div className="bg-white rounded-2xl border border-cafe-200 p-5 text-center text-sm text-cafe-600">
-            Please enter your name before viewing your orders.
+            {t("enter_name_to_view_orders")}
           </div>
         ) : orders.length === 0 ? (
           <div className="bg-white rounded-2xl border border-cafe-200 p-5 text-center text-sm text-cafe-600">
-            No orders yet for this customer. Your new orders will appear here.
+            {t("no_customer_orders")}
           </div>
         ) : (
           orders.map((order) => (
@@ -113,7 +115,7 @@ const MyOrdersPage = () => {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
-                    Order
+                    {t("order_label")}
                   </div>
                   <div className="text-sm font-black text-cafe-900 mt-1">
                     {order.orderNumber}
@@ -140,8 +142,9 @@ const MyOrdersPage = () => {
               </div>
 
               <div className="mt-2 text-[11px] text-cafe-600">
-                Table #
-                {order.tableNumberSnapshot ?? order.table?.tableNumber ?? "-"}
+                {t("table_number_label", {
+                  number: order.tableNumberSnapshot ?? order.table?.tableNumber ?? "-",
+                })}
               </div>
             </button>
           ))

@@ -131,10 +131,10 @@ const FoodFormModal = ({
             <label className="flex-1 cursor-pointer bg-cafe-50 hover:bg-cafe-100 border-2 border-dashed border-cafe-300 rounded-xl p-3 text-center transition-colors">
               <Upload className="w-5 h-5 text-cafe-600 mx-auto mb-1" />
               <span className="text-xs font-semibold text-cafe-800 block">
-                Choose image file
+                {t("choose_image_file")}
               </span>
               <span className="text-[10px] text-cafe-500">
-                JPG, PNG, WEBP max 5MB
+                {t("image_file_hint")}
               </span>
               <input
                 type="file"
@@ -156,7 +156,7 @@ const FoodFormModal = ({
               type="text"
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
-              placeholder="e.g. Chicken Burger"
+              placeholder={t("food_name_en_placeholder")}
               className="form-field"
               required
             />
@@ -205,8 +205,8 @@ const FoodFormModal = ({
             >
               <option value="" disabled>
                 {categories.length
-                  ? "Select category"
-                  : "No food categories available"}
+                  ? t("select_category")
+                  : t("no_food_categories")}
               </option>
               {categories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
@@ -221,19 +221,19 @@ const FoodFormModal = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Ingredients (English, comma separated)
+              {t("ingredients_en_label")}
             </label>
             <input
               type="text"
               value={ingredientsEn}
               onChange={(e) => setIngredientsEn(e.target.value)}
-              placeholder="Chicken, Cheese, Mayo"
+              placeholder={t("ingredients_food_placeholder")}
               className="form-field"
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-cafe-800 uppercase tracking-wider mb-1">
-              Ingredients (Amharic, comma separated)
+              {t("ingredients_am_label")}
             </label>
             <input
               type="text"
@@ -249,10 +249,10 @@ const FoodFormModal = ({
         <div className="flex items-center justify-between p-3 bg-cafe-50 rounded-xl border border-cafe-200">
           <div>
             <span className="font-bold text-xs text-cafe-900 block">
-              Item Availability Status
+              {t("item_availability_status")}
             </span>
             <span className="text-[11px] text-cafe-500">
-              Toggle whether customers can order this item
+              {t("toggle_item_availability")}
             </span>
           </div>
           <button
@@ -277,14 +277,14 @@ const FoodFormModal = ({
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-xs font-bold text-cafe-700 hover:bg-cafe-100 transition-colors"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="submit"
             disabled={isLoading}
             className="bg-cafe-800 hover:bg-cafe-900 text-white px-5 py-2 rounded-xl font-bold text-xs shadow-md transition-all disabled:opacity-50"
           >
-            {isLoading ? "Saving..." : food ? "Update Food" : "Create Food"}
+            {isLoading ? t("saving") : food ? t("update_food") : t("create_food")}
           </button>
         </div>
       </form>

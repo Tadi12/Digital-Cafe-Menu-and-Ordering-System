@@ -37,14 +37,14 @@ const OrderCard = ({ order, onUpdateStatus }) => {
           </div>
           <div className="flex items-center gap-1 font-extrabold text-cafe-800 bg-cafe-100 px-2 py-0.5 rounded-md">
             <MapPin className="w-3 h-3 text-gold-600" />
-            <span>Table #{order.tableNumberSnapshot}</span>
+            <span>{t('table_number_label', { number: order.tableNumberSnapshot })}</span>
           </div>
         </div>
 
         {/* Items List */}
         <div className="space-y-1.5 py-1">
           {order.items.map((item, idx) => {
-            const foodName = item.foodName ? item.foodName[currentLang] || item.foodName.en : 'Food Item';
+            const foodName = item.foodName ? item.foodName[currentLang] || item.foodName.en : t('food');
             return (
               <div key={idx} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 min-w-0">
@@ -84,7 +84,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             className="w-full bg-gold-500 hover:bg-gold-600 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
           >
             <ChefHat className="w-4 h-4" />
-            <span>Start Preparing</span>
+            <span>{t('start_preparing')}</span>
           </button>
         )}
 
@@ -94,7 +94,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>Mark Ready</span>
+            <span>{t('mark_ready')}</span>
           </button>
         )}
 
@@ -104,19 +104,19 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
           >
             <Check className="w-4 h-4" />
-            <span>Complete Order</span>
+            <span>{t('complete_order')}</span>
           </button>
         )}
 
         {order.status === 'Completed' && (
           <div className="text-center py-1 text-xs font-bold text-gray-500">
-            Order Completed
+            {t('order_completed_label')}
           </div>
         )}
 
         {order.status === 'Cancelled' && (
           <div className="text-center py-1 text-xs font-bold text-red-500">
-            Order Cancelled
+            {t('order_cancelled_label')}
           </div>
         )}
       </div>

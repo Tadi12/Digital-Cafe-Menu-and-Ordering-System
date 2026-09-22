@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MonitorSmartphone, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,7 @@ const AdminDevicesPage = () => {
   const [loading, setLoading] = useState(true);
   const [terminatingId, setTerminatingId] = useState(null);
   const { logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const loadSessions = useCallback(async () => {
@@ -22,7 +24,7 @@ const AdminDevicesPage = () => {
       const response = await getAdminSessionsApi();
       setSessions(response.data || []);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not load signed-in devices.');
+      toast.error(error.response?.data?.message || t('devices_load_failed'));
     } finally {
       setLoading(false);
     }
@@ -31,8 +33,8 @@ const AdminDevicesPage = () => {
   useEffect(() => { loadSessions(); }, [loadSessions]);
 
   const terminate = async (session) => {
-    const action = session.isCurrent ? 'sign yourself out' : 'terminate this device session';
-    if (!window.confirm(`Are you sure you want to ${action}?`)) return;
+    const action = session.isCurrent ? t('sign_out_self_action') : t('terminate_session_action');
+    if (!window.confirm(t('terminate_confirm', { action }))) return;
     setTerminatingId(session._id);
     try {
       const response = await terminateAdminSessionApi(session._id);
@@ -42,9 +44,9 @@ const AdminDevicesPage = () => {
         return;
       }
       setSessions((current) => current.filter((item) => item._id !== session._id));
-      toast.success('Device session terminated.');
+      toast.success(t('device_terminated'));
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not terminate this device session.');
+      toast.error(error.response?.data?.message || t('device_terminate_failed'));
     } finally {
       setTerminatingId(null);
     }
@@ -58,7 +60,7 @@ const AdminDevicesPage = () => {
             <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="font-display text-xl font-bold text-cafe-900">Signed-in devices</h2>
+            <h2 className="font-display text-xl font-bold text-cafe-900">{t('admin_page_devices')}</h2>
             
           </div>
         </div>
@@ -66,15 +68,15 @@ const AdminDevicesPage = () => {
 
       <div className="overflow-hidden rounded-2xl border border-cafe-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-cafe-100 px-5 py-4">
-          <p className="text-sm font-semibold text-cafe-900">Active sessions ({sessions.length})</p>
+          <p className="text-sm font-semibold text-cafe-900">{t('active_sessions', { count: sessions.length })}</p>
           <button onClick={loadSessions} disabled={loading} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-cafe-700 hover:bg-cafe-100 disabled:opacity-50">
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> {t('refresh')}
           </button>
         </div>
         {loading ? (
-          <p className="p-6 text-sm text-cafe-600">Loading signed-in devices…</p>
+          <p className="p-6 text-sm text-cafe-600">{t('loading_devices')}</p>
         ) : sessions.length === 0 ? (
-          <p className="p-6 text-sm text-cafe-600">No active device sessions found.</p>
+          <p className="p-6 text-sm text-cafe-600">{t('no_device_sessions')}</p>
         ) : (
           <ul className="divide-y divide-cafe-100">
             {sessions.map((session) => (
@@ -84,14 +86,14 @@ const AdminDevicesPage = () => {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold text-cafe-900">{session.deviceName}</p>
-                      {session.isCurrent && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">This device</span>}
+                      {session.isCurrent && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">{t('this_device')}</span>}
                     </div>
-                    <p className="mt-1 text-xs text-cafe-600">Signed in {formatDate(session.createdAt)} · Last active {formatDate(session.lastActiveAt)}</p>
-                    {session.ipAddress && <p className="mt-1 text-xs text-cafe-500">IP address: {session.ipAddress}</p>}
+                    <p className="mt-1 text-xs text-cafe-600">{t('signed_in_last_active', { signedIn: formatDate(session.createdAt), lastActive: formatDate(session.lastActiveAt) })}</p>
+                    {session.ipAddress && <p className="mt-1 text-xs text-cafe-500">{t('ip_address_label', { ip: session.ipAddress })}</p>}
                   </div>
                 </div>
                 <button onClick={() => terminate(session)} disabled={terminatingId === session._id} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
-                  <Trash2 className="h-4 w-4" /> {terminatingId === session._id ? 'Terminating…' : 'Terminate'}
+                  <Trash2 className="h-4 w-4" /> {terminatingId === session._id ? t('terminating') : t('terminate')}
                 </button>
               </li>
             ))}

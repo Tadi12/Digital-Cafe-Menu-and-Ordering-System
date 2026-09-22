@@ -180,7 +180,7 @@ const TableManagerPage = () => {
                     <button
                       onClick={() => handleDeleteTable(tbl._id, tbl.tableNumber)}
                       className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                      title="Delete Table"
+                      title={t('delete_table_title')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -237,7 +237,7 @@ const TableManagerPage = () => {
               type="text"
               value={tableName}
               onChange={(e) => setTableName(e.target.value)}
-              placeholder="e.g. Terrace Window Table 1"
+              placeholder={t('table_name_placeholder')}
               className="w-full px-3 py-2 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none"
             />
           </div>

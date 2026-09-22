@@ -167,7 +167,7 @@ const OrderManagerPage = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search order # or name..."
+              placeholder={t("search_orders_placeholder")}
               className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-cafe-200 text-xs focus:border-cafe-600 focus:outline-none"
             />
           </div>
@@ -182,8 +182,8 @@ const OrderManagerPage = () => {
             }`}
             title={
               soundEnabled
-                ? "Order Sound Alert Enabled"
-                : "Order Sound Alert Muted"
+                ? t("sound_alert_enabled")
+                : t("sound_alert_muted")
             }
           >
             {soundEnabled ? (
@@ -192,7 +192,7 @@ const OrderManagerPage = () => {
               <VolumeX className="w-4 h-4" />
             )}
             <span className="hidden sm:inline">
-              {soundEnabled ? "Chime ON" : "Chime Muted"}
+              {soundEnabled ? t("chime_on") : t("chime_muted")}
             </span>
           </button>
         </div>
@@ -200,7 +200,7 @@ const OrderManagerPage = () => {
 
       {/* Orders Grid */}
       {loading ? (
-        <LoadingSpinner message="Connecting to live order stream..." />
+        <LoadingSpinner message={t("loading_order_stream")} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.length === 0 ? (

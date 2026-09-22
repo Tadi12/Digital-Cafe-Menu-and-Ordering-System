@@ -37,7 +37,7 @@ const OrderConfirmationPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-cafe-50 flex flex-col justify-center">
-        <LoadingSpinner message="Fetching order confirmation..." />
+        <LoadingSpinner message={t('fetching_confirmation')} />
       </div>
     );
   }
@@ -45,7 +45,7 @@ const OrderConfirmationPage = () => {
   if (!order) {
     return (
       <div className="min-h-screen bg-cafe-50 flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-sm font-semibold text-cafe-700">Order details not found.</p>
+        <p className="text-sm font-semibold text-cafe-700">{t('order_details_not_found')}</p>
       </div>
     );
   }
@@ -78,7 +78,7 @@ const OrderConfirmationPage = () => {
         {/* Order Details Card */}
         <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4">
           <h3 className="text-xs font-extrabold text-cafe-800 uppercase tracking-wider border-b border-cafe-100 pb-2">
-            Summary Details
+            {t('summary_details')}
           </h3>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
@@ -93,8 +93,8 @@ const OrderConfirmationPage = () => {
             <div className="flex items-center gap-2 text-cafe-700 bg-cafe-50 p-2.5 rounded-xl border border-cafe-100">
               <MapPin className="w-4 h-4 text-gold-600 shrink-0" />
               <div>
-                <span className="text-[10px] text-cafe-400 block font-bold">Table</span>
-                <span className="font-bold text-cafe-900">Table #{order.tableNumberSnapshot}</span>
+                <span className="text-[10px] text-cafe-400 block font-bold">{t('table')}</span>
+                <span className="font-bold text-cafe-900">{t('table_number_label', { number: order.tableNumberSnapshot })}</span>
               </div>
             </div>
           </div>

@@ -147,7 +147,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                       <button
                         onClick={() => removeFromCart(item._id)}
                         className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-gray-400 hover:text-red-600 transition-colors"
-                        title="Remove item"
+                        title={t("remove_item")}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

@@ -70,7 +70,7 @@ const AdminLoginPage = () => {
                 autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="enter your email"
+                placeholder={t('email_placeholder')}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none font-medium bg-white text-cafe-900"
                 required
               />

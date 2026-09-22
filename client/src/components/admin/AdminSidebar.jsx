@@ -38,7 +38,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     { path: "/admin/tables", label: t("table_management"), icon: QrCode },
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3 },
     { path: "/admin/profile", label: t("profile"), icon: User },
-    { path: "/admin/devices", label: "Signed-in devices", icon: MonitorSmartphone },
+    { path: "/admin/devices", label: t("admin_page_devices"), icon: MonitorSmartphone },
   ];
 
   return (
@@ -64,10 +64,10 @@ const AdminSidebar = ({ isOpen, onClose }) => {
             </div>
             <div className="md:hidden lg:block">
               <h2 className="font-display text-sm font-bold tracking-tight text-white">
-                Hable Cafe Admin
+                {t("admin_sidebar_title")}
               </h2>
               <p className="text-[10px] text-cafe-300 uppercase tracking-wider font-semibold">
-                Management Portal
+                {t("management_portal")}
               </p>
             </div>
           </div>
