@@ -1,36 +1,45 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // Layouts
 import CustomerLayout from "../layouts/CustomerLayout";
 import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
-// Customer Pages
+// Customer Pages (eager — primary QR-menu entry, keep first paint fast)
 import MenuPage from "../pages/customer/MenuPage";
 import OrderConfirmationPage from "../pages/customer/OrderConfirmationPage";
 import OrderTrackerPage from "../pages/customer/OrderTrackerPage";
 import MyOrdersPage from "../pages/customer/MyOrdersPage";
 
-// Admin Pages
-import AdminLoginPage from "../pages/admin/AdminLoginPage";
-import ForgotPasswordPage from "../pages/admin/ForgotPasswordPage";
-import ResetPasswordPage from "../pages/admin/ResetPasswordPage";
-import DashboardPage from "../pages/admin/DashboardPage";
-import FoodManagerPage from "../pages/admin/FoodManagerPage";
-import DrinkManagerPage from "../pages/admin/DrinkManagerPage";
-import CategoryManagerPage from "../pages/admin/CategoryManagerPage";
-import TableManagerPage from "../pages/admin/TableManagerPage";
-import OrderManagerPage from "../pages/admin/OrderManagerPage";
-import AnalyticsPage from "../pages/admin/AnalyticsPage";
-import AdminProfilePage from "../pages/admin/AdminProfilePage";
-import AdminDevicesPage from "../pages/admin/AdminDevicesPage";
+// Admin Pages (lazy — customers never download these; recharts splits out too)
+const AdminLoginPage = lazy(() => import("../pages/admin/AdminLoginPage"));
+const ForgotPasswordPage = lazy(() => import("../pages/admin/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("../pages/admin/ResetPasswordPage"));
+const DashboardPage = lazy(() => import("../pages/admin/DashboardPage"));
+const FoodManagerPage = lazy(() => import("../pages/admin/FoodManagerPage"));
+const DrinkManagerPage = lazy(() => import("../pages/admin/DrinkManagerPage"));
+const CategoryManagerPage = lazy(() => import("../pages/admin/CategoryManagerPage"));
+const TableManagerPage = lazy(() => import("../pages/admin/TableManagerPage"));
+const OrderManagerPage = lazy(() => import("../pages/admin/OrderManagerPage"));
+const AnalyticsPage = lazy(() => import("../pages/admin/AnalyticsPage"));
+const AdminProfilePage = lazy(() => import("../pages/admin/AdminProfilePage"));
+const AdminDevicesPage = lazy(() => import("../pages/admin/AdminDevicesPage"));
+
 import StatusErrorPage from "../pages/errors/StatusErrorPage";
 // Profile route will be added inside admin routes below
 
 const AppRoutes = () => {
   return (
-    <Routes>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-cafe-50 flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      }
+    >
+      <Routes>
       {/* Customer Routes */}
       <Route element={<CustomerLayout />}>
         <Route path="/menu/table/:tableId" element={<MenuPage />} />
@@ -68,7 +77,8 @@ const AppRoutes = () => {
 
       {/* Default Catch-all */}
       <Route path="*" element={<StatusErrorPage type="notFound" />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
 

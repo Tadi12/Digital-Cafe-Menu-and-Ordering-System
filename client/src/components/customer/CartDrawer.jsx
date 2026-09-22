@@ -50,7 +50,10 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex justify-end overscroll-contain bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}>
+    <div
+      className={`fixed inset-0 z-50 flex justify-end overscroll-contain bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}
+      onClick={onClose}
+    >
       <div
         className={`w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden overscroll-contain transition-transform duration-200 ${isOpen ? "translate-x-0" : "translate-x-full"}`}
         onClick={(e) => e.stopPropagation()}

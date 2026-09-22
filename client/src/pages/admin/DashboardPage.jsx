@@ -71,28 +71,28 @@ const DashboardPage = () => {
           title={t('total_revenue_today')}
           value={formatCurrency(metrics?.todayRevenue || 0, currentLang)}
           icon={Banknote}
-          color="bg-emerald-600 text-white"
+          tone="emerald"
           subtext="Today's total sales"
         />
         <MetricCard
           title={t('orders_today')}
           value={metrics?.ordersToday || 0}
           icon={ShoppingBag}
-          color="bg-cafe-800 text-white"
+          tone="cafe"
           subtext="New customer orders"
         />
         <MetricCard
           title={t('pending_orders')}
           value={metrics?.pendingOrders || 0}
           icon={Clock}
-          color="bg-amber-600 text-white"
+          tone="amber"
           subtext="Awaiting preparation"
         />
         <MetricCard
           title={t('preparing_orders')}
           value={metrics?.preparingOrders || 0}
           icon={ChefHat}
-          color="bg-blue-600 text-white"
+          tone="blue"
           subtext="Currently in kitchen"
         />
       </div>

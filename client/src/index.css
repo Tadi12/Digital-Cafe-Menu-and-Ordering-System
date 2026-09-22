@@ -58,8 +58,6 @@ html.dark {
     @apply w-full rounded-xl border border-cafe-200 bg-white px-3 py-2 text-sm text-cafe-900 outline-none transition focus:border-cafe-600 focus:ring-2 focus:ring-cafe-200;
   }
   .card { @apply rounded-2xl border border-cafe-100 bg-white shadow-sm; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl font-bold transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-50; }
-  button { @apply transition-transform active:scale-95; }
 }
 
 /* Animations */
