@@ -61,7 +61,7 @@ const OrderConfirmationPage = () => {
             <CheckCircle2 className="w-10 h-10" />
           </div>
           <div>
-            <h2 className="text-xl font-extrabold text-cafe-900">
+            <h2 className="font-display text-xl font-extrabold text-cafe-900">
               {t('order_confirmation_title')}
             </h2>
             <p className="text-xs text-cafe-600 font-medium mt-1">

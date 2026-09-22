@@ -291,7 +291,7 @@ const OrderTrackerPage = () => {
         {/* Visual Progress Steps Bar */}
         {!isCancelled ? (
           <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-6">
-            <h3 className="text-xs font-extrabold text-cafe-800 uppercase tracking-wider text-center">
+              <h3 className="font-display text-base font-semibold text-cafe-800 text-center">
               {t("live_tracking_title")}
             </h3>
 

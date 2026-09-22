@@ -13,7 +13,7 @@ const LanguageSwitcher = ({ className = '' }) => {
   return (
     <button
       onClick={toggleLanguage}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-cafe-100 text-cafe-800 hover:bg-cafe-200 transition-colors shadow-sm ${className}`}
+      className={`inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-cafe-100 text-cafe-800 hover:bg-cafe-200 transition-colors shadow-sm ${className}`}
       title="Switch Language / ቋንቋ ቀይር"
     >
       <Globe className="w-3.5 h-3.5 text-cafe-600" />

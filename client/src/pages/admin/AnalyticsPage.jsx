@@ -19,6 +19,11 @@ import {
 
 import { BarChart3, TrendingUp, Award } from 'lucide-react';
 
+const BrandTooltip = ({ active, payload, label, formatter }) => {
+  if (!active || !payload?.length) return null;
+  return <div className="chart-tooltip rounded-xl border p-3 shadow-lg"><p className="mb-1 text-xs font-bold">{label}</p>{payload.map((entry) => <p key={entry.dataKey} className="text-xs" style={{ color: entry.color }}>{formatter ? formatter(entry.value, entry.name) : `${entry.name}: ${entry.value}`}</p>)}</div>;
+};
+
 const AnalyticsPage = () => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
@@ -55,13 +60,17 @@ const AnalyticsPage = () => {
 
   const totalPeriodRevenue = revenueData.reduce((acc, item) => acc + item.revenue, 0);
   const totalPeriodOrders = revenueData.reduce((acc, item) => acc + item.orderCount, 0);
+  const popularChartData = popularFoods.map((item) => ({
+    ...item,
+    chartName: item.name[currentLang] || item.name.en,
+  }));
 
   return (
     <div className="space-y-6">
       {/* Top Filter */}
       <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-cafe-200 shadow-sm">
         <div>
-          <h2 className="font-bold text-cafe-900 text-sm flex items-center gap-2">
+        <h2 className="font-display font-semibold text-cafe-900 text-base flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-cafe-700" />
             <span>{t("cafe_financial_menu_performance")}</span>
           </h2>
@@ -134,12 +143,11 @@ const AnalyticsPage = () => {
                   <stop offset="95%" stopColor="#8B5A2B" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6B7280' }} />
-              <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--analytics-grid)" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--analytics-axis)' }} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--analytics-axis)' }} />
               <Tooltip
-                formatter={(value) => [`${value} ETB`, 'Revenue']}
-                contentStyle={{ borderRadius: '12px', borderColor: '#E5E7EB' }}
+                content={(props) => <BrandTooltip {...props} formatter={(value) => `${value} ETB`} />}
               />
               <Area
                 type="monotone"
@@ -154,11 +162,27 @@ const AnalyticsPage = () => {
         </div>
       </div>
 
+      {/* Top Selling Foods Chart */}
+      <div className="bg-white rounded-2xl p-4 border border-cafe-200 shadow-sm space-y-4">
+        <h3 className="font-display font-semibold text-cafe-900 text-base">{t("total_sales_generated")}</h3>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={popularChartData} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--analytics-grid)" />
+              <XAxis dataKey="chartName" interval={0} angle={-20} textAnchor="end" height={56} tick={{ fontSize: 10, fill: 'var(--analytics-axis)' }} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--analytics-axis)' }} />
+              <Tooltip content={(props) => <BrandTooltip {...props} formatter={(value) => formatCurrency(value, currentLang)} />} />
+              <Bar dataKey="totalRevenue" name={t("total_sales_generated")} fill="#D97706" radius={[6, 6, 0, 0]} maxBarSize={48} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* Top Selling Foods Report Table */}
-      <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4">
+      <div className="bg-white rounded-2xl p-4 border border-cafe-200 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <Award className="w-5 h-5 text-gold-600" />
-          <h3 className="font-bold text-cafe-900 text-sm">{t("popular_items")}</h3>
+          <h3 className="font-display font-semibold text-cafe-900 text-base">{t("popular_items")}</h3>
         </div>
 
         <div className="overflow-x-auto">

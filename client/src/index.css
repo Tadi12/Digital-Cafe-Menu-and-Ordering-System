@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --analytics-grid: #e8d8c3;
+  --analytics-axis: #6b625b;
+  --analytics-tooltip-bg: #ffffff;
+  --analytics-tooltip-border: #e8d8c3;
+  --analytics-tooltip-text: #2c1a1d;
+}
+html.dark {
+  --analytics-grid: #5c3a21;
+  --analytics-axis: #e8d8c3;
+  --analytics-tooltip-bg: #3d2314;
+  --analytics-tooltip-border: #8b5a2b;
+  --analytics-tooltip-text: #faf7f2;
+}
+.chart-tooltip { background: var(--analytics-tooltip-bg); border-color: var(--analytics-tooltip-border); color: var(--analytics-tooltip-text); }
+
 @layer base {
   /* Force white background for all form input elements */
   input, select, textarea {

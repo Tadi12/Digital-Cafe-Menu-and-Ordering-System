@@ -52,18 +52,18 @@ const AdminSidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-40 w-64 bg-cafe-900 text-white flex flex-col transition-transform duration-300 lg:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 left-0 bottom-0 z-40 w-64 bg-cafe-900 text-white flex flex-col transition-[width,transform] duration-300 md:w-16 lg:w-64 md:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
         {/* Brand header */}
-        <div className="p-4 border-b border-cafe-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="p-4 border-b border-cafe-800 flex items-center justify-between md:justify-center lg:justify-between">
+            <div className="flex items-center gap-3 md:justify-center lg:justify-start">
             <div className="w-9 h-9 rounded-xl bg-cafe-600 flex items-center justify-center text-amber-300 shadow">
               <Coffee className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-sm font-bold tracking-tight text-white">
+            <div className="md:hidden lg:block">
+              <h2 className="font-display text-sm font-bold tracking-tight text-white">
                 Hable Cafe Admin
               </h2>
               <p className="text-[10px] text-cafe-300 uppercase tracking-wider font-semibold">
@@ -73,7 +73,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden text-cafe-400 hover:text-white p-1"
+            className="lg:hidden md:hidden min-h-10 min-w-10 text-cafe-400 hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
@@ -89,15 +89,16 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                 to={item.path}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors ${
+                  `relative flex min-h-10 items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors md:justify-center md:px-0 lg:justify-start lg:px-3.5 ${
                     isActive
-                      ? "bg-cafe-700 text-white shadow"
+                      ? "bg-cafe-700 text-white shadow before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-gold-500"
                       : "text-cafe-300 hover:bg-cafe-800 hover:text-white"
                   }`
                 }
+                title={item.label}
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
+                <span className="md:hidden lg:inline">{item.label}</span>
               </NavLink>
             );
           })}

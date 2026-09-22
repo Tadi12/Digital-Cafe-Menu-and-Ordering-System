@@ -16,11 +16,11 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={onOpenSidebar}
-            className="lg:hidden p-2 rounded-lg text-cafe-700 hover:bg-cafe-100 transition-colors"
+            className="lg:hidden min-h-10 min-w-10 rounded-lg text-cafe-700 hover:bg-cafe-100 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="text-base font-bold text-cafe-900 tracking-tight">
+          <h1 className="font-display text-xl font-bold text-cafe-900 tracking-tight">
             {pageTitle}
           </h1>
         </div>
@@ -54,7 +54,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
             </span>
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-cafe-600 transition-colors hover:bg-red-50 hover:text-red-600"
+              className="flex min-h-10 items-center gap-1.5 rounded-lg px-2 py-2 text-cafe-600 transition-colors hover:bg-red-50 hover:text-red-600"
               title={t("logout")}
             >
               <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />

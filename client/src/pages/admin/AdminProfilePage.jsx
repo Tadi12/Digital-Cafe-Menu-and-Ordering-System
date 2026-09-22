@@ -54,7 +54,7 @@ const AdminProfilePage = () => {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">{t('admin_profile')}</h2>
+      <h2 className="font-display text-xl font-bold mb-4">{t('admin_profile')}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="name">{t('name')}</label>

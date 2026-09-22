@@ -1,12 +1,13 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageContext } from '../../context/LanguageContext';
 import { formatCurrency } from '../../utils/currencyFormatter';
-import { Plus, Info } from 'lucide-react';
+import { Plus, Info, Utensils } from 'lucide-react';
 
 const FoodCard = ({ food, onSelectFood, onQuickAdd }) => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
+  const [imageFailed, setImageFailed] = useState(false);
 
   const name = food.name[currentLang] || food.name.en;
   const isAvailable = food.available;
@@ -20,12 +21,13 @@ const FoodCard = ({ food, onSelectFood, onQuickAdd }) => {
     >
       {/* Food Image */}
       <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-cafe-100 shrink-0">
-        <img
+        {!imageFailed ? <img
           src={food.image?.url}
           alt={name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
-        />
+          onError={() => setImageFailed(true)}
+        /> : <div className="flex h-full w-full items-center justify-center bg-cafe-100 text-cafe-500" aria-hidden="true"><Utensils className="h-7 w-7" /></div>}
         {!isAvailable && (
           <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center p-1 text-center">
             <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-red-600 px-1.5 py-0.5 rounded">
@@ -61,7 +63,7 @@ const FoodCard = ({ food, onSelectFood, onQuickAdd }) => {
                 e.stopPropagation();
                 onQuickAdd(food);
               }}
-              className="w-8 h-8 rounded-full bg-cafe-700 hover:bg-cafe-800 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-full bg-cafe-700 hover:bg-cafe-800 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform"
               title={t('add_to_cart')}
             >
               <Plus className="w-4 h-4" />

@@ -25,7 +25,7 @@ import {
   saveCustomerOrderToHistory,
 } from "../../utils/customerOrderHistory";
 
-import { Search, ShoppingBag, AlertCircle } from "lucide-react";
+import { Search, SearchX, ShoppingBag, AlertCircle, RotateCw } from "lucide-react";
 
 const MenuPage = () => {
   const { tableId } = useParams();
@@ -34,6 +34,7 @@ const MenuPage = () => {
   // Keep the effect dependency below primitive/stable. The `t` function itself
   // may receive a new reference during a render and would restart menu loading.
   const invalidTableMessage = t("invalid_table_desc");
+  const menuFetchFailedMessage = t("menu_fetch_failed");
   const { currentLang } = useContext(LanguageContext);
   const { socket, joinOrderRoom, playNotificationSound } = useSocket();
   const {
@@ -117,23 +118,30 @@ const MenuPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [tableError, setTableError] = useState("");
+  const [errorKind, setErrorKind] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   // Validate table and fetch menu data whenever the QR table id changes
   useEffect(() => {
     let cancelled = false;
+    let validatingTable = true;
 
     const initMenu = async () => {
       setLoading(true);
       setTableError("");
+      setErrorKind("");
       try {
         const tableRes = await getTableByIdApi(tableId);
         if (!tableRes.success || !tableRes.data) {
-          throw new Error(tableRes.message || invalidTableMessage);
+          const error = new Error(tableRes.message || invalidTableMessage);
+          error.isInvalidTable = true;
+          throw error;
         }
         if (cancelled) return;
         setTable(tableRes.data);
+        validatingTable = false;
 
         const [catRes, foodRes] = await Promise.all([
           getCategoriesApi(),
@@ -147,8 +155,11 @@ const MenuPage = () => {
         if (cancelled) return;
         console.error("[Menu Init Error]:", err);
         setTable(null);
+        const status = err.response?.status;
+        const invalidTable = !!err.isInvalidTable || (validatingTable && [400, 404].includes(status));
+        setErrorKind(invalidTable ? "invalid-table" : "network");
         setTableError(
-          err.response?.data?.message || err.message || invalidTableMessage,
+          invalidTable ? (err.response?.data?.message || err.message || invalidTableMessage) : menuFetchFailedMessage,
         );
       } finally {
         if (!cancelled) setLoading(false);
@@ -159,13 +170,14 @@ const MenuPage = () => {
       initMenu();
     } else {
       setTableError(invalidTableMessage);
+      setErrorKind("invalid-table");
       setLoading(false);
     }
 
     return () => {
       cancelled = true;
     };
-  }, [tableId, invalidTableMessage]);
+  }, [tableId, invalidTableMessage, menuFetchFailedMessage, retryCount]);
 
   useEffect(() => {
     if (!customerName || !customerName.trim()) {
@@ -345,10 +357,11 @@ const MenuPage = () => {
         <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 shadow">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-bold text-cafe-900 mb-2">
-          {t("invalid_table_title")}
+        <h2 className="font-display text-xl font-bold text-cafe-900 mb-2">
+          {errorKind === "invalid-table" ? t("invalid_table_title") : t("menu_network_error_title")}
         </h2>
-        <p className="text-sm text-cafe-600 max-w-xs mb-6">{tableError}</p>
+        <p className="text-sm text-cafe-600 max-w-xs mb-2">{errorKind === "invalid-table" ? t("invalid_table_friendly") : tableError}</p>
+        {errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
       </div>
     );
   }
@@ -482,7 +495,7 @@ const MenuPage = () => {
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-2.5 text-xs text-cafe-400 font-bold"
+                  className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-sm text-cafe-500 font-bold"
                 >
                   ×
                 </button>
@@ -493,8 +506,11 @@ const MenuPage = () => {
           {/* Food Items List */}
           <div className="px-4 space-y-3">
             {filteredFoods.length === 0 ? (
-              <div className="py-12 text-center text-cafe-500">
-                <p className="text-sm font-semibold">No food items found.</p>
+              <div className="flex flex-col items-center py-12 text-center text-cafe-700">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cafe-100 text-cafe-700"><SearchX className="h-6 w-6" /></div>
+                <h2 className="font-display mb-2 text-lg font-bold text-cafe-900">{t("no_menu_matches")}</h2>
+                <p className="mb-4 max-w-xs text-sm">{searchQuery ? t("search_no_matches", { query: searchQuery }) : t("category_no_matches")}</p>
+                {(searchQuery || selectedCategory) && <button type="button" onClick={() => { setSearchQuery(""); setSelectedCategory(null); }} className="rounded-xl border border-cafe-300 px-4 py-2 text-sm font-bold text-cafe-800 hover:bg-cafe-100">{t("clear_filters")}</button>}
               </div>
             ) : (
               filteredFoods.map((food, index) => (
@@ -527,7 +543,7 @@ const MenuPage = () => {
 
           {/* Sticky Floating Bottom Cart Bar */}
           {totalItemsCount > 0 && (
-            <div className="fixed bottom-4 left-0 right-0 z-30 px-4 max-w-md mx-auto">
+            <div className="fixed bottom-4 left-0 right-0 z-30 px-4 pb-[env(safe-area-inset-bottom)] max-w-md mx-auto">
               <button
                 onClick={() => setIsCartOpen(true)}
                 className="w-full bg-cafe-900 text-white p-3.5 rounded-2xl shadow-xl border border-cafe-700 flex items-center justify-between active:scale-[0.99] transition-transform"

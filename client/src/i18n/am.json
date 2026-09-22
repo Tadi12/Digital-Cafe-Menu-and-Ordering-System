@@ -139,5 +139,14 @@
   "admin_page_devices": "የአስተዳዳሪ ዲቫይሶች",
   "food_unavailable_message": "ይህ ምግብ በአሁኑ ጊዜ አይገኝም። እባክዎ በሜኑ ውስጥ ያሉ ሌሎች ምግቦችን ይመልከቱ።",
   "drink_unavailable_message": "ይህ መጠጥ በአሁኑ ጊዜ አይገኝም። እባክዎ በሜኑ ውስጥ ያሉ ሌሎች መጠጦችን ይመልከቱ።",
-  "total_amount": "ጠቅላላ መጠን"
+  "total_amount": "ጠቅላላ መጠን",
+  "no_menu_matches": "የሚዛመድ የምግብ ዝርዝር አልተገኘም",
+  "search_no_matches": "ለ “{{query}}” ምንም አልተገኘም። ሌላ ቃል ይፈልጉ።",
+  "category_no_matches": "በዚህ ምድብ ውስጥ ገና ምንም የምግብ ዝርዝር የለም።",
+  "clear_filters": "ማጣሪያዎችን አጽዳ",
+  "invalid_table_friendly": "ይህን ሜኑ ከጠረጴዛዎ ጋር ማገናኘት አልቻልንም።",
+  "rescan_qr_hint": "እባክዎ በጠረጴዛዎ ላይ ያለውን QR ኮድ እንደገና ይቃኙ ወይም የካፌውን ሰራተኛ ያነጋግሩ።",
+  "menu_network_error_title": "ሜኑው ለጊዜው አይገኝም",
+  "menu_fetch_failed": "ሜኑውን መጫን አልቻልንም። ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።",
+  "retry": "እንደገና ሞክር"
 }

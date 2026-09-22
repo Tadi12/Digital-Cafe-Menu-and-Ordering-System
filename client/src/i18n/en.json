@@ -196,5 +196,14 @@
   "admin_page_devices": "Signed-in devices",
   "food_unavailable_message": "This food item is currently unavailable. Please check the menu for available food items.",
   "drink_unavailable_message": "This drink is currently unavailable. Please check the menu for available drinks.",
-  "error_unexpected_message": "The page ran into an unexpected problem. You can safely try again."
+  "error_unexpected_message": "The page ran into an unexpected problem. You can safely try again.",
+  "no_menu_matches": "Nothing on the menu matches",
+  "search_no_matches": "We couldn't find anything for “{{query}}”. Try another search.",
+  "category_no_matches": "There are no menu items in this category yet.",
+  "clear_filters": "Clear filters",
+  "invalid_table_friendly": "We couldn't connect this menu to your table.",
+  "rescan_qr_hint": "Please scan the QR code on your table again, or ask a cafe team member for help.",
+  "menu_network_error_title": "Menu temporarily unavailable",
+  "menu_fetch_failed": "We couldn't load the menu. Check your connection and try again.",
+  "retry": "Retry"
 }

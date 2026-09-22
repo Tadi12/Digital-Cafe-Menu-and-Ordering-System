@@ -103,7 +103,7 @@ const DashboardPage = () => {
         <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-cafe-900 text-sm flex items-center gap-2">
+              <h3 className="font-display font-semibold text-cafe-900 text-base flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
                 {t("revenue_analytics")}
               </h3>
@@ -130,7 +130,7 @@ const DashboardPage = () => {
         {/* Order Status Pie Chart (1 Col) */}
         <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4 flex flex-col justify-between">
           <div>
-            <h3 className="font-bold text-cafe-900 text-sm">Order Status Breakdown</h3>
+            <h3 className="font-display font-semibold text-cafe-900 text-base">Order Status Breakdown</h3>
             <p className="text-xs text-cafe-500">Distribution of all cafe orders</p>
           </div>
 
@@ -172,7 +172,7 @@ const DashboardPage = () => {
 
       {/* Recent Orders List Table */}
       <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-4">
-        <h3 className="font-bold text-cafe-900 text-sm">{t("recent_orders")}</h3>
+        <h3 className="font-display font-semibold text-cafe-900 text-base">{t("recent_orders")}</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-cafe-50 text-cafe-700 uppercase font-bold text-[10px]">

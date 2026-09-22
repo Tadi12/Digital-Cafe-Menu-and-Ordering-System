@@ -40,7 +40,7 @@ const CustomerAccessGate = ({ children }) => {
         <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${denied ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
           {denied ? <WifiOff className="h-8 w-8" /> : <AlertCircle className="h-8 w-8" />}
         </div>
-        <h1 className="text-xl font-bold text-cafe-900">
+        <h1 className="font-display text-xl font-bold text-cafe-900">
           {denied ? "Cafe Wi-Fi required" : "Menu temporarily unavailable"}
         </h1>
         <p className="mt-3 text-sm leading-6 text-cafe-600">

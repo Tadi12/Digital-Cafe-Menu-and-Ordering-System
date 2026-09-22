@@ -11,7 +11,7 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
     <div className="py-2.5 px-4 overflow-x-auto no-scrollbar flex items-center gap-2 border-b border-cafe-200 bg-cafe-50/80 backdrop-blur">
       <button
         onClick={() => onSelectCategory(null)}
-        className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+        className={`min-h-10 px-3 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
           selectedCategory === null
             ? "bg-cafe-800 text-white shadow"
             : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200"
@@ -41,7 +41,7 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
           <button
             key={cat._id}
             onClick={() => onSelectCategory(cat._id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
+            className={`min-h-10 px-3 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
               isSelected
                 ? "bg-cafe-800 text-white shadow"
                 : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200"

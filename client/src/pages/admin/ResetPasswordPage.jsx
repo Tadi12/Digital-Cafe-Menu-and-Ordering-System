@@ -60,7 +60,7 @@ const ResetPasswordPage = () => {
           <div className="w-14 h-14 rounded-2xl bg-cafe-700 text-amber-300 flex items-center justify-center mx-auto shadow-md">
             <ShieldCheck className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-black text-cafe-900 tracking-tight">
+          <h1 className="font-display text-xl font-black text-cafe-900 tracking-tight">
             {t("create_new_password")}
           </h1>
           <p className="text-xs text-cafe-500 font-medium">

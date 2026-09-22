@@ -50,9 +50,9 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}>
+    <div className={`fixed inset-0 z-50 flex justify-end overscroll-contain bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}>
       <div
-        className={`w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden transition-transform duration-200 ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden overscroll-contain transition-transform duration-200 ${isOpen ? "translate-x-0" : "translate-x-full"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -68,14 +68,14 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-full text-cafe-300 hover:text-white hover:bg-cafe-800 transition-colors"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-cafe-300 hover:text-white hover:bg-cafe-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center text-cafe-500">
               <ShoppingBag className="w-12 h-12 stroke-[1.5] text-cafe-300 mb-2" />
@@ -126,7 +126,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                       <div className="flex items-center gap-1.5 bg-cafe-50 rounded-lg p-1 border border-cafe-200">
                         <button
                           onClick={() => updateQuantity(item._id, -1)}
-                          className="w-6 h-6 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95"
+                          className="w-10 h-10 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -135,7 +135,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                         </span>
                         <button
                           onClick={() => updateQuantity(item._id, 1)}
-                          className="w-6 h-6 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95"
+                          className="w-10 h-10 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -143,7 +143,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
 
                       <button
                         onClick={() => removeFromCart(item._id)}
-                        className="text-gray-400 hover:text-red-600 p-1 transition-colors"
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center text-gray-400 hover:text-red-600 transition-colors"
                         title="Remove item"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -200,7 +200,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
 
         {/* Footer Actions */}
         {cartItems.length > 0 && (
-          <div className="p-5 border-t border-cafe-100 bg-cafe-50 space-y-3">
+          <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-cafe-100 bg-cafe-50 space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="font-semibold text-cafe-700">
                 {t("subtotal")}

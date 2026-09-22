@@ -115,7 +115,7 @@ const TableManagerPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-cafe-200 shadow-sm">
         <div>
-          <h2 className="font-bold text-cafe-900 text-sm">{t('table_management')}</h2>
+          <h2 className="font-display font-semibold text-cafe-900 text-base">{t('table_management')}</h2>
          
         </div>
         <button

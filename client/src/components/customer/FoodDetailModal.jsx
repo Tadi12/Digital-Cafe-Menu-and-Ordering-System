@@ -95,7 +95,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
             <div className="flex items-center gap-3 bg-cafe-100 rounded-full p-1 border border-cafe-200">
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-8 h-8 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform"
+                className="w-10 h-10 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform"
                 disabled={quantity <= 1}
               >
                 <Minus className="w-4 h-4" />
@@ -105,7 +105,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
               </span>
               <button
                 onClick={() => setQuantity((q) => q + 1)}
-                className="w-8 h-8 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform"
+                className="w-10 h-10 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform"
               >
                 <Plus className="w-4 h-4" />
               </button>

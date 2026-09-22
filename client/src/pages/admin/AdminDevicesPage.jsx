@@ -58,7 +58,7 @@ const AdminDevicesPage = () => {
             <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-cafe-900">Signed-in devices</h2>
+            <h2 className="font-display text-xl font-bold text-cafe-900">Signed-in devices</h2>
             
           </div>
         </div>
