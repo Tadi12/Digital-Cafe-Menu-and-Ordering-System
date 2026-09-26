@@ -1,13 +1,16 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import { LanguageContext } from '../../context/LanguageContext';
+import { useFavorites } from '../../hooks/useFavorites';
 import Modal from '../common/Modal';
 import { formatCurrency } from '../../utils/currencyFormatter';
-import { Plus, Minus, ShoppingBag, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, CheckCircle, XCircle, Heart } from 'lucide-react';
 
 const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food" }) => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
@@ -21,11 +24,19 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
   const name = food.name[currentLang] || food.name.en;
   const ingredientsList = food.ingredients ? food.ingredients[currentLang] || food.ingredients.en : [];
   const isAvailable = food.available;
+  const favorited = isFavorite(food._id);
 
   const handleAdd = () => {
     if (!isAvailable) return;
     onAddToCart(food, quantity);
     onClose();
+  };
+
+  const handleToggleFavorite = () => {
+    const nowFavorited = toggleFavorite(food);
+    toast.success(
+      nowFavorited ? t("added_to_favorites") : t("removed_from_favorites"),
+    );
   };
 
   return (
@@ -38,7 +49,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
             alt={name}
             className="w-full h-full object-cover"
           />
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 left-3">
             {isAvailable ? (
               <span className="inline-flex items-center gap-1 bg-green-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
                 <CheckCircle className="w-3.5 h-3.5" />
@@ -51,6 +62,23 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
               </span>
             )}
           </div>
+
+          {/* Favorite Toggle */}
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            aria-pressed={favorited}
+            aria-label={favorited ? t("remove_from_favorite") : t("add_to_favorite")}
+            title={favorited ? t("remove_from_favorite") : t("add_to_favorite")}
+            className="absolute top-3 right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-md backdrop-blur transition-transform hover:bg-white active:scale-90"
+          >
+            <Heart
+              key={String(favorited)}
+              className={`h-5 w-5 transition-colors ${
+                favorited ? "animate-pop fill-red-500 text-red-500" : "text-cafe-700"
+              }`}
+            />
+          </button>
         </div>
 
         {/* Title & Price */}

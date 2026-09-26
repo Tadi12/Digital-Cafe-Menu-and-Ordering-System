@@ -324,5 +324,15 @@
   "wifi_required_title": "Cafe Wi-Fi required",
   "wifi_required_message": "Please connect to the cafe’s Wi-Fi to access the menu and place an order.",
   "menu_unavailable_title": "Menu temporarily unavailable",
-  "menu_unavailable_message": "We couldn’t reach the cafe menu right now. Check your connection and try again."
+  "menu_unavailable_message": "We couldn’t reach the cafe menu right now. Check your connection and try again.",
+  "favorites": "My Favorites",
+  "favorite_items_count": "{{total}} saved items",
+  "favorites_local_notice": "Favorites are saved on this device for this customer.",
+  "add_to_favorite": "Add to favorites",
+  "remove_from_favorite": "Remove from favorites",
+  "added_to_favorites": "Added to your favorites",
+  "removed_from_favorites": "Removed from your favorites",
+  "no_favorites": "You haven’t saved any favorites yet. Tap the heart on any food or drink to save it here.",
+  "browse_menu": "Browse the menu",
+  "loading_favorites": "Loading your favorites..."
 }

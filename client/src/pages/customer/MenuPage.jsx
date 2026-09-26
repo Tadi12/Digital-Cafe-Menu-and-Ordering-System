@@ -8,6 +8,7 @@ import { getCategoriesApi } from "../../api/categoryApi";
 import { getFoodsApi } from "../../api/foodApi";
 import { createOrderApi, getCustomerOrdersApi } from "../../api/orderApi";
 import { useCart } from "../../hooks/useCart";
+import { useFavorites } from "../../hooks/useFavorites";
 import { useSocket } from "../../hooks/useSocket";
 
 import Header from "../../components/common/Header";
@@ -25,7 +26,7 @@ import {
   saveCustomerOrderToHistory,
 } from "../../utils/customerOrderHistory";
 
-import { Search, SearchX, ShoppingBag, AlertCircle, RotateCw } from "lucide-react";
+import { Search, SearchX, ShoppingBag, AlertCircle, RotateCw, Heart } from "lucide-react";
 
 const MenuPage = () => {
   const { tableId } = useParams();
@@ -46,6 +47,7 @@ const MenuPage = () => {
     customerName,
     customerSessionId,
   } = useCart();
+  const { favoriteCount } = useFavorites();
 
   const readyOrderIdsRef = useRef(new Set());
   const getNotifiedReadyOrders = () => {
@@ -424,8 +426,8 @@ const MenuPage = () => {
           {/* Table Badge */}
           <TableHeader table={table} />
 
-          {customerName && (
-            <div className="px-4 pt-4">
+          <div className="px-4 pt-4 space-y-2">
+            {customerName && (
               <button
                 type="button"
                 onClick={() => navigate("/my-orders")}
@@ -449,8 +451,30 @@ const MenuPage = () => {
                   </span>
                 </div>
               </button>
-            </div>
-          )}
+            )}
+
+            <button
+              type="button"
+              onClick={() => navigate("/favorites")}
+              className="w-full flex items-center justify-between rounded-2xl border border-cafe-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cafe-300"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Heart className="w-4 h-4 shrink-0 fill-red-500 text-red-500" />
+                <div className="text-left min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+                    {t('favorites')}
+                  </p>
+                  <h3 className="text-sm font-black text-cafe-900 truncate">
+                    {t('favorite_items_count', { total: favoriteCount })}
+                  </h3>
+                </div>
+              </div>
+
+              <span className="text-[10px] font-bold text-cafe-600 shrink-0">
+                {t('view')}
+              </span>
+            </button>
+          </div>
 
           {/* Category Pills Filter */}
           <div className="border-b border-cafe-200 bg-cafe-50/80 backdrop-blur">

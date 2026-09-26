@@ -12,6 +12,7 @@ import MenuPage from "../pages/customer/MenuPage";
 import OrderConfirmationPage from "../pages/customer/OrderConfirmationPage";
 import OrderTrackerPage from "../pages/customer/OrderTrackerPage";
 import MyOrdersPage from "../pages/customer/MyOrdersPage";
+import FavoritesPage from "../pages/customer/FavoritesPage";
 
 // Admin Pages (lazy — customers never download these; recharts splits out too)
 const AdminLoginPage = lazy(() => import("../pages/admin/AdminLoginPage"));
@@ -49,6 +50,7 @@ const AppRoutes = () => {
         />
         <Route path="/order-track/:orderId" element={<OrderTrackerPage />} />
         <Route path="/my-orders" element={<MyOrdersPage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
       </Route>
 
       {/* Admin Auth Route */}
