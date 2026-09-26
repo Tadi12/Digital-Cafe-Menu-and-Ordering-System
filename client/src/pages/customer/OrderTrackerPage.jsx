@@ -235,7 +235,7 @@ const OrderTrackerPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 p-5 space-y-6">
+      <div className="flex-1 p-5 pb-28 space-y-6">
         {readyToastVisible && (
           <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-cafe-200 bg-cafe-900 px-4 py-3 text-sm font-bold text-white shadow-xl ring-4 ring-amber-200/40">
             <div className="flex items-center justify-between gap-3">

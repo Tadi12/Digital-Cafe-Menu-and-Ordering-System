@@ -106,7 +106,7 @@ const FavoritesPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 p-4 space-y-4">
+      <div className="flex-1 p-4 pb-28 space-y-4">
         <div className="bg-white rounded-2xl border border-cafe-200 p-4 shadow-sm space-y-2">
           <div className="flex items-center gap-2 text-cafe-700">
             <Heart className="w-4 h-4 shrink-0 fill-red-500 text-red-500" />

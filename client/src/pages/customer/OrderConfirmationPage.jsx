@@ -54,7 +54,7 @@ const OrderConfirmationPage = () => {
     <div className="min-h-screen bg-cafe-50 max-w-md mx-auto relative shadow-xl border-x border-cafe-200 flex flex-col">
       <Header />
 
-      <div className="flex-1 p-5 space-y-6">
+      <div className="flex-1 p-5 pb-28 space-y-6">
         {/* Success Card Banner */}
         <div className="bg-white rounded-2xl p-6 border border-cafe-200 text-center shadow-sm space-y-3">
           <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
@@ -136,7 +136,7 @@ const OrderConfirmationPage = () => {
       </div>
 
       {/* Footer Track Order Button */}
-      <div className="p-5 bg-white border-t border-cafe-200">
+      <div className="p-5 pb-28 bg-white border-t border-cafe-200">
         <button
           onClick={() => navigate(`/order-track/${order._id}`)}
           className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"

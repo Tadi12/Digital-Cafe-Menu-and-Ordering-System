@@ -333,6 +333,16 @@
   "added_to_favorites": "ወደምትወዷቸው ተጨምሯል",
   "removed_from_favorites": "ከምትወዷቸው ተወግዷል",
   "no_favorites": "እስከ አሁን ምንም የሚወዷቸው እቃዎች አልቀመጡም። ማንኛውንም ምግብ ወይም መጠጥ ለመቀመጥ በልብ ምልክቱ ላይ ይንኩ።",
-  "browse_menu": "ምናሌውን ይመልከቱ",
-  "loading_favorites": "የምወዷቸውን በመጫን ላይ..."
+  "browse_menu": "ሜኑ ይመልከቱ",
+  "loading_favorites": "የምወዷቸውን በመጫን ላይ...",
+  "tab_menu": "ሜኑ",
+  "tab_orders": "ትዕዛዞች",
+  "tab_search": "ፍለጋ",
+  "tab_favorites": "የምወዳቸው",
+  "tab_cart": "ቅርጫት",
+  "customer_tabs_label": "የደንበኛ ምናሌ አሰሳ",
+  "cart_item_count": "{{total}} እቃዎች በትዕዛዝዎ ውስጥ",
+  "results_count": "{{total}} ውጤቶች",
+  "close_search": "ፍለጋ ዝጋ",
+  "clear_search": "ፍለጋ አጽዳ"
 }

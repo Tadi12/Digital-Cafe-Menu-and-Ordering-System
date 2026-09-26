@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { LanguageContext } from "../../context/LanguageContext";
 import { getTableByIdApi } from "../../api/tableApi";
 import { getCategoriesApi } from "../../api/categoryApi";
 import { getFoodsApi } from "../../api/foodApi";
 import { createOrderApi, getCustomerOrdersApi } from "../../api/orderApi";
 import { useCart } from "../../hooks/useCart";
-import { useFavorites } from "../../hooks/useFavorites";
+import { useCustomerUI } from "../../hooks/useCustomerUI";
 import { useSocket } from "../../hooks/useSocket";
 
 import Header from "../../components/common/Header";
@@ -19,35 +18,31 @@ import { MenuListSkeleton } from "../../components/customer/MenuItemSkeleton";
 import FoodDetailModal from "../../components/customer/FoodDetailModal";
 import DrinkDetailModal from "../../components/customer/DrinkDetailModal";
 import CartDrawer from "../../components/customer/CartDrawer";
-import { formatCurrency } from "../../utils/currencyFormatter";
 import {
   mergeCustomerOrderHistory,
   readCustomerOrderHistory,
   saveCustomerOrderToHistory,
 } from "../../utils/customerOrderHistory";
-
-import { Search, SearchX, ShoppingBag, AlertCircle, RotateCw, Heart } from "lucide-react";
+import { SearchX, AlertCircle, RotateCw } from "lucide-react";
 
 const MenuPage = () => {
   const { tableId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   // Keep the effect dependency below primitive/stable. The `t` function itself
   // may receive a new reference during a render and would restart menu loading.
   const invalidTableMessage = t("invalid_table_desc");
   const menuFetchFailedMessage = t("menu_fetch_failed");
-  const { currentLang } = useContext(LanguageContext);
   const { socket, joinOrderRoom, playNotificationSound } = useSocket();
   const {
     cartItems,
     addToCart,
     clearCart,
-    totalItemsCount,
-    subtotal,
     customerName,
     customerSessionId,
   } = useCart();
-  const { favoriteCount } = useFavorites();
+  const { isCartOpen, openCart, closeCart, rememberTableId } = useCustomerUI();
 
   const readyOrderIdsRef = useRef(new Set());
   const getNotifiedReadyOrders = () => {
@@ -81,11 +76,9 @@ const MenuPage = () => {
   const [categories, setCategories] = useState([]);
   const [foods, setFoods] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
   const [selectedDrink, setSelectedDrink] = useState(null);
   const [customerOrderHistory, setCustomerOrderHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
   const [readyToastVisible, setReadyToastVisible] = useState(false);
   const [readyToastOrder, setReadyToastOrder] = useState(null);
 
@@ -122,7 +115,6 @@ const MenuPage = () => {
   const [tableError, setTableError] = useState("");
   const [errorKind, setErrorKind] = useState("");
   const [retryCount, setRetryCount] = useState(0);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   // Validate table and fetch menu data whenever the QR table id changes
@@ -143,6 +135,7 @@ const MenuPage = () => {
         }
         if (cancelled) return;
         setTable(tableRes.data);
+        rememberTableId(tableRes.data._id);
         validatingTable = false;
 
         const [catRes, foodRes] = await Promise.all([
@@ -179,7 +172,19 @@ const MenuPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [tableId, invalidTableMessage, menuFetchFailedMessage, retryCount]);
+  }, [tableId, invalidTableMessage, menuFetchFailedMessage, retryCount, rememberTableId]);
+
+  // The overlay tab bar links here with ?cart=1 when Cart is tapped on another
+  // page; open the drawer once the table for this QR code is known.
+  useEffect(() => {
+    if (!table) return;
+    if (searchParams.get("cart") !== "1") return;
+
+    openCart();
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("cart");
+    setSearchParams(nextParams, { replace: true });
+  }, [table, searchParams, setSearchParams, openCart]);
 
   useEffect(() => {
     if (!customerName || !customerName.trim()) {
@@ -191,7 +196,6 @@ const MenuPage = () => {
     }
 
     const loadCustomerHistory = async () => {
-      setHistoryLoading(true);
       const cachedOrders = readCustomerOrderHistory(
         customerName,
         customerSessionId,
@@ -213,8 +217,6 @@ const MenuPage = () => {
       } catch (err) {
         console.error("[Customer History Error]:", err);
         setCustomerOrderHistory(cachedOrders);
-      } finally {
-        setHistoryLoading(false);
       }
     };
 
@@ -292,17 +294,12 @@ const MenuPage = () => {
     };
   }, [socket, customerName, customerSessionId, playNotificationSound]);
 
-  // Filter foods by selected category and search query
+  // Filter foods by the selected category (search lives in the Search tab overlay)
   const filteredFoods = foods.filter((food) => {
     const matchesCategory = selectedCategory
       ? food.category?._id === selectedCategory
       : true;
-    const nameEn = (food.name?.en || "").toLowerCase();
-    const nameAm = (food.name?.am || "").toLowerCase();
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !query || nameEn.includes(query) || nameAm.includes(query);
-    return matchesCategory && matchesSearch;
+    return matchesCategory;
   });
 
   const handlePlaceOrder = async () => {
@@ -324,7 +321,7 @@ const MenuPage = () => {
       if (res.success) {
         saveCustomerOrderToHistory(res.data);
         clearCart();
-        setIsCartOpen(false);
+        closeCart();
         navigate(`/order-confirmation/${res.data._id}`);
       }
     } catch (err) {
@@ -388,7 +385,7 @@ const MenuPage = () => {
           style={decorativePanelStyle("/images/burger-side.svg")}
         />
 
-        <div className="relative min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 pb-24 shadow-xl">
+        <div className="relative min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 pb-28 shadow-xl">
           {readyToastVisible && readyToastOrder && (
             <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-cafe-200 bg-cafe-900 px-4 py-3 text-sm font-bold text-white shadow-xl ring-4 ring-amber-200/40">
               <div className="flex items-center justify-between gap-3">
@@ -426,56 +423,6 @@ const MenuPage = () => {
           {/* Table Badge */}
           <TableHeader table={table} />
 
-          <div className="px-4 pt-4 space-y-2">
-            {customerName && (
-              <button
-                type="button"
-                onClick={() => navigate("/my-orders")}
-                className="w-full flex items-center justify-between rounded-2xl border border-cafe-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cafe-300"
-              >
-                <div className="text-left">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
-                    {t('my_orders')}
-                  </p>
-                  <h3 className="text-sm font-black text-cafe-900">
-                    {customerName}
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex min-w-7 justify-center rounded-full bg-cafe-900 px-2 py-1 text-[10px] font-black text-white">
-                    {historyLoading ? "..." : customerOrderHistory.length}
-                  </span>
-                  <span className="text-[10px] font-bold text-cafe-600">
-                    {t('view_all')}
-                  </span>
-                </div>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => navigate("/favorites")}
-              className="w-full flex items-center justify-between rounded-2xl border border-cafe-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cafe-300"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <Heart className="w-4 h-4 shrink-0 fill-red-500 text-red-500" />
-                <div className="text-left min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
-                    {t('favorites')}
-                  </p>
-                  <h3 className="text-sm font-black text-cafe-900 truncate">
-                    {t('favorite_items_count', { total: favoriteCount })}
-                  </h3>
-                </div>
-              </div>
-
-              <span className="text-[10px] font-bold text-cafe-600 shrink-0">
-                {t('view')}
-              </span>
-            </button>
-          </div>
-
           {/* Category Pills Filter */}
           <div className="border-b border-cafe-200 bg-cafe-50/80 backdrop-blur">
             {foodCategoryList.length > 0 && (
@@ -505,36 +452,14 @@ const MenuPage = () => {
             )}
           </div>
 
-          {/* Search Input */}
-          <div className="p-4 bg-cafe-50 sticky top-14 z-20 shadow-xs">
-            <div className="relative">
-              <Search className="w-4 h-4 text-cafe-400 absolute left-3.5 top-3" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t("search_placeholder")}
-                className="w-full pl-10 pr-4 py-2.5 rounded-full border border-cafe-200 bg-white text-xs font-medium text-cafe-900 focus:outline-none focus:border-cafe-600 shadow-xs"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-sm text-cafe-500 font-bold"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-
           {/* Food Items List */}
           <div className="px-4 space-y-3">
             {filteredFoods.length === 0 ? (
               <div className="flex flex-col items-center py-12 text-center text-cafe-700">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cafe-100 text-cafe-700"><SearchX className="h-6 w-6" /></div>
                 <h2 className="font-display mb-2 text-lg font-bold text-cafe-900">{t("no_menu_matches")}</h2>
-                <p className="mb-4 max-w-xs text-sm">{searchQuery ? t("search_no_matches", { query: searchQuery }) : t("category_no_matches")}</p>
-                {(searchQuery || selectedCategory) && <button type="button" onClick={() => { setSearchQuery(""); setSelectedCategory(null); }} className="rounded-xl border border-cafe-300 px-4 py-2 text-sm font-bold text-cafe-800 hover:bg-cafe-100">{t("clear_filters")}</button>}
+                <p className="mb-4 max-w-xs text-sm">{t("category_no_matches")}</p>
+                {selectedCategory && <button type="button" onClick={() => setSelectedCategory(null)} className="rounded-xl border border-cafe-300 px-4 py-2 text-sm font-bold text-cafe-800 hover:bg-cafe-100">{t("clear_filters")}</button>}
               </div>
             ) : (
               filteredFoods.map((food, index) => (
@@ -565,41 +490,10 @@ const MenuPage = () => {
             onAddToCart={addToCart}
           />
 
-          {/* Sticky Floating Bottom Cart Bar */}
-          {totalItemsCount > 0 && (
-            <div className="fixed bottom-4 left-0 right-0 z-30 px-4 pb-[env(safe-area-inset-bottom)] max-w-md mx-auto">
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="w-full bg-cafe-900 text-white p-3.5 rounded-2xl shadow-xl border border-cafe-700 flex items-center justify-between active:scale-[0.99] transition-transform"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <ShoppingBag className="w-5 h-5 text-gold-500" />
-                    <span key={totalItemsCount} className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center animate-pop">
-                      {totalItemsCount}
-                    </span>
-                  </div>
-                  <span className="font-bold text-xs uppercase tracking-wider text-cafe-200">
-                    {t("cart_title")}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="font-black text-sm text-white">
-                    {formatCurrency(subtotal, currentLang)}
-                  </span>
-                  <span className="bg-cafe-700 text-cafe-100 text-xs px-2 py-1 rounded-lg font-bold">
-                    {t('view')}
-                  </span>
-                </div>
-              </button>
-            </div>
-          )}
-
           {/* Cart Drawer */}
           <CartDrawer
             isOpen={isCartOpen}
-            onClose={() => setIsCartOpen(false)}
+            onClose={closeCart}
             onPlaceOrder={handlePlaceOrder}
             table={table}
             isSubmitting={isSubmittingOrder}

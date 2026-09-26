@@ -334,5 +334,15 @@
   "removed_from_favorites": "Removed from your favorites",
   "no_favorites": "You haven’t saved any favorites yet. Tap the heart on any food or drink to save it here.",
   "browse_menu": "Browse the menu",
-  "loading_favorites": "Loading your favorites..."
+  "loading_favorites": "Loading your favorites...",
+  "tab_menu": "Menu",
+  "tab_orders": "Orders",
+  "tab_search": "Search",
+  "tab_favorites": "Favorites",
+  "tab_cart": "Cart",
+  "customer_tabs_label": "Customer menu navigation",
+  "cart_item_count": "{{total}} items in your order",
+  "results_count": "{{total}} results",
+  "close_search": "Close search",
+  "clear_search": "Clear search"
 }

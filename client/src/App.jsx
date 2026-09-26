@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { CustomerUIProvider } from './context/CustomerUIContext';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { SocketProvider } from './context/SocketContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -14,9 +15,11 @@ function App() {
         <AuthProvider>
           <SocketProvider>
             <CartProvider>
-              <FavoritesProvider>
-                <AppRoutes />
-              </FavoritesProvider>
+              <CustomerUIProvider>
+                <FavoritesProvider>
+                  <AppRoutes />
+                </FavoritesProvider>
+              </CustomerUIProvider>
             </CartProvider>
           </SocketProvider>
         </AuthProvider>
