@@ -16,12 +16,15 @@ const CustomerTabBar = () => {
   const {
     isCartOpen,
     isSearchOpen,
+    isCustomerNavigationHidden,
     lastTableId,
     openCart,
     closeCart,
     openSearch,
     closeSearch,
   } = useCustomerUI();
+
+  if (isCustomerNavigationHidden) return null;
 
   const path = location.pathname || "";
   const isMenuPage = path.startsWith("/menu/table");

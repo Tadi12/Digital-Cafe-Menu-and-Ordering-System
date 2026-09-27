@@ -15,6 +15,7 @@ const readLastTableId = () => {
 export const CustomerUIProvider = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCustomerNavigationHidden, setIsCustomerNavigationHidden] = useState(false);
   const [lastTableId, setLastTableId] = useState(readLastTableId);
 
   // Cart drawer and search overlay are full-screen surfaces: keep them
@@ -49,6 +50,8 @@ export const CustomerUIProvider = ({ children }) => {
     () => ({
       isCartOpen,
       isSearchOpen,
+      isCustomerNavigationHidden,
+      setIsCustomerNavigationHidden,
       lastTableId,
       openCart,
       closeCart,
@@ -59,6 +62,7 @@ export const CustomerUIProvider = ({ children }) => {
     [
       isCartOpen,
       isSearchOpen,
+      isCustomerNavigationHidden,
       lastTableId,
       openCart,
       closeCart,

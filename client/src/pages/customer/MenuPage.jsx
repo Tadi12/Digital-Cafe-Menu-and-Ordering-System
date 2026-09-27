@@ -42,7 +42,13 @@ const MenuPage = () => {
     customerName,
     customerSessionId,
   } = useCart();
-  const { isCartOpen, openCart, closeCart, rememberTableId } = useCustomerUI();
+  const {
+    isCartOpen,
+    openCart,
+    closeCart,
+    rememberTableId,
+    setIsCustomerNavigationHidden,
+  } = useCustomerUI();
 
   const readyOrderIdsRef = useRef(new Set());
   const getNotifiedReadyOrders = () => {
@@ -117,6 +123,11 @@ const MenuPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
+  useEffect(() => {
+    setIsCustomerNavigationHidden(errorKind === "inactive-table");
+    return () => setIsCustomerNavigationHidden(false);
+  }, [errorKind, setIsCustomerNavigationHidden]);
+
   // Validate table and fetch menu data whenever the QR table id changes
   useEffect(() => {
     let cancelled = false;
@@ -149,12 +160,19 @@ const MenuPage = () => {
       } catch (err) {
         if (cancelled) return;
         console.error("[Menu Init Error]:", err);
-        setTable(null);
+        const inactiveTable = err.response?.data?.data?.active === false
+          ? err.response.data.data
+          : null;
+        setTable(inactiveTable);
         const status = err.response?.status;
-        const invalidTable = !!err.isInvalidTable || (validatingTable && [400, 404].includes(status));
-        setErrorKind(invalidTable ? "invalid-table" : "network");
+        const invalidTable = !inactiveTable && (!!err.isInvalidTable || (validatingTable && [400, 404].includes(status)));
+        setErrorKind(inactiveTable ? "inactive-table" : invalidTable ? "invalid-table" : "network");
         setTableError(
-          invalidTable ? (err.response?.data?.message || err.message || invalidTableMessage) : menuFetchFailedMessage,
+          inactiveTable
+            ? err.response?.data?.message
+            : invalidTable
+              ? (err.response?.data?.message || err.message || invalidTableMessage)
+              : menuFetchFailedMessage,
         );
       } finally {
         if (!cancelled) setLoading(false);
@@ -351,16 +369,23 @@ const MenuPage = () => {
   }
 
   if (tableError) {
+    const inactiveTable = errorKind === "inactive-table";
     return (
       <div className="min-h-screen bg-cafe-50 flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 shadow">
           <AlertCircle className="w-8 h-8" />
         </div>
         <h2 className="font-display text-xl font-bold text-cafe-900 mb-2">
-          {errorKind === "invalid-table" ? t("invalid_table_title") : t("menu_network_error_title")}
+          {inactiveTable ? t("inactive_table_title") : errorKind === "invalid-table" ? t("invalid_table_title") : t("menu_network_error_title")}
         </h2>
-        <p className="text-sm text-cafe-600 max-w-xs mb-2">{errorKind === "invalid-table" ? t("invalid_table_friendly") : tableError}</p>
-        {errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
+        <p className="text-sm text-cafe-600 max-w-xs mb-2">
+          {inactiveTable
+            ? t("inactive_table_desc", { number: table?.tableNumber })
+            : errorKind === "invalid-table"
+              ? t("invalid_table_friendly")
+              : tableError}
+        </p>
+        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
       </div>
     );
   }
