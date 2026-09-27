@@ -346,5 +346,15 @@
   "close_search": "Close search",
   "clear_search": "Clear search",
   "theme_switch_to_dark": "Switch to dark mode",
-  "theme_switch_to_light": "Switch to light mode"
+  "theme_switch_to_light": "Switch to light mode",
+  "admin_notifications": "Notifications",
+  "admin_notifications_recent": "Recent activity",
+  "admin_notifications_empty": "You're all caught up",
+  "admin_notifications_clear": "Clear all",
+  "admin_notification_new_order": "New order received",
+  "admin_notification_new_order_detail": "Order #{{orderNumber}} from Table #{{tableNumber}}",
+  "admin_notification_order_updated": "Order status updated",
+  "admin_notification_order_updated_detail": "Order #{{orderNumber}} is now {{status}}",
+  "admin_notification_order_cancelled": "Order cancelled",
+  "admin_notification_order_cancelled_detail": "Order #{{orderNumber}} was cancelled"
 }

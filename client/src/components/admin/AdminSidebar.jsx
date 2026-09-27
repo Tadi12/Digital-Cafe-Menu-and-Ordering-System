@@ -11,11 +11,14 @@ import {
   BarChart3,
   User,
   MonitorSmartphone,
+  LogOut,
   X,
 } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
+  const { logout } = useAuth();
 
   const navItems = [
     { path: "/admin/dashboard", label: t("dashboard"), icon: LayoutDashboard },
@@ -103,6 +106,21 @@ const AdminSidebar = ({ isOpen, onClose }) => {
             );
           })}
         </nav>
+
+        <div className="border-t border-cafe-800 p-3">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              logout();
+            }}
+            title={t("logout")}
+            className="flex min-h-10 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-xs font-semibold text-cafe-300 transition-colors hover:bg-red-500/15 hover:text-red-300 md:justify-center md:px-0 lg:justify-start lg:px-3.5"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span className="md:hidden lg:inline">{t("logout_action")}</span>
+          </button>
+        </div>
       </aside>
     </>
   );

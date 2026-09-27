@@ -346,5 +346,15 @@
   "close_search": "ፍለጋ ዝጋ",
   "clear_search": "ፍለጋ አጽዳ",
   "theme_switch_to_dark": "ወደ ጨለማ ገጽታ ቀይር",
-  "theme_switch_to_light": "ወደ ብሩህ ገጽታ ቀይር"
+  "theme_switch_to_light": "ወደ ብሩህ ገጽታ ቀይር",
+  "admin_notifications": "ማሳወቂያዎች",
+  "admin_notifications_recent": "የቅርብ ጊዜ እንቅስቃሴ",
+  "admin_notifications_empty": "ሁሉንም ማሳወቂያዎች አይተዋል",
+  "admin_notifications_clear": "ሁሉንም አጽዳ",
+  "admin_notification_new_order": "አዲስ ትዕዛዝ ደርሷል",
+  "admin_notification_new_order_detail": "ትዕዛዝ #{{orderNumber}} ከጠረጴዛ #{{tableNumber}}",
+  "admin_notification_order_updated": "የትዕዛዝ ሁኔታ ተዘምኗል",
+  "admin_notification_order_updated_detail": "ትዕዛዝ #{{orderNumber}} አሁን {{status}} ላይ ነው",
+  "admin_notification_order_cancelled": "ትዕዛዙ ተሰርዟል",
+  "admin_notification_order_cancelled_detail": "ትዕዛዝ #{{orderNumber}} ተሰርዟል"
 }
