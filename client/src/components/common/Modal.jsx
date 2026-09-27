@@ -81,18 +81,18 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-200 border border-cafe-100 max-h-[90vh] flex flex-col outline-none ${isOpen ? "translate-y-0 scale-100" : "translate-y-3 scale-95"}`}
+        className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-200 border border-cafe-100 max-h-[90vh] flex flex-col outline-none dark:bg-recipe-card dark:border-recipe-border dark:shadow-black/50 ${isOpen ? "translate-y-0 scale-100" : "translate-y-3 scale-95"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-cafe-100 bg-cafe-50">
-          <h3 id={titleId} className="text-base font-bold text-cafe-900">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-cafe-100 bg-cafe-50 dark:border-recipe-border dark:bg-recipe-cardHover">
+          <h3 id={titleId} className="text-base font-bold text-cafe-900 dark:text-recipe-text">
             {title}
           </h3>
           <button
             onClick={onClose}
             aria-label={t('close')}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-cafe-500 hover:text-cafe-900 hover:bg-cafe-200 transition-colors"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-cafe-500 hover:text-cafe-900 hover:bg-cafe-200 transition-colors dark:text-recipe-muted dark:hover:bg-recipe-pill dark:hover:text-recipe-text"
           >
             <X className="w-5 h-5" />
           </button>

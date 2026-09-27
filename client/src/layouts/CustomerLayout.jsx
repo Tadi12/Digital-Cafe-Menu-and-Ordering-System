@@ -10,7 +10,7 @@ const CustomerLayout = () => {
 
   return (
     <CustomerAccessGate>
-      <div className="min-h-screen bg-cafe-100/50">
+      <div className="min-h-screen bg-cafe-100/50 dark:bg-recipe-bg">
         <Outlet />
         <CustomerTabBar />
         <CustomerSearchOverlay isOpen={isSearchOpen} onClose={closeSearch} />

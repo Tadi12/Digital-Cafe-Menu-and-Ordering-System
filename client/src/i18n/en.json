@@ -344,5 +344,7 @@
   "cart_item_count": "{{total}} items in your order",
   "results_count": "{{total}} results",
   "close_search": "Close search",
-  "clear_search": "Clear search"
+  "clear_search": "Clear search",
+  "theme_switch_to_dark": "Switch to dark mode",
+  "theme_switch_to_light": "Switch to light mode"
 }

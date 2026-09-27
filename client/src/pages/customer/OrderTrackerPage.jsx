@@ -240,7 +240,7 @@ const OrderTrackerPage = () => {
           <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-cafe-200 bg-cafe-900 px-4 py-3 text-sm font-bold text-white shadow-xl ring-4 ring-amber-200/40">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-cafe-900">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-cafe-900 dark:bg-recipe-orange dark:text-[#17181c]">
                   ✓
                 </span>
                 <span className="tracking-[0.12em] uppercase text-[10px] text-amber-200">

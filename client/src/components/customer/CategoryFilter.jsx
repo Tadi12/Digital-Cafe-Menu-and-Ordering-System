@@ -8,13 +8,13 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
   const { currentLang } = useContext(LanguageContext);
 
   return (
-    <div className="py-2.5 px-4 overflow-x-auto no-scrollbar flex items-center gap-2 border-b border-cafe-200 bg-cafe-50/80 backdrop-blur">
+    <div className="py-2.5 px-4 overflow-x-auto no-scrollbar flex items-center gap-2 border-b border-cafe-200 bg-cafe-50/80 backdrop-blur dark:border-recipe-border dark:bg-recipe-bg/90">
       <button
         onClick={() => onSelectCategory(null)}
         className={`min-h-10 px-3 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
           selectedCategory === null
-            ? "bg-cafe-800 text-white shadow"
-            : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200"
+            ? "bg-cafe-800 text-white shadow dark:bg-recipe-orange dark:text-[#17181c] dark:shadow-lg"
+            : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200 dark:bg-recipe-pill dark:text-recipe-text dark:border-recipe-border dark:hover:bg-recipe-cardHover"
         }`}
       >
         <Utensils className="w-3.5 h-3.5" />
@@ -22,8 +22,8 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
         <span
           className={`min-w-4 h-4 px-1 text-[10px] rounded-full flex items-center justify-center ${
             selectedCategory === null
-              ? "bg-white/20 text-white"
-              : "bg-cafe-100 text-cafe-700"
+              ? "bg-white/20 text-white dark:bg-black/20"
+              : "bg-cafe-100 text-cafe-700 dark:bg-recipe-cardHover dark:text-recipe-muted"
           }`}
         >
           {categories.reduce(
@@ -43,8 +43,8 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
             onClick={() => onSelectCategory(cat._id)}
             className={`min-h-10 px-3 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
               isSelected
-                ? "bg-cafe-800 text-white shadow"
-                : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200"
+                ? "bg-cafe-800 text-white shadow dark:bg-recipe-orange dark:text-[#17181c] dark:shadow-lg"
+                : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200 dark:bg-recipe-pill dark:text-recipe-text dark:border-recipe-border dark:hover:bg-recipe-cardHover"
             }`}
           >
             {cat.image?.url && (
@@ -58,8 +58,8 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
             <span
               className={`min-w-4 h-4 px-1 text-[10px] rounded-full flex items-center justify-center ${
                 isSelected
-                  ? "bg-white/20 text-white"
-                  : "bg-cafe-100 text-cafe-700"
+                  ? "bg-white/20 text-white dark:bg-black/20"
+                  : "bg-cafe-100 text-cafe-700 dark:bg-recipe-cardHover dark:text-recipe-muted"
               }`}
             >
               {cat.itemCount || 0}

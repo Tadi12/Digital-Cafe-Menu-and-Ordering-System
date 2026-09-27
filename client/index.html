@@ -8,8 +8,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Apply the saved theme before first paint so there is no light flash.
+      (function () {
+        try {
+          var saved = localStorage.getItem('cafe_theme_mode');
+          if (saved !== 'light') document.documentElement.classList.add('dark');
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
-  <body class="bg-cafe-50 text-cafe-900 antialiased min-h-screen font-sans">
+  <body class="bg-cafe-50 text-cafe-900 antialiased min-h-screen font-sans dark:bg-recipe-bg dark:text-recipe-text">
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

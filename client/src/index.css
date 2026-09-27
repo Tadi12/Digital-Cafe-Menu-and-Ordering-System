@@ -9,13 +9,28 @@
   --analytics-tooltip-border: #e8d8c3;
   --analytics-tooltip-text: #2c1a1d;
 }
+
+.dark {
+  --analytics-grid: #2a2e36;
+  --analytics-axis: #9ca3af;
+  --analytics-tooltip-bg: #1c1e22;
+  --analytics-tooltip-border: #2e323b;
+  --analytics-tooltip-text: #f3f4f6;
+  color-scheme: dark;
+}
 .chart-tooltip { background: var(--analytics-tooltip-bg); border-color: var(--analytics-tooltip-border); color: var(--analytics-tooltip-text); }
 
 @layer base {
-  /* Force white background for all form input elements */
+  /* Default (light) form input surface */
   input, select, textarea {
-    background-color: #ffffff !important;
+    background-color: #ffffff;
     color: #2C1A1D;
+  }
+
+  /* Dark mode form input surface */
+  .dark input, .dark select, .dark textarea {
+    background-color: #1e2126;
+    color: #F3F4F6;
   }
 
   /* Handle WebKit browser autofill background */
@@ -32,7 +47,21 @@
     -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
     transition: background-color 5000s ease-in-out 0s;
   }
+
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus,
+  .dark textarea:-webkit-autofill,
+  .dark textarea:-webkit-autofill:hover,
+  .dark textarea:-webkit-autofill:focus,
+  .dark select:-webkit-autofill,
+  .dark select:-webkit-autofill:hover,
+  .dark select:-webkit-autofill:focus {
+    -webkit-text-fill-color: #F3F4F6;
+    -webkit-box-shadow: 0 0 0px 1000px #1e2126 inset !important;
+  }
 }
+
 
 @layer utilities {
   /* Hide scrollbar for Chrome, Safari and Opera */
@@ -52,6 +81,78 @@
   }
   .card { @apply rounded-2xl border border-cafe-100 bg-white shadow-sm; }
 }
+
+/*
+ * Dark theme bridge
+ * -----------------
+ * The app was originally written with literal light-mode utilities
+ * (`bg-white`, `bg-cafe-50`, `text-cafe-900`, ...). Instead of duplicating a
+ * `dark:` variant on every element, these rules remap those literals to the
+ * dark palette from the reference design. Because each rule is scoped with
+ * `.dark` it has a higher specificity than the plain utility, while any
+ * explicit `dark:` utility still wins (themes use the same values, so there is
+ * never a visual conflict).
+ */
+@layer components {
+  /* Surfaces */
+  .dark .bg-white { background-color: #1e2126; }
+  .dark .bg-cafe-50 { background-color: #1a1c20; }
+  .dark .bg-cafe-100 { background-color: #262930; }
+  .dark .bg-cafe-200 { background-color: #2e323b; }
+  .dark .bg-gray-50 { background-color: #1e2126; }
+  .dark .bg-gray-100 { background-color: #33363d; }
+
+  /* Primary surfaces / actions become the vivid brand orange */
+  .dark .bg-cafe-700 { background-color: #ff7a28; }
+  .dark .bg-cafe-800 { background-color: #ff7a28; }
+  .dark .bg-gold-500 { background-color: #ff7a28; }
+  .dark .bg-cafe-900 { background-color: #17181c; }
+  .dark .hover\:bg-cafe-900:hover { background-color: #d95812; }
+  .dark .hover\:bg-cafe-800:hover { background-color: #d95812; }
+  .dark .hover\:bg-cafe-700:hover { background-color: #3a3f49; }
+  .dark .hover\:bg-gold-600:hover { background-color: #d95812; }
+
+  /* Borders */
+  .dark .border-cafe-50 { border-color: #24272d; }
+  .dark .border-cafe-100 { border-color: #2a2e36; }
+  .dark .border-cafe-200 { border-color: #2e323b; }
+  .dark .border-cafe-300 { border-color: #3a3f49; }
+  .dark .border-cafe-700 { border-color: #2a2e36; }
+  .dark .border-cafe-800 { border-color: #2a2e36; }
+  .dark .border-gray-300 { border-color: #4b5563; }
+  .dark .hover\:border-cafe-300:hover { border-color: #3a3f49; }
+  .dark .border-gray-200 { border-color: #2e323b; }
+
+  /* Typography */
+  .dark .text-cafe-900 { color: #f5f5f7; }
+  .dark .text-cafe-800 { color: #e8e9ec; }
+  .dark .text-cafe-700 { color: #d2d5da; }
+  .dark .text-cafe-600 { color: #a8adb6; }
+  .dark .text-cafe-500 { color: #8b9099; }
+  .dark .text-cafe-400 { color: #868c96; }
+  .dark .text-cafe-300 { color: #949aa4; }
+  .dark .text-gray-800 { color: #e5e7eb; }
+  .dark .text-gray-700 { color: #d1d5db; }
+  .dark .text-gray-400 { color: #868c96; }
+  .dark .text-gold-600 { color: #e9a23b; }
+  .dark .hover\:text-cafe-900:hover { color: #f5f5f7; }
+
+  /* Soft hovers / surfaces */
+  .dark .hover\:bg-cafe-50:hover { background-color: #1a1c20; }
+  .dark .hover\:bg-cafe-100:hover { background-color: #262930; }
+  .dark .hover\:bg-cafe-200:hover { background-color: #2e323b; }
+
+  /* Focus rings */
+  .dark .ring-cafe-200 { --tw-ring-color: #2e323b; }
+  .dark .focus\:ring-cafe-200:focus { --tw-ring-color: #2e323b; }
+  .dark .focus\:border-cafe-600:focus { border-color: #ff7a28; }
+
+}
+
+/* These remapped action fills need dark foreground text for clear contrast. */
+.dark .bg-cafe-700,
+.dark .bg-cafe-800,
+.dark .bg-gold-500 { color: #17181c; }
 
 /* Animations */
 @keyframes fadeIn {
@@ -82,3 +183,16 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+/* React-Toastify follows the active theme (kept unlayered so it always wins
+   over the Toastify stylesheet, which is not scanned by Tailwind). */
+.dark .Toastify__toast {
+  background-color: #1e2126;
+  color: #f5f5f7;
+}
+.dark .Toastify__toast-body,
+.dark .Toastify__toast-body > div {
+  color: #f5f5f7;
+}
+.dark .Toastify__toast-theme--dark { background-color: #1e2126; }
+.dark .Toastify__progress-bar { background: #ff7a28; }

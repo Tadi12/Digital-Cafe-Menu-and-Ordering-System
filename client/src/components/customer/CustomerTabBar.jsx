@@ -124,7 +124,7 @@ const CustomerTabBar = () => {
       aria-label={t("customer_tabs_label")}
       className="fixed bottom-4 left-0 right-0 z-[45] mx-auto max-w-md px-4 pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="flex items-center gap-1 rounded-full border border-cafe-700 bg-cafe-900/95 p-1.5 shadow-xl backdrop-blur">
+      <div className="flex items-center gap-1 rounded-full border border-cafe-700 bg-cafe-900/95 p-1.5 shadow-xl backdrop-blur dark:border-recipe-border dark:bg-recipe-card/95 dark:shadow-black/60">
         {tabs.map((tab) => {
           const Icon = tab.icon;
 
@@ -141,14 +141,14 @@ const CustomerTabBar = () => {
               }
               className={`relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-[10px] font-bold leading-none transition-colors ${
                 tab.isActive
-                  ? "bg-gold-500 text-cafe-900 shadow-md"
-                  : "text-cafe-200 hover:bg-cafe-800 hover:text-white"
+                  ? "bg-gold-500 text-cafe-900 shadow-md dark:bg-recipe-orange dark:text-[#17181c] dark:shadow-lg"
+                  : "text-cafe-200 hover:bg-cafe-800 hover:text-white dark:text-recipe-muted dark:hover:bg-recipe-pill dark:hover:text-recipe-text"
               }`}
             >
               <span className="relative shrink-0">
                 <Icon
                   className={`h-4 w-4 ${
-                    tab.id === "favorites" && tab.isActive ? "fill-cafe-900" : ""
+                    tab.id === "favorites" && tab.isActive ? "fill-cafe-900 dark:fill-white" : ""
                   }`}
                 />
                 {tab.count > 0 && (

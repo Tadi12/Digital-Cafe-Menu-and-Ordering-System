@@ -116,33 +116,33 @@ const CustomerSearchOverlay = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-40 overscroll-contain bg-cafe-50 transition-opacity duration-200 ${
+      className={`fixed inset-0 z-40 overscroll-contain bg-cafe-50 transition-opacity duration-200 dark:bg-recipe-bg ${
         isOpen ? "opacity-100" : "opacity-0"
       }`}
       onClick={onClose}
     >
       <div
-        className="mx-auto flex h-full w-full max-w-md flex-col border-x border-cafe-200 bg-cafe-50 shadow-xl"
+        className="mx-auto flex h-full w-full max-w-md flex-col border-x border-cafe-200 bg-cafe-50 shadow-xl dark:border-recipe-border dark:bg-recipe-bg"
         onClick={(event) => event.stopPropagation()}
       >
         {/* Search Header */}
-        <div className="border-b border-cafe-200 bg-cafe-50 px-4 py-3 shadow-sm">
+        <div className="border-b border-cafe-200 bg-cafe-50 px-4 py-3 shadow-sm dark:border-recipe-border dark:bg-recipe-bg">
           <div className="relative">
-            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-cafe-400" />
+            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-cafe-400 dark:text-recipe-subtle" />
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("search_placeholder")}
-              className="w-full rounded-full border border-cafe-200 bg-white py-3 pl-10 pr-12 text-xs font-medium text-cafe-900 shadow-sm focus:border-cafe-600 focus:outline-none"
+              className="w-full rounded-full border border-cafe-200 bg-white py-3 pl-10 pr-12 text-xs font-medium text-cafe-900 shadow-sm focus:border-cafe-600 focus:outline-none dark:border-recipe-border dark:bg-recipe-card dark:text-recipe-text dark:placeholder:text-recipe-subtle dark:shadow-none dark:focus:border-recipe-orange"
             />
             <button
               type="button"
               onClick={query ? () => setQuery("") : onClose}
               aria-label={query ? t("clear_search") : t("close_search")}
               title={query ? t("clear_search") : t("close_search")}
-              className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-cafe-500 transition-colors hover:bg-cafe-100 hover:text-cafe-900"
+              className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-cafe-500 transition-colors hover:bg-cafe-100 hover:text-cafe-900 dark:text-recipe-muted dark:hover:bg-recipe-pill dark:hover:text-recipe-text"
             >
               {query ? (
                 <span className="text-base font-bold leading-none">×</span>
@@ -152,7 +152,7 @@ const CustomerSearchOverlay = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          <div className="mt-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+          <div className="mt-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500 dark:text-recipe-subtle">
             <span>{t("tab_search")}</span>
             <span>{t("results_count", { total: results.length })}</span>
           </div>
@@ -163,11 +163,11 @@ const CustomerSearchOverlay = ({ isOpen, onClose }) => {
           {loading ? (
             <MenuListSkeleton />
           ) : results.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-center text-cafe-700">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cafe-100 text-cafe-700">
+            <div className="flex flex-col items-center py-12 text-center text-cafe-700 dark:text-recipe-muted">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cafe-100 text-cafe-700 dark:bg-recipe-cardHover dark:text-recipe-muted">
                 <SearchX className="h-6 w-6" />
               </div>
-              <h2 className="font-display mb-2 text-lg font-bold text-cafe-900">
+              <h2 className="font-display mb-2 text-lg font-bold text-cafe-900 dark:text-recipe-text">
                 {t("no_menu_matches")}
               </h2>
               <p className="mb-4 max-w-xs text-sm">

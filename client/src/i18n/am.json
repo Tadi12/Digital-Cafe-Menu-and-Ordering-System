@@ -344,5 +344,7 @@
   "cart_item_count": "{{total}} እቃዎች በትዕዛዝዎ ውስጥ",
   "results_count": "{{total}} ውጤቶች",
   "close_search": "ፍለጋ ዝጋ",
-  "clear_search": "ፍለጋ አጽዳ"
+  "clear_search": "ፍለጋ አጽዳ",
+  "theme_switch_to_dark": "ወደ ጨለማ ገጽታ ቀይር",
+  "theme_switch_to_light": "ወደ ብሩህ ገጽታ ቀይር"
 }

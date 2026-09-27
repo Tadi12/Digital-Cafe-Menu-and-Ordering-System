@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
+import ThemeToggle from '../common/ThemeToggle';
 import { Menu, LogOut, Radio } from 'lucide-react';
 
 const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
@@ -44,6 +45,8 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
             />
             <span>{connected ? "Live Sync" : "Offline"}</span>
           </div>
+
+          <ThemeToggle />
 
           <LanguageSwitcher />
 

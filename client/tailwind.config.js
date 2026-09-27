@@ -4,6 +4,8 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
+
   theme: {
     extend: {
       colors: {
@@ -22,7 +24,21 @@ export default {
         gold: {
           500: '#D97706',
           600: '#B45309',
-        }
+        },
+        recipe: {
+          bg: '#121316',
+          card: '#1e2126',
+          cardHover: '#262930',
+          border: '#2a2e36',
+          orange: '#FF7A28',
+          orangeDark: '#D95812',
+          pill: '#272a31',
+          pillActive: '#FF7A28',
+          text: '#F5F5F7',
+          muted: '#9CA3AF',
+          subtle: '#6B7280',
+        },
+
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

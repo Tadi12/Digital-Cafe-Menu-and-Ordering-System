@@ -354,14 +354,14 @@ const MenuPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cafe-50">
-        <div className="mx-auto min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 shadow-xl">
+      <div className="min-h-screen bg-cafe-50 dark:bg-recipe-bg">
+        <div className="mx-auto min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 shadow-xl dark:border-recipe-border dark:bg-recipe-bg">
           <Header />
-          <div className="h-20 animate-pulse bg-cafe-100" />
-          <div className="space-y-3 border-b border-cafe-200 px-4 py-4">
-            <div className="flex gap-2">{[1, 2, 3, 4].map((item) => <div key={item} className="h-8 w-20 animate-pulse rounded-full bg-cafe-100" />)}</div>
+          <div className="h-20 animate-pulse bg-cafe-100 dark:bg-recipe-card" />
+          <div className="space-y-3 border-b border-cafe-200 px-4 py-4 dark:border-recipe-border">
+            <div className="flex gap-2">{[1, 2, 3, 4].map((item) => <div key={item} className="h-8 w-20 animate-pulse rounded-full bg-cafe-100 dark:bg-recipe-pill" />)}</div>
           </div>
-          <div className="p-4"><div className="h-10 animate-pulse rounded-full bg-white shadow-sm" /></div>
+          <div className="p-4"><div className="h-10 animate-pulse rounded-full bg-white shadow-sm dark:bg-recipe-card" /></div>
           <div className="px-4"><MenuListSkeleton /></div>
         </div>
       </div>
@@ -371,21 +371,21 @@ const MenuPage = () => {
   if (tableError) {
     const inactiveTable = errorKind === "inactive-table";
     return (
-      <div className="min-h-screen bg-cafe-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 shadow">
+      <div className="min-h-screen bg-cafe-50 flex flex-col items-center justify-center p-6 text-center dark:bg-recipe-bg">
+        <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 shadow dark:bg-red-500/15 dark:text-red-400">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="font-display text-xl font-bold text-cafe-900 mb-2">
+        <h2 className="font-display text-xl font-bold text-cafe-900 mb-2 dark:text-recipe-text">
           {inactiveTable ? t("inactive_table_title") : errorKind === "invalid-table" ? t("invalid_table_title") : t("menu_network_error_title")}
         </h2>
-        <p className="text-sm text-cafe-600 max-w-xs mb-2">
+        <p className="text-sm text-cafe-600 max-w-xs mb-2 dark:text-recipe-muted">
           {inactiveTable
             ? t("inactive_table_desc", { number: table?.tableNumber })
             : errorKind === "invalid-table"
               ? t("invalid_table_friendly")
               : tableError}
         </p>
-        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
+        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6 dark:text-recipe-muted">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orangeDark"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
       </div>
     );
   }
@@ -403,19 +403,19 @@ const MenuPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cafe-50 lg:bg-[#f3eee6]">
+    <div className="min-h-screen bg-cafe-50 lg:bg-[#f3eee6] dark:bg-recipe-bg dark:lg:bg-recipe-bg">
       <div className="mx-auto flex w-full max-w-[1600px] justify-center">
         <div
-          className="pointer-events-none hidden w-[220px] shrink-0 lg:block"
+          className="pointer-events-none hidden w-[220px] shrink-0 lg:block dark:opacity-30 dark:saturate-50"
           style={decorativePanelStyle("/images/burger-side.svg")}
         />
 
-        <div className="relative min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 pb-28 shadow-xl">
+        <div className="relative min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 pb-28 shadow-xl dark:border-recipe-border dark:bg-recipe-bg">
           {readyToastVisible && readyToastOrder && (
-            <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-cafe-200 bg-cafe-900 px-4 py-3 text-sm font-bold text-white shadow-xl ring-4 ring-amber-200/40">
+            <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-cafe-200 bg-cafe-900 px-4 py-3 text-sm font-bold text-white shadow-xl ring-4 ring-amber-200/40 dark:border-recipe-border dark:bg-recipe-card dark:ring-recipe-orange/30">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-cafe-900">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-cafe-900 dark:bg-recipe-orange dark:text-[#17181c]">
                     ✓
                   </span>
                   <span className="tracking-[0.12em] uppercase text-[10px] text-amber-200">
@@ -449,10 +449,10 @@ const MenuPage = () => {
           <TableHeader table={table} />
 
           {/* Category Pills Filter */}
-          <div className="border-b border-cafe-200 bg-cafe-50/80 backdrop-blur">
+          <div className="border-b border-cafe-200 bg-cafe-50/80 backdrop-blur dark:border-recipe-border dark:bg-recipe-bg/90">
             {foodCategoryList.length > 0 && (
               <div className="px-4 pt-3 pb-1">
-                <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500 dark:text-recipe-subtle">
                   {t('food')}
                 </div>
                 <CategoryFilter
@@ -465,7 +465,7 @@ const MenuPage = () => {
 
             {drinkCategoryList.length > 0 && (
               <div className="px-4 py-1 pb-3">
-                <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cafe-500 dark:text-recipe-subtle">
                   {t('drinks')}
                 </div>
                 <CategoryFilter
@@ -480,11 +480,11 @@ const MenuPage = () => {
           {/* Food Items List */}
           <div className="px-4 space-y-3">
             {filteredFoods.length === 0 ? (
-              <div className="flex flex-col items-center py-12 text-center text-cafe-700">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cafe-100 text-cafe-700"><SearchX className="h-6 w-6" /></div>
-                <h2 className="font-display mb-2 text-lg font-bold text-cafe-900">{t("no_menu_matches")}</h2>
+              <div className="flex flex-col items-center py-12 text-center text-cafe-700 dark:text-recipe-muted">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cafe-100 text-cafe-700 dark:bg-recipe-cardHover dark:text-recipe-muted"><SearchX className="h-6 w-6" /></div>
+                <h2 className="font-display mb-2 text-lg font-bold text-cafe-900 dark:text-recipe-text">{t("no_menu_matches")}</h2>
                 <p className="mb-4 max-w-xs text-sm">{t("category_no_matches")}</p>
-                {selectedCategory && <button type="button" onClick={() => setSelectedCategory(null)} className="rounded-xl border border-cafe-300 px-4 py-2 text-sm font-bold text-cafe-800 hover:bg-cafe-100">{t("clear_filters")}</button>}
+                {selectedCategory && <button type="button" onClick={() => setSelectedCategory(null)} className="rounded-xl border border-cafe-300 px-4 py-2 text-sm font-bold text-cafe-800 hover:bg-cafe-100 dark:border-recipe-border dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-cardHover">{t("clear_filters")}</button>}
               </div>
             ) : (
               filteredFoods.map((food, index) => (
@@ -526,7 +526,7 @@ const MenuPage = () => {
         </div>
 
         <div
-          className="pointer-events-none hidden w-[220px] shrink-0 lg:block"
+          className="pointer-events-none hidden w-[220px] shrink-0 lg:block dark:opacity-30 dark:saturate-50"
           style={decorativePanelStyle("/images/pizza-side.svg")}
         />
       </div>
