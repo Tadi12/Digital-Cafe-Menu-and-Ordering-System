@@ -1,4 +1,0 @@
-
-Rebuilding...
-
-Done in 493ms.
