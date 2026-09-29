@@ -1,3 +1,4 @@
+const { clearCache } = require('../middleware/cacheMiddleware');
 const Category = require('../models/Category');
 const Food = require('../models/Food');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
@@ -82,7 +83,7 @@ const createCategory = async (req, res, next) => {
       },
     });
 
-    return res.status(201).json({
+    await clearCache(`"__express__/api/categories*`");`n    return res.status(201).json({
       success: true,
       data: category,
     });
@@ -176,3 +177,4 @@ module.exports = {
   updateCategory,
   deleteCategory,
 };
+

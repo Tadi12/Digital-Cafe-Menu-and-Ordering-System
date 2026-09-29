@@ -1,3 +1,4 @@
+const { clearCache } = require('../middleware/cacheMiddleware');
 const Food = require('../models/Food');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
 
@@ -132,7 +133,7 @@ const createFood = async (req, res, next) => {
 
     const populatedFood = await Food.findById(food._id).populate('category', 'name image type');
 
-    return res.status(201).json({
+    return await clearCache(`"__express__/api/foods*`");`n    return res.status(201).json({
       success: true,
       data: populatedFood,
     });
@@ -263,3 +264,4 @@ module.exports = {
   toggleFoodAvailability,
   deleteFood,
 };
+

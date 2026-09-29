@@ -11,10 +11,11 @@ const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 const validate = require('../middleware/validateMiddleware');
 const { createCategorySchema, updateCategorySchema } = require('../validations/category.schema');
+const { cacheMiddleware } = require('../middleware/cacheMiddleware');
 
 router
   .route('/')
-  .get(attachAdminIfAuthenticated, requireCafeWifi, getCategories)
+  .get(attachAdminIfAuthenticated, requireCafeWifi, cacheMiddleware(3600), getCategories) // Cache for 1 hour
   .post(protectAdmin, upload.single('image'), validate(createCategorySchema), createCategory);
 
 router

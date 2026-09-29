@@ -1,6 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
-
-export const CartContext = createContext();
+import { create } from 'zustand';
 
 const SESSION_ID_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const SESSION_KEYS = [
@@ -27,7 +25,7 @@ const getStoredCustomerSession = () => {
 
 const getOrCreateCustomerSessionId = () => {
   try {
-    const { sessionId, sessionKey, expiryKey } = getStoredCustomerSession();
+    const { sessionId, sessionKey } = getStoredCustomerSession();
 
     if (sessionId) {
       if (sessionKey !== "cafe_customer_session_id") {
@@ -57,57 +55,52 @@ const getOrCreateCustomerSessionId = () => {
   }
 };
 
-export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
+const useCartStore = create((set, get) => ({
+  cartItems: (() => {
     try {
       const savedCart = localStorage.getItem("cafe_cart_items");
       return savedCart ? JSON.parse(savedCart) : [];
     } catch {
       return [];
     }
-  });
+  })(),
+  customerName: localStorage.getItem("cafe_customer_name") || "",
+  customerSessionId: getOrCreateCustomerSessionId(),
 
-  const [customerName, setCustomerName] = useState(() => {
-    return localStorage.getItem("cafe_customer_name") || "";
-  });
+  setCustomerName: (name) => {
+    localStorage.setItem("cafe_customer_name", name);
+    set({ customerName: name });
+  },
 
-  const [customerSessionId, setCustomerSessionId] = useState(() =>
-    getOrCreateCustomerSessionId(),
-  );
-
-  useEffect(() => {
-    localStorage.setItem("cafe_cart_items", JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  useEffect(() => {
-    localStorage.setItem("cafe_customer_name", customerName);
-  }, [customerName]);
-
-  useEffect(() => {
+  setCustomerSessionId: (id) => {
     const nextExpiry = String(Date.now() + SESSION_ID_TTL_MS);
-    localStorage.setItem("cafe_customer_session_id", customerSessionId);
+    localStorage.setItem("cafe_customer_session_id", id);
     localStorage.setItem("cafe_customer_session_expires_at", nextExpiry);
-    localStorage.setItem("customer_session_id", customerSessionId);
+    localStorage.setItem("customer_session_id", id);
     localStorage.setItem("customer_session_expires_at", nextExpiry);
-  }, [customerSessionId]);
+    set({ customerSessionId: id });
+  },
 
-  const addToCart = (food, quantity = 1) => {
-    setCartItems((prevItems) => {
-      const existingIndex = prevItems.findIndex(
+  addToCart: (food, quantity = 1) => {
+    set((state) => {
+      const existingIndex = state.cartItems.findIndex(
         (item) => item._id === food._id,
       );
+      let updated;
       if (existingIndex > -1) {
-        const updated = [...prevItems];
+        updated = [...state.cartItems];
         updated[existingIndex].quantity += quantity;
-        return updated;
+      } else {
+        updated = [...state.cartItems, { ...food, quantity }];
       }
-      return [...prevItems, { ...food, quantity }];
+      localStorage.setItem("cafe_cart_items", JSON.stringify(updated));
+      return { cartItems: updated };
     });
-  };
+  },
 
-  const updateQuantity = (foodId, delta) => {
-    setCartItems((prevItems) => {
-      return prevItems
+  updateQuantity: (foodId, delta) => {
+    set((state) => {
+      const updated = state.cartItems
         .map((item) => {
           if (item._id === foodId) {
             const newQty = item.quantity + delta;
@@ -116,46 +109,27 @@ export const CartProvider = ({ children }) => {
           return item;
         })
         .filter(Boolean);
+      localStorage.setItem("cafe_cart_items", JSON.stringify(updated));
+      return { cartItems: updated };
     });
-  };
+  },
 
-  const removeFromCart = (foodId) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item._id !== foodId),
-    );
-  };
+  removeFromCart: (foodId) => {
+    set((state) => {
+      const updated = state.cartItems.filter((item) => item._id !== foodId);
+      localStorage.setItem("cafe_cart_items", JSON.stringify(updated));
+      return { cartItems: updated };
+    });
+  },
 
-  const clearCart = () => {
-    setCartItems([]);
-  };
+  clearCart: () => {
+    localStorage.setItem("cafe_cart_items", JSON.stringify([]));
+    set({ cartItems: [] });
+  },
 
-  const totalItemsCount = cartItems.reduce(
-    (acc, item) => acc + item.quantity,
-    0,
-  );
+  // Derived state (selectors can be used instead, but keeping them as functions on the store makes migration seamless)
+  getTotalItemsCount: () => get().cartItems.reduce((acc, item) => acc + item.quantity, 0),
+  getSubtotal: () => get().cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+}));
 
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
-  );
-
-  return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        customerName,
-        setCustomerName,
-        customerSessionId,
-        setCustomerSessionId,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        totalItemsCount,
-        subtotal,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
-};
+export default useCartStore;
