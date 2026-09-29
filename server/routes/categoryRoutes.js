@@ -7,7 +7,7 @@ const {
   deleteCategory,
 } = require('../controllers/categoryController');
 const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
-const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
+const { requireGeofence } = require('../middleware/geofenceMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 const validate = require('../middleware/validateMiddleware');
 const { createCategorySchema, updateCategorySchema } = require('../validations/category.schema');
@@ -15,7 +15,7 @@ const { cacheMiddleware } = require('../middleware/cacheMiddleware');
 
 router
   .route('/')
-  .get(attachAdminIfAuthenticated, requireCafeWifi, cacheMiddleware(3600), getCategories) // Cache for 1 hour
+  .get(attachAdminIfAuthenticated, requireGeofence, cacheMiddleware(3600), getCategories) // Cache for 1 hour
   .post(protectAdmin, upload.single('image'), validate(createCategorySchema), createCategory);
 
 router
@@ -24,3 +24,4 @@ router
   .delete(protectAdmin, deleteCategory);
 
 module.exports = router;
+

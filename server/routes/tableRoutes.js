@@ -9,7 +9,7 @@ const {
   getTableQR,
 } = require('../controllers/tableController');
 const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
-const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
+const { requireGeofence } = require('../middleware/geofenceMiddleware');
 const validate = require('../middleware/validateMiddleware');
 const { createTableSchema, updateTableSchema } = require('../validations/table.schema');
 
@@ -20,10 +20,11 @@ router
 
 router
   .route('/:id')
-  .get(attachAdminIfAuthenticated, requireCafeWifi, getTableById)
+  .get(attachAdminIfAuthenticated, requireGeofence, getTableById)
   .put(protectAdmin, validate(updateTableSchema), updateTable)
   .delete(protectAdmin, deleteTable);
 
 router.get('/:id/qr', protectAdmin, getTableQR);
 
 module.exports = router;
+

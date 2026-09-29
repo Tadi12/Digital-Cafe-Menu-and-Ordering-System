@@ -39,13 +39,21 @@ axiosClient.interceptors.response.use(
   }
 );
 
-// Interceptor to attach Authorization Bearer token
+// Interceptor to attach Authorization Bearer token and GPS coordinates
 axiosClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('cafe_admin_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    const lat = localStorage.getItem('cafe_client_lat');
+    const lon = localStorage.getItem('cafe_client_lon');
+    if (lat && lon) {
+      config.headers['x-client-lat'] = lat;
+      config.headers['x-client-lon'] = lon;
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
