@@ -7,6 +7,7 @@ import {
   deleteCategoryApi,
 } from "../../api/categoryApi";
 import CategoryFormModal from "../../components/admin/CategoryFormModal";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { Plus, Edit2, Trash2, Layers } from "lucide-react";
 
@@ -19,6 +20,7 @@ const CategoryManagerPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null, name: "" });
 
   const fetchCategories = async () => {
     try {
@@ -68,10 +70,12 @@ const CategoryManagerPage = () => {
     }
   };
 
-  const handleDeleteCategory = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete category "${name}"?`))
-      return;
+  const openDeleteConfirm = (id, name) => {
+    setConfirmModal({ isOpen: true, id, name });
+  };
 
+  const handleConfirmDelete = async () => {
+    const { id } = confirmModal;
     try {
       const res = await deleteCategoryApi(id);
       if (res.success) {
@@ -157,7 +161,7 @@ const CategoryManagerPage = () => {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteCategory(cat._id, cat.name.en)}
+                    onClick={() => openDeleteConfirm(cat._id, cat.name.en)}
                     className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                     title={t("delete_category_title")}
                   >
@@ -177,6 +181,17 @@ const CategoryManagerPage = () => {
         onSubmit={handleFormSubmit}
         category={editingCategory}
         isLoading={isSaving}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleConfirmDelete}
+        title={t("delete_category_title", "Delete Category")}
+        message={`Are you sure you want to delete category "${confirmModal.name}"?`}
+        confirmText={t("delete", "Delete")}
+        isDestructive={true}
       />
     </div>
   );

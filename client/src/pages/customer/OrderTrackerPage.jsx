@@ -6,6 +6,7 @@ import { useSocket } from "../../hooks/useSocket";
 import { getOrderByIdApi, cancelOrderApi } from "../../api/orderApi";
 import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import StatusErrorPage, { getErrorPageType } from "../errors/StatusErrorPage";
@@ -60,6 +61,7 @@ const OrderTrackerPage = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [pageErrorType, setPageErrorType] = useState("");
   const [readyToastVisible, setReadyToastVisible] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -174,22 +176,7 @@ const OrderTrackerPage = () => {
     previousReadyStatusRef.current = isReadyNow;
   }, [order, playNotificationSound]);
 
-  const handleCancelOrder = async () => {
-    if (!window.confirm(t("cancel_order_confirm"))) return;
 
-    setCancelling(true);
-    setErrorMsg("");
-    try {
-      const res = await cancelOrderApi(orderId);
-      if (res.success) {
-        setOrder(res.data);
-      }
-    } catch (err) {
-      setErrorMsg(err.response?.data?.message || "Failed to cancel order.");
-    } finally {
-      setCancelling(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -400,7 +387,7 @@ const OrderTrackerPage = () => {
           <div className="pt-2">
             {canCancel ? (
               <button
-                onClick={handleCancelOrder}
+                onClick={() => setIsCancelModalOpen(true)}
                 disabled={cancelling}
                 className="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 px-4 rounded-xl font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -415,6 +402,27 @@ const OrderTrackerPage = () => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={() => {
+          setCancelling(true);
+          setErrorMsg("");
+          cancelOrderApi(orderId)
+            .then(res => {
+              if (res.success) setOrder(res.data);
+            })
+            .catch(err => {
+              setErrorMsg(err.response?.data?.message || "Failed to cancel order.");
+            })
+            .finally(() => setCancelling(false));
+        }}
+        title={t("cancel_order", "Cancel Order")}
+        message={t("cancel_order_confirm", "Are you sure you want to cancel this order? This action cannot be undone.")}
+        confirmText={t("cancel_order", "Cancel Order")}
+        isDestructive={true}
+      />
     </div>
   );
 };

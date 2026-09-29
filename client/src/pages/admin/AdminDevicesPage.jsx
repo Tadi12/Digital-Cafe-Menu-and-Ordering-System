@@ -4,6 +4,7 @@ import { MonitorSmartphone, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react'
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { getAdminSessionsApi, terminateAdminSessionApi } from '../../api/authApi';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { useAuth } from '../../hooks/useAuth';
 
 const formatDate = (value) => new Intl.DateTimeFormat(undefined, {
@@ -12,6 +13,7 @@ const formatDate = (value) => new Intl.DateTimeFormat(undefined, {
 
 const AdminDevicesPage = () => {
   const [sessions, setSessions] = useState([]);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, session: null });
   const [loading, setLoading] = useState(true);
   const [terminatingId, setTerminatingId] = useState(null);
   const { logout } = useAuth();
@@ -32,9 +34,12 @@ const AdminDevicesPage = () => {
 
   useEffect(() => { loadSessions(); }, [loadSessions]);
 
-  const terminate = async (session) => {
-    const action = session.isCurrent ? t('sign_out_self_action') : t('terminate_session_action');
-    if (!window.confirm(t('terminate_confirm', { action }))) return;
+  const openDeleteConfirm = (session) => {
+    setConfirmModal({ isOpen: true, session });
+  };
+
+  const handleConfirmTerminate = async () => {
+    const { session } = confirmModal;
     setTerminatingId(session._id);
     try {
       const response = await terminateAdminSessionApi(session._id);
@@ -92,7 +97,7 @@ const AdminDevicesPage = () => {
                     {session.ipAddress && <p className="mt-1 text-xs text-cafe-500">{t('ip_address_label', { ip: session.ipAddress })}</p>}
                   </div>
                 </div>
-                <button onClick={() => terminate(session)} disabled={terminatingId === session._id} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
+                <button onClick={() => openDeleteConfirm(session)} disabled={terminatingId === session._id} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50">
                   <Trash2 className="h-4 w-4" /> {terminatingId === session._id ? t('terminating') : t('terminate')}
                 </button>
               </li>
@@ -100,8 +105,20 @@ const AdminDevicesPage = () => {
           </ul>
         )}
       </div>
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleConfirmTerminate}
+        title={t('terminate_session')}
+        message={t('terminate_confirm', { action: confirmModal.session?.isCurrent ? t('sign_out_self_action') : t('terminate_session_action') })}
+        confirmText={t('terminate')}
+        isDestructive={true}
+      />
     </section>
   );
 };
 
 export default AdminDevicesPage;
+
+
+

@@ -10,6 +10,7 @@ import {
 } from "../../api/foodApi";
 import { getCategoriesApi } from "../../api/categoryApi";
 import FoodFormModal from "../../components/admin/FoodFormModal";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import {
@@ -36,6 +37,7 @@ const FoodManagerPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFood, setEditingFood] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null, name: "" });
 
   const fetchFoodsAndCategories = async () => {
     try {
@@ -119,9 +121,12 @@ const FoodManagerPage = () => {
     }
   };
 
-  const handleDeleteFood = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return;
+  const openDeleteConfirm = (id, name) => {
+    setConfirmModal({ isOpen: true, id, name });
+  };
 
+  const handleConfirmDelete = async () => {
+    const { id } = confirmModal;
     try {
       const res = await deleteFoodApi(id);
       if (res.success) {
@@ -251,7 +256,7 @@ const FoodManagerPage = () => {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteFood(food._id, food.name.en)}
+                    onClick={() => openDeleteConfirm(food._id, food.name.en)}
                     className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                     title={t("delete_food_title")}
                   >
@@ -272,6 +277,16 @@ const FoodManagerPage = () => {
         categories={categories}
         food={editingFood}
         isLoading={isSaving}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleConfirmDelete}
+        title={t("delete_food_title", "Delete Food")}
+        message={`Are you sure you want to delete "${confirmModal.name}"?`}
+        confirmText={t("delete", "Delete")}
+        isDestructive={true}
       />
     </div>
   );

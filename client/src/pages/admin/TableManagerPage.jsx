@@ -8,6 +8,7 @@ import {
 } from '../../api/tableApi';
 import TableQRModal from '../../components/admin/TableQRModal';
 import Modal from '../../components/common/Modal';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Plus, QrCode, Edit2, Trash2, CheckCircle2, XCircle, MapPin } from 'lucide-react';
 
@@ -26,6 +27,7 @@ const TableManagerPage = () => {
   const [active, setActive] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null, num: '' });
 
   const fetchTables = async () => {
     try {
@@ -97,9 +99,12 @@ const TableManagerPage = () => {
     }
   };
 
-  const handleDeleteTable = async (id, num) => {
-    if (!window.confirm(t('delete_table_confirm', { number: num }))) return;
+  const openDeleteConfirm = (id, num) => {
+    setConfirmModal({ isOpen: true, id, num });
+  };
 
+  const handleConfirmDelete = async () => {
+    const { id } = confirmModal;
     try {
       const res = await deleteTableApi(id);
       if (res.success) {
@@ -178,7 +183,7 @@ const TableManagerPage = () => {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteTable(tbl._id, tbl.tableNumber)}
+                      onClick={() => openDeleteConfirm(tbl._id, tbl.tableNumber)}
                       className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                       title={t('delete_table_title')}
                     >
@@ -287,8 +292,19 @@ const TableManagerPage = () => {
         onClose={() => setSelectedQRTable(null)}
         table={selectedQRTable}
       />
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleConfirmDelete}
+        title={t('delete_table_title', 'Delete Table')}
+        message={t('delete_table_confirm', { number: confirmModal.num })}
+        confirmText={t('delete', 'Delete')}
+        isDestructive={true}
+      />
     </div>
   );
 };
 
 export default TableManagerPage;
+
+
