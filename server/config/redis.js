@@ -1,7 +1,9 @@
 const Redis = require('ioredis');
 
-const redisClient = process.env.REDIS_URI 
-  ? new Redis(process.env.REDIS_URI) 
+const redisUri = process.env.REDIS_URI || process.env.REDIS_URL;
+
+const redisClient = redisUri 
+  ? new Redis(redisUri) 
   : null;
 
 if (redisClient) {

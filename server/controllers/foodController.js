@@ -133,7 +133,8 @@ const createFood = async (req, res, next) => {
 
     const populatedFood = await Food.findById(food._id).populate('category', 'name image type');
 
-    return await clearCache(`"__express__/api/foods*`");`n    return res.status(201).json({
+    await clearCache('__express__/api/*');
+    return res.status(201).json({
       success: true,
       data: populatedFood,
     });

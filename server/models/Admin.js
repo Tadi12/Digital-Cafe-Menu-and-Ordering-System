@@ -24,8 +24,8 @@ const adminSchema = new mongoose.Schema(
     resetTokenExpires: Date,
     role: {
       type: String,
-      default: 'admin',
-      enum: ['admin'],
+      default: 'super_admin',
+      enum: ['super_admin', 'admin', 'waiter', 'chef'],
     },
   },
   {

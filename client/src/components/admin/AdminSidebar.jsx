@@ -18,31 +18,38 @@ import { useAuth } from "../../hooks/useAuth";
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  const { logout } = useAuth();
+  const { logout, admin } = useAuth();
+  const role = admin?.role || 'waiter'; // fallback to waiter if undefined
 
-  const navItems = [
-    { path: "/admin/dashboard", label: t("dashboard"), icon: LayoutDashboard },
+  const allNavItems = [
+    { path: "/admin/dashboard", label: t("dashboard"), icon: LayoutDashboard, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
     {
       path: "/admin/orders",
       label: t("order_management"),
       icon: ClipboardList,
+      roles: ['super_admin', 'admin', 'chef', 'waiter'],
     },
     {
       path: "/admin/foods",
       label: t("food_management"),
       icon: UtensilsCrossed,
+      roles: ['super_admin', 'admin'],
     },
-    { path: "/admin/drinks", label: t("drink_management"), icon: Coffee },
+    { path: "/admin/drinks", label: t("drink_management"), icon: Coffee, roles: ['super_admin', 'admin'] },
     {
       path: "/admin/categories",
       label: t("category_management"),
       icon: Layers,
+      roles: ['super_admin', 'admin'],
     },
-    { path: "/admin/tables", label: t("table_management"), icon: QrCode },
-    { path: "/admin/analytics", label: t("analytics"), icon: BarChart3 },
-    { path: "/admin/profile", label: t("profile"), icon: User },
-    { path: "/admin/devices", label: t("admin_page_devices"), icon: MonitorSmartphone },
+    { path: "/admin/tables", label: t("table_management"), icon: QrCode, roles: ['super_admin', 'admin', 'waiter'] },
+    { path: "/admin/analytics", label: t("analytics"), icon: BarChart3, roles: ['super_admin', 'admin'] },
+    { path: "/admin/profile", label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
+    { path: "/admin/staff", label: "Staff Management", icon: User, roles: ['super_admin', 'admin'] },
+    { path: "/admin/devices", label: t("admin_page_devices"), icon: MonitorSmartphone, roles: ['super_admin', 'admin'] },
   ];
+
+  const navItems = allNavItems.filter(item => item.roles.includes(role));
 
   return (
     <>

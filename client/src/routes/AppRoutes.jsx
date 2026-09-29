@@ -27,6 +27,7 @@ const OrderManagerPage = lazy(() => import("../pages/admin/OrderManagerPage"));
 const AnalyticsPage = lazy(() => import("../pages/admin/AnalyticsPage"));
 const AdminProfilePage = lazy(() => import("../pages/admin/AdminProfilePage"));
 const AdminDevicesPage = lazy(() => import("../pages/admin/AdminDevicesPage"));
+const StaffManagerPage = lazy(() => import("../pages/admin/StaffManagerPage"));
 
 import StatusErrorPage from "../pages/errors/StatusErrorPage";
 // Profile route will be added inside admin routes below
@@ -74,6 +75,7 @@ const AppRoutes = () => {
           <Route path="/admin/analytics" element={<AnalyticsPage />} />
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/devices" element={<AdminDevicesPage />} />
+          <Route path="/admin/staff" element={<StaffManagerPage />} />
         </Route>
       </Route>
 
@@ -85,3 +87,4 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
+

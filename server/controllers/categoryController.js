@@ -83,7 +83,8 @@ const createCategory = async (req, res, next) => {
       },
     });
 
-    await clearCache(`"__express__/api/categories*`");`n    return res.status(201).json({
+    await clearCache('__express__/api/*');
+    return res.status(201).json({
       success: true,
       data: category,
     });

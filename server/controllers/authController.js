@@ -265,7 +265,36 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+const getStaff = async (req, res) => {
+  try {
+    if (req.user.role !== 'super_admin' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+    const staff = await Admin.find().select('-password');
+    res.json({ success: true, data: staff });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+const createStaff = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    if (req.user.role !== 'super_admin' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Only super admins can create staff.' });
+    }
+    const existing = await Admin.findOne({ email });
+    if (existing) return res.status(400).json({ success: false, message: 'Email already exists' });
+    const staff = await Admin.create({ name, email, password, role });
+    res.status(201).json({ success: true, data: { _id: staff._id, name: staff.name, email: staff.email, role: staff.role } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to create staff' });
+  }
+};
+
 module.exports = {
+  getStaff,
+  createStaff,
   loginAdmin,
   getAdminProfile,
   updateAdminProfile,
@@ -274,3 +303,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
 };
+
+

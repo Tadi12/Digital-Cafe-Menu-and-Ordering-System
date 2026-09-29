@@ -25,6 +25,8 @@ const AdminLayout = () => {
         return t("admin_page_tables");
       case "/admin/analytics":
         return t("admin_page_analytics");
+      case "/admin/staff":
+        return "Staff Management";
       case "/admin/devices":
         return t("admin_page_devices");
       default:
@@ -55,3 +57,4 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+

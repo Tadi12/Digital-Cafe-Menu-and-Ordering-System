@@ -1,3 +1,4 @@
+import { useAuth } from '../../hooks/useAuth';
 import React, { useState, useEffect, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageContext } from '../../context/LanguageContext';
@@ -30,6 +31,21 @@ import {
 } from 'lucide-react';
 
 const DashboardPage = () => {
+  const { admin } = useAuth();
+  if (admin?.role === 'chef') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
+        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-cafe-200 overflow-hidden">
+          <img src="/kitchen-dashboard.jpg" alt="Kitchen" className="w-full h-80 object-cover" />
+          <div className="p-8 text-center">
+            <h1 className="text-3xl font-display font-bold text-cafe-900 mb-2">Welcome to the Kitchen</h1>
+            <p className="text-cafe-600 mb-6">Your station is ready. Head over to the Order Management tab to see incoming tickets.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
 
@@ -222,3 +238,5 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
+
