@@ -1,7 +1,7 @@
 const { z } = require('zod');
 
 const orderItemSchema = z.object({
-  food: z.string().min(1, 'Food ID is required'),
+  foodId: z.string().min(1, 'Food ID is required'),
   quantity: z.number().int().positive('Quantity must be at least 1'),
 });
 
@@ -9,7 +9,7 @@ const createOrderSchema = z.object({
   body: z.object({
     customerName: z.string().min(1, 'Customer name is required').trim(),
     customerSessionId: z.string().optional(),
-    table: z.string().min(1, 'Table reference is required'),
+    tableId: z.string().min(1, 'Table reference is required'),
     items: z.array(orderItemSchema).min(1, 'Order must contain at least one item'),
     paymentMethod: z.enum(['Cash']).optional(),
   }),
