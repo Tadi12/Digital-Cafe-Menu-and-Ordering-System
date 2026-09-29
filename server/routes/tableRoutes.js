@@ -10,16 +10,18 @@ const {
 } = require('../controllers/tableController');
 const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
 const { requireCafeWifi } = require('../middleware/cafeWifiMiddleware');
+const validate = require('../middleware/validateMiddleware');
+const { createTableSchema, updateTableSchema } = require('../validations/table.schema');
 
 router
   .route('/')
   .get(getTables)
-  .post(protectAdmin, createTable);
+  .post(protectAdmin, validate(createTableSchema), createTable);
 
 router
   .route('/:id')
   .get(attachAdminIfAuthenticated, requireCafeWifi, getTableById)
-  .put(protectAdmin, updateTable)
+  .put(protectAdmin, validate(updateTableSchema), updateTable)
   .delete(protectAdmin, deleteTable);
 
 router.get('/:id/qr', protectAdmin, getTableQR);

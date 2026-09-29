@@ -1,46 +1,22 @@
-const MAX_REQUESTS = 5;
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 
-const resetRequests = new Map();
-
-const resetRateLimiter = (req, res, next) => {
-  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-  const email =
-    typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
-  const key = `${ip}:${email}`;
-  const now = Date.now();
-
-  if (!resetRequests.has(key)) {
-    resetRequests.set(key, { count: 1, resetTime: now + WINDOW_MS });
-    return next();
+// Rate limiter for password reset endpoints
+const resetRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 5, // limit each IP/email to 5 requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many password reset requests. Please try again after an hour.',
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  validate: { trustProxy: false },
+  keyGenerator: (req, res) => {
+    // Generate key using IP and email if provided, just IP otherwise
+    const email = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
+    return `${ipKeyGenerator(req, res)}:${email}`;
   }
-
-  const requestData = resetRequests.get(key);
-
-  if (now > requestData.resetTime) {
-    resetRequests.set(key, { count: 1, resetTime: now + WINDOW_MS });
-    return next();
-  }
-
-  if (requestData.count >= MAX_REQUESTS) {
-    return res.status(429).json({
-      success: false,
-      message: 'Too many password reset requests. Please try again after an hour.',
-    });
-  }
-
-  requestData.count++;
-  return next();
-};
-
-// Cleanup interval to prevent memory leak
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, data] of resetRequests.entries()) {
-    if (now > data.resetTime) {
-      resetRequests.delete(ip);
-    }
-  }
-}, WINDOW_MS);
+});
 
 module.exports = resetRateLimiter;

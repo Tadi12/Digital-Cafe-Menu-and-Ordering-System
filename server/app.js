@@ -10,6 +10,7 @@ const tableRoutes = require('./routes/tableRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const { requireCafeWifi } = require('./middleware/cafeWifiMiddleware');
+const globalRateLimiter = require('./middleware/globalRateLimiter');
 
 const app = express();
 
@@ -31,6 +32,9 @@ app.use(cors({ origin: true, credentials: true }));
 // Body Parsing Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply global rate limiting to all API requests
+app.use('/api/', globalRateLimiter);
 
 // Serve static uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

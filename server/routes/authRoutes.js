@@ -11,13 +11,15 @@ const {
 } = require('../controllers/authController');
 const { protectAdmin } = require('../middleware/authMiddleware');
 const resetRateLimiter = require('../middleware/resetRateLimiter');
+const validate = require('../middleware/validateMiddleware');
+const { loginSchema, forgotPasswordSchema, resetPasswordSchema, updateProfileSchema } = require('../validations/auth.schema');
 
-router.post('/login', loginAdmin);
-router.post('/forgot-password', resetRateLimiter, forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/login', validate(loginSchema), loginAdmin);
+router.post('/forgot-password', resetRateLimiter, validate(forgotPasswordSchema), forgotPassword);
+router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
 router.get('/me', protectAdmin, getAdminProfile);
 router.get('/sessions', protectAdmin, getAdminSessions);
 router.delete('/sessions/:sessionId', protectAdmin, terminateAdminSession);
 
-router.put('/me', protectAdmin, updateAdminProfile);
+router.put('/me', protectAdmin, validate(updateProfileSchema), updateAdminProfile);
 module.exports = router;

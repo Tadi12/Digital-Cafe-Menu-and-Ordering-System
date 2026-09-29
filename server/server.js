@@ -12,11 +12,21 @@ const { initSocket } = require('./sockets/socketHandler');
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectDB();
-
 // Create HTTP server
 const server = http.createServer(app);
+
+// Connect to MongoDB and then start the server
+connectDB().then(() => {
+  // Start listening
+  server.listen(PORT, () => {
+    console.log(`==================================================`);
+    console.log(` Hable Cafe Server running on port ${PORT}`);
+    console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`==================================================`);
+  });
+}).catch((err) => {
+  console.error("Failed to connect to MongoDB", err);
+});
 
 // Attach Socket.IO
 const io = new Server(server, {
@@ -34,10 +44,4 @@ const io = new Server(server, {
 // Initialize Socket events engine
 initSocket(io);
 
-// Start listening
-server.listen(PORT, () => {
-  console.log(`==================================================`);
-  console.log(` Hable Cafe Server running on port ${PORT}`);
-  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`==================================================`);
-});
+
