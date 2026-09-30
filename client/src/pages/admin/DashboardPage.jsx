@@ -39,7 +39,7 @@ const DashboardPage = () => {
         <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-cafe-200 overflow-hidden">
           <img 
             src={isChef 
-              ? "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&q=80&w=800" 
+              ? "/kitchen-dashboard.jpg" 
               : "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800"} 
             alt={isChef ? "Kitchen" : "Service Floor"} 
             className="w-full h-72 object-cover bg-cafe-100" 
