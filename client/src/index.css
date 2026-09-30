@@ -196,3 +196,23 @@
 }
 .dark .Toastify__toast-theme--dark { background-color: #1e2126; }
 .dark .Toastify__progress-bar { background: #ff7a28; }
+
+/*
+ * Dark mode: every <button> hovers to the brand orange.
+ * -----------------------------------------------------
+ * Buttons across the app use a mix of hover utilities
+ * (`hover:bg-cafe-50/100/200/700/900`, `dark:hover:bg-recipe-card/pill/
+ * cardHover`, `dark:hover:bg-transparent`, ...) which the dark bridge remaps
+ * to near-black/dark-gray surfaces. Per design requirement, in dark mode ALL
+ * buttons must hover to the vivid brand orange instead. This rule is
+ * intentionally unlayered with `!important` so it always beats any Tailwind
+ * hover utility (including `dark:` variants, which compile to
+ * `.dark .dark\:hover\:*:hover` at higher specificity).
+ * The dark foreground matches the existing convention for orange fills
+ * (`.dark .bg-cafe-800 { color: #17181c }`) and keeps text/icons readable.
+ * Disabled buttons are excluded so disabled states are unaffected.
+ */
+.dark button:hover:not(:disabled) {
+  background-color: #ff7a28 !important;
+  color: #17181c !important;
+}
