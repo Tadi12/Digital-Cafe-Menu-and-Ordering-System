@@ -77,6 +77,7 @@ const AppRoutes = () => {
           <Route path="/admin/profile" element={<AdminProfilePage />} />
           <Route path="/admin/devices" element={<AdminDevicesPage />} />
           <Route path="/admin/staff" element={<StaffManagerPage />} />
+          <Route path="/admin/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 
@@ -88,5 +89,6 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
+
 
 
