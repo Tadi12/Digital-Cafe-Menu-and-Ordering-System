@@ -104,7 +104,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                   `relative flex min-h-10 items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors md:justify-center md:px-0 lg:justify-start lg:px-3.5 ${
                     isActive
                       ? "bg-cafe-700 text-white shadow before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-gold-500"
-                      : "text-cafe-300 hover:bg-cafe-800 hover:text-white dark:hover:bg-orange-500/20 dark:hover:text-orange-300"
+                      : "text-cafe-300 hover:bg-cafe-800 hover:text-white dark:hover:bg-transparent dark:hover:text-white"
                   }`
                 }
                 title={item.label}

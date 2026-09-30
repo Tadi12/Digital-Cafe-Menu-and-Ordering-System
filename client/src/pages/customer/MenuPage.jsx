@@ -385,7 +385,7 @@ const MenuPage = () => {
               ? t("invalid_table_friendly")
               : tableError}
         </p>
-        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6 dark:text-recipe-muted">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orangeDark"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
+        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6 dark:text-recipe-muted">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orange"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
       </div>
     );
   }
@@ -484,7 +484,7 @@ const MenuPage = () => {
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cafe-100 text-cafe-700 dark:bg-recipe-cardHover dark:text-recipe-muted"><SearchX className="h-6 w-6" /></div>
                 <h2 className="font-display mb-2 text-lg font-bold text-cafe-900 dark:text-recipe-text">{t("no_menu_matches")}</h2>
                 <p className="mb-4 max-w-xs text-sm">{t("category_no_matches")}</p>
-                {selectedCategory && <button type="button" onClick={() => setSelectedCategory(null)} className="rounded-xl border border-cafe-300 px-4 py-2 text-sm font-bold text-cafe-800 hover:bg-cafe-100 dark:border-recipe-border dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-cardHover">{t("clear_filters")}</button>}
+                {selectedCategory && <button type="button" onClick={() => setSelectedCategory(null)} className="rounded-xl border border-cafe-300 px-4 py-2 text-sm font-bold text-cafe-800 hover:bg-cafe-100 dark:border-recipe-border dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-pill">{t("clear_filters")}</button>}
               </div>
             ) : (
               filteredFoods.map((food, index) => (

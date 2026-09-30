@@ -15,7 +15,7 @@ const FoodCard = ({ food, onSelectFood, onQuickAdd }) => {
   return (
     <div
       onClick={() => onSelectFood(food)}
-      className={`bg-white rounded-2xl p-3 border border-cafe-100 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex gap-3 cursor-pointer group relative overflow-hidden dark:bg-recipe-card dark:border-recipe-border dark:hover:bg-recipe-cardHover dark:shadow-none ${
+      className={`bg-white rounded-2xl p-3 border border-cafe-100 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 flex gap-3 cursor-pointer group relative overflow-hidden dark:bg-recipe-card dark:border-recipe-border dark:hover:bg-recipe-card dark:shadow-none ${
         !isAvailable ? 'opacity-60 bg-gray-50 dark:bg-recipe-card/70' : ''
       }`}
     >
@@ -63,7 +63,7 @@ const FoodCard = ({ food, onSelectFood, onQuickAdd }) => {
                 e.stopPropagation();
                 onQuickAdd(food);
               }}
-              className="w-10 h-10 rounded-full bg-cafe-700 hover:bg-cafe-800 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orangeDark"
+              className="w-10 h-10 rounded-full bg-cafe-700 hover:bg-cafe-800 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orange"
               title={t('add_to_cart')}
             >
               <Plus className="w-4 h-4" />

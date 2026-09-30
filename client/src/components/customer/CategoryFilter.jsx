@@ -14,7 +14,7 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
         className={`min-h-10 px-3 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
           selectedCategory === null
             ? "bg-cafe-800 text-white shadow dark:bg-recipe-orange dark:text-[#17181c] dark:shadow-lg"
-            : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200 dark:bg-recipe-pill dark:text-recipe-text dark:border-recipe-border dark:hover:bg-recipe-cardHover"
+            : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200 dark:bg-recipe-pill dark:text-recipe-text dark:border-recipe-border dark:hover:bg-recipe-pill"
         }`}
       >
         <Utensils className="w-3.5 h-3.5" />
@@ -44,7 +44,7 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
             className={`min-h-10 px-3 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
               isSelected
                 ? "bg-cafe-800 text-white shadow dark:bg-recipe-orange dark:text-[#17181c] dark:shadow-lg"
-                : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200 dark:bg-recipe-pill dark:text-recipe-text dark:border-recipe-border dark:hover:bg-recipe-cardHover"
+                : "bg-white text-cafe-700 hover:bg-cafe-100 border border-cafe-200 dark:bg-recipe-pill dark:text-recipe-text dark:border-recipe-border dark:hover:bg-recipe-pill"
             }`}
           >
             {cat.image?.url && (

@@ -70,7 +70,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
             aria-pressed={favorited}
             aria-label={favorited ? t("remove_from_favorite") : t("add_to_favorite")}
             title={favorited ? t("remove_from_favorite") : t("add_to_favorite")}
-            className="absolute top-3 right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-md backdrop-blur transition-transform hover:bg-white active:scale-90 dark:border-recipe-border dark:bg-recipe-pill/90 dark:hover:bg-recipe-cardHover"
+            className="absolute top-3 right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-md backdrop-blur transition-transform hover:bg-white active:scale-90 dark:border-recipe-border dark:bg-recipe-pill/90 dark:hover:bg-recipe-pill/90"
           >
             <Heart
               key={String(favorited)}
@@ -123,7 +123,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
             <div className="flex items-center gap-3 bg-cafe-100 rounded-full p-1 border border-cafe-200 dark:border-recipe-border dark:bg-recipe-pill">
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-10 h-10 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform dark:bg-recipe-cardHover dark:text-recipe-text dark:hover:bg-recipe-border disabled:opacity-40"
+                className="w-10 h-10 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform dark:bg-recipe-cardHover dark:text-recipe-text dark:hover:bg-recipe-cardHover disabled:opacity-40"
                 disabled={quantity <= 1}
               >
                 <Minus className="w-4 h-4" />
@@ -133,7 +133,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
               </span>
               <button
                 onClick={() => setQuantity((q) => q + 1)}
-                className="w-10 h-10 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform dark:bg-recipe-cardHover dark:text-recipe-text dark:hover:bg-recipe-border"
+                className="w-10 h-10 rounded-full bg-white text-cafe-800 hover:bg-cafe-200 flex items-center justify-center shadow-sm font-bold active:scale-95 transition-transform dark:bg-recipe-cardHover dark:text-recipe-text dark:hover:bg-recipe-cardHover"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -141,7 +141,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
 
             <button
               onClick={handleAdd}
-              className="flex-1 bg-cafe-800 hover:bg-cafe-900 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orangeDark"
+              className="flex-1 bg-cafe-800 hover:bg-cafe-900 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orange"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>

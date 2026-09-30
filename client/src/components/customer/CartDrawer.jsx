@@ -71,7 +71,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
           </div>
           <button
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-cafe-300 hover:text-white hover:bg-cafe-800 transition-colors dark:hover:bg-recipe-pill"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-cafe-300 hover:text-white hover:bg-cafe-800 transition-colors dark:hover:bg-recipe-bg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -129,7 +129,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                       <div className="flex items-center gap-1.5 bg-cafe-50 rounded-lg p-1 border border-cafe-200 dark:border-recipe-border dark:bg-recipe-cardHover">
                         <button
                           onClick={() => updateQuantity(item._id, -1)}
-                          className="w-10 h-10 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95 dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-border"
+                          className="w-10 h-10 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95 dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-pill"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -138,7 +138,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                         </span>
                         <button
                           onClick={() => updateQuantity(item._id, 1)}
-                          className="w-10 h-10 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95 dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-border"
+                          className="w-10 h-10 rounded bg-white text-cafe-800 flex items-center justify-center shadow-xs font-bold hover:bg-cafe-100 active:scale-95 dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-pill"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -223,7 +223,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orangeDark"
+              className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orange"
             >
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
