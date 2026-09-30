@@ -4,6 +4,7 @@ import { useSocket } from "../../hooks/useSocket";
 import { getOrdersApi, updateOrderStatusApi } from "../../api/orderApi";
 import OrderCard from "../../components/admin/OrderCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import Modal from "../../components/common/Modal";
 import { Search, Volume2, VolumeX, Bell } from "lucide-react";
 
 const OrderManagerPage = () => {
@@ -11,6 +12,7 @@ const OrderManagerPage = () => {
   const { socket, joinAdminRoom, playNotificationSound } = useSocket();
 
   const [orders, setOrders] = useState([]);
+  const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ const OrderManagerPage = () => {
         );
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update order status.");
+      setErrorModal({ isOpen: true, message: err.response?.data?.message || "Failed to update order status." });
     }
   };
 
@@ -218,8 +220,15 @@ const OrderManagerPage = () => {
           )}
         </div>
       )}
+      <Modal isOpen={errorModal.isOpen} onClose={() => setErrorModal({ isOpen: false, message: "" })} title="Access Denied" maxWidth="max-w-sm">
+        <div className="p-4 text-center">
+          <p className="mb-6 text-cafe-700">{errorModal.message}</p>
+          <button className="w-full bg-cafe-800 text-white rounded-xl py-3 font-bold hover:bg-cafe-900 transition" onClick={() => setErrorModal({ isOpen: false, message: "" })}>Understood</button>
+        </div>
+      </Modal>
     </div>
   );
 };
 
 export default OrderManagerPage;
+
