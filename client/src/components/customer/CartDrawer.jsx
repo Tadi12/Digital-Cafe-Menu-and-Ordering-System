@@ -12,7 +12,8 @@ import {
   Banknote,
   User,
   ChevronRight,
-} from "lucide-react";
+} from 'lucide-react';
+import PaymentVerificationBlock from './PaymentVerificationBlock';
 
 const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
   const [mounted, setMounted] = useState(isOpen);
@@ -36,6 +37,8 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
   } = useCart();
 
   const [nameError, setNameError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [verifiedPayment, setVerifiedPayment] = useState(null);
 
   if (!mounted) return null;
 
@@ -46,7 +49,11 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
       return;
     }
     setNameError("");
-    onPlaceOrder();
+    if (paymentMethod !== 'Cash' && !verifiedPayment) {
+      setNameError('Please verify your payment before placing the order');
+      return;
+    }
+    onPlaceOrder(paymentMethod, verifiedPayment);
   };
 
   return (
@@ -187,18 +194,54 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                 </p>
               </div>
 
-              {/* Payment Method Notice */}
-              <div className="bg-cafe-50 border border-cafe-200 rounded-xl p-3 flex items-center gap-3 text-xs dark:border-recipe-border dark:bg-recipe-cardHover">
-                <Banknote className="w-5 h-5 text-emerald-600 shrink-0 dark:text-emerald-400" />
-                <div>
-                  <span className="font-bold text-cafe-900 block dark:text-recipe-text">
-                    {t("payment_method")}
-                  </span>
-                  <span className="text-cafe-600 dark:text-recipe-muted">{t("cash_on_table")}</span>
+              {/* Payment Method Selection */}
+              <div className="bg-white border border-cafe-200 rounded-xl p-3 space-y-2 dark:border-recipe-border dark:bg-recipe-cardHover">
+                <span className="font-bold text-cafe-900 block text-xs dark:text-recipe-text mb-2">
+                  {t("payment_method") || "Payment Method"}
+                </span>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setPaymentMethod('Cash'); setVerifiedPayment(null); }}
+                    className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all ${paymentMethod === 'Cash' ? 'bg-emerald-50 border-emerald-400 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-500 dark:text-emerald-300' : 'bg-gray-50 border-gray-200 text-gray-600 dark:bg-recipe-bg dark:border-recipe-border dark:text-recipe-muted'}`}
+                  >
+                    Cash/POS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setPaymentMethod('Telebirr'); setVerifiedPayment(null); }}
+                    className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all ${paymentMethod === 'Telebirr' ? 'bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/30 dark:border-blue-500 dark:text-blue-300' : 'bg-gray-50 border-gray-200 text-gray-600 dark:bg-recipe-bg dark:border-recipe-border dark:text-recipe-muted'}`}
+                  >
+                    Telebirr
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setPaymentMethod('CBE'); setVerifiedPayment(null); }}
+                    className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all ${paymentMethod === 'CBE' ? 'bg-purple-50 border-purple-400 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500 dark:text-purple-300' : 'bg-gray-50 border-gray-200 text-gray-600 dark:bg-recipe-bg dark:border-recipe-border dark:text-recipe-muted'}`}
+                  >
+                    CBE
+                  </button>
                 </div>
               </div>
             </>
           )}
+              {/* Payment Verification Block */}
+              {paymentMethod !== 'Cash' && !verifiedPayment && (
+                <div className="pt-2 pb-2">
+                  <PaymentVerificationBlock 
+                    bankName={paymentMethod} 
+                    expectedAmount={subtotal} 
+                    onVerified={(data) => setVerifiedPayment(data)} 
+                  />
+                </div>
+              )}
+              {verifiedPayment && (
+                <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center dark:bg-emerald-900/20 dark:border-emerald-500/30 mb-3">
+                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">✅ Payment Verified ({paymentMethod})</p>
+                </div>
+              )}
+
         </div>
 
         {/* Footer Actions */}
@@ -222,7 +265,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
 
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || (paymentMethod !== 'Cash' && !verifiedPayment)}
               className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"
             >
               {isSubmitting ? (

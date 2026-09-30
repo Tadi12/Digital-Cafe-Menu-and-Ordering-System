@@ -123,7 +123,7 @@ const OrderConfirmationPage = () => {
           <div className="pt-3 border-t border-cafe-200 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1 rounded-lg">
               <Banknote className="w-4 h-4" />
-              <span>{order.paymentMethod} ({t('cash_on_table')})</span>
+              <span>{order.paymentMethod} {order.paymentMethod === 'Cash' && `(${t('cash_on_table')})`}</span>
             </div>
             <div className="text-right">
               <span className="text-[10px] text-cafe-400 block font-bold">{t('total')}</span>
@@ -133,6 +133,14 @@ const OrderConfirmationPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Payment Status Check */}
+        {order.paymentMethod !== 'Cash' && order.paymentStatus === 'Unpaid' && (
+          <div className="bg-red-50 rounded-2xl p-5 border border-red-200 text-center space-y-2">
+            <h3 className="font-bold text-red-900">Payment Pending</h3>
+            <p className="text-xs text-red-700">This order is marked as unpaid. Please contact the cashier.</p>
+          </div>
+        )}
       </div>
 
       {/* Footer Track Order Button */}

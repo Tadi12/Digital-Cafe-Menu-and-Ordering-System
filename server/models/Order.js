@@ -63,13 +63,22 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['Cash'],
+      enum: ['Cash', 'Telebirr', 'CBE', 'Dashen', 'Awash', 'BOA', 'Zemen'],
       default: 'Cash',
     },
     paymentStatus: {
       type: String,
       enum: ['Unpaid', 'Paid'],
       default: 'Unpaid',
+    },
+    paymentReference: {
+      type: String,
+      sparse: true,
+      unique: true,
+    },
+    receiptData: {
+      type: Object,
+      default: null,
     },
     status: {
       type: String,

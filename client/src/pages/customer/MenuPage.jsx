@@ -320,7 +320,7 @@ const MenuPage = () => {
     return matchesCategory;
   });
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (selectedPaymentMethod = "Cash", verifiedPayment = null) => {
     if (cartItems.length === 0 || !table) return;
 
     setIsSubmittingOrder(true);
@@ -329,6 +329,9 @@ const MenuPage = () => {
         customerName,
         customerSessionId,
         tableId: table._id,
+        paymentMethod: selectedPaymentMethod,
+        paymentReference: verifiedPayment?.reference || null,
+        receiptData: verifiedPayment?.receiptData || null,
         items: cartItems.map((item) => ({
           foodId: item._id,
           quantity: item.quantity,

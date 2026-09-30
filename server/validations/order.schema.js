@@ -11,7 +11,7 @@ const createOrderSchema = z.object({
     customerSessionId: z.string().optional(),
     tableId: z.string().min(1, 'Table reference is required'),
     items: z.array(orderItemSchema).min(1, 'Order must contain at least one item'),
-    paymentMethod: z.enum(['Cash']).optional(),
+    paymentMethod: z.enum(['Cash', 'Telebirr', 'CBE', 'Dashen', 'Awash', 'BOA', 'Zemen']).optional(),
   }),
 });
 
