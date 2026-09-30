@@ -45,7 +45,10 @@ const OrderManagerPage = () => {
       const handleNewOrder = (newOrder) => {
         setOrders((prev) => [newOrder, ...prev]);
         setNewOrderAlert(
-          `New Order #${newOrder.orderNumber} placed from Table #${newOrder.tableNumberSnapshot}!`,
+          t('new_order_placed', {
+            orderNumber: newOrder.orderNumber,
+            tableNumber: newOrder.tableNumberSnapshot,
+          }),
         );
 
         if (soundEnabled) {
@@ -94,7 +97,7 @@ const OrderManagerPage = () => {
         );
       }
     } catch (err) {
-      setErrorModal({ isOpen: true, message: err.response?.data?.message || "Failed to update order status." });
+      setErrorModal({ isOpen: true, message: err.response?.data?.message || t("failed_update_order") });
     }
   };
 
@@ -207,7 +210,7 @@ const OrderManagerPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.length === 0 ? (
             <div className="col-span-full py-16 text-center text-cafe-500 font-medium">
-              No orders found for this filter.
+              {t('no_orders')}
             </div>
           ) : (
             orders.map((order) => (
@@ -220,7 +223,7 @@ const OrderManagerPage = () => {
           )}
         </div>
       )}
-      <Modal isOpen={errorModal.isOpen} onClose={() => setErrorModal({ isOpen: false, message: "" })} title="Access Denied" maxWidth="max-w-sm">
+      <Modal isOpen={errorModal.isOpen} onClose={() => setErrorModal({ isOpen: false, message: "" })} title={t('access_denied')} maxWidth="max-w-sm">
         <div className="p-4 text-center">
           <p className="mb-6 text-cafe-700">{errorModal.message}</p>
           <button className="w-full bg-cafe-800 text-white rounded-xl py-3 font-bold hover:bg-cafe-900 transition" onClick={() => setErrorModal({ isOpen: false, message: "" })}>Understood</button>

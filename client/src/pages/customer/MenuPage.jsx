@@ -345,7 +345,7 @@ const MenuPage = () => {
     } catch (err) {
       toast.error(
         err.response?.data?.message ||
-          "Failed to submit order. Please try again.",
+          t("failed_submit_order"),
       );
     } finally {
       setIsSubmittingOrder(false);
@@ -437,7 +437,7 @@ const MenuPage = () => {
                 {readyToastOrder.orderNumber}
               </p>
               <p className="mt-1 text-xs text-cafe-200">
-                Your order is ready, we will bring you here.
+                {t('order_ready_bring_here')}
               </p>
             </div>
           )}

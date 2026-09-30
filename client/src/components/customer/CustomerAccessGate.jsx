@@ -30,7 +30,7 @@ const CustomerAccessGate = ({ children }) => {
         setHasAccess(true);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid PIN code.');
+      setError(err.response?.data?.message || t('invalid_pin'));
     } finally {
       setVerifying(false);
     }
@@ -45,8 +45,8 @@ const CustomerAccessGate = ({ children }) => {
           <div className="w-16 h-16 bg-cafe-100 text-cafe-800 rounded-full flex items-center justify-center mx-auto mb-6">
             <Lock className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-display font-bold text-cafe-900 mb-2">Cafe Menu Access</h2>
-          <p className="text-cafe-600 mb-8 text-sm">Please enter the 4-digit code provided in the cafe to view the menu and order.</p>
+          <h2 className="text-2xl font-display font-bold text-cafe-900 mb-2">{t('cafe_menu_access')}</h2>
+          <p className="text-cafe-600 mb-8 text-sm">{t('pin_instruction')}</p>
           
           {error && <div className="text-red-500 bg-red-50 p-3 rounded-xl mb-6 text-sm">{error}</div>}
           
@@ -65,7 +65,7 @@ const CustomerAccessGate = ({ children }) => {
               disabled={verifying || pin.length < 4}
               className="w-full bg-cafe-800 text-white font-bold py-4 rounded-xl hover:bg-cafe-900 transition disabled:opacity-50"
             >
-              {verifying ? 'Verifying...' : 'Unlock Menu'}
+              {verifying ? t('verifying') : t('unlock_menu')}
             </button>
           </form>
         </div>

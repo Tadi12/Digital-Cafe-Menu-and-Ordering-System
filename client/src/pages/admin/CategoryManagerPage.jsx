@@ -189,7 +189,7 @@ const CategoryManagerPage = () => {
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={handleConfirmDelete}
         title={t("delete_category_title", "Delete Category")}
-        message={`Are you sure you want to delete category "${confirmModal.name}"?`}
+        message={t("delete_category_confirm", { name: confirmModal.name })}
         confirmText={t("delete", "Delete")}
         isDestructive={true}
       />

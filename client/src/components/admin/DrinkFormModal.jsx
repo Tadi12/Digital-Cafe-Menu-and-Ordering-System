@@ -68,23 +68,23 @@ const DrinkFormModal = ({
     e.preventDefault();
     if (!safeCategories.length) {
       setError(
-        "Please create at least one drink category before adding a drink item.",
+        t("create_drink_category_first"),
       );
       return;
     }
 
     if (!nameEn.trim() || !nameAm.trim() || !price || !category) {
-      setError("Drink name (EN & AM), price, and category are required.");
+      setError(t("drink_required_fields"));
       return;
     }
 
     if (Number(price) <= 0) {
-      setError("Price must be a positive number.");
+      setError(t("price_positive"));
       return;
     }
 
     if (!drink && !imageFile) {
-      setError("Drink image file is required.");
+      setError(t("drink_image_required"));
       return;
     }
 

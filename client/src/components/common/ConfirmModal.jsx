@@ -3,7 +3,7 @@ import Modal from './Modal';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle } from 'lucide-react';
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', cancelText = 'Cancel', isDestructive = true }) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText, cancelText, isDestructive = true }) => {
   const { t } = useTranslation();
 
   return (

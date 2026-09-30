@@ -1,9 +1,11 @@
 import React, { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LanguageContext } from '../../context/LanguageContext';
 import { Globe } from 'lucide-react';
 
 const LanguageSwitcher = ({ className = '' }) => {
   const { currentLang, changeLanguage } = useContext(LanguageContext);
+  const { t } = useTranslation();
 
   const toggleLanguage = () => {
     const nextLang = currentLang === 'en' ? 'am' : 'en';
@@ -14,7 +16,7 @@ const LanguageSwitcher = ({ className = '' }) => {
     <button
       onClick={toggleLanguage}
       className={`inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-cafe-100 text-cafe-800 hover:bg-cafe-200 transition-colors shadow-sm dark:border dark:border-recipe-border dark:bg-recipe-pill dark:text-recipe-text dark:hover:bg-recipe-cardHover ${className}`}
-      title="Switch Language / ቋንቋ ቀይር"
+      title={t('switch_language')}
     >
       <Globe className="w-3.5 h-3.5 text-cafe-600 dark:text-recipe-orange" />
       <span>{currentLang === 'en' ? 'English' : 'አማርኛ'}</span>

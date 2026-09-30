@@ -47,12 +47,12 @@ const CategoryFormModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!nameEn.trim() || !nameAm.trim()) {
-      setError("Category names in English and Amharic are required.");
+      setError(t("category_names_required"));
       return;
     }
 
     if (!category && !imageFile) {
-      setError("Category image file is required.");
+      setError(t("category_image_required"));
       return;
     }
 

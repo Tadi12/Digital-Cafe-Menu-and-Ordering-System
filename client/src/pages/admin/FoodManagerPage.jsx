@@ -216,7 +216,7 @@ const FoodManagerPage = () => {
                       {food.name.am}
                     </div>
                     <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-cafe-600">
-                      {food.category?.name?.en || "Uncategorized"}
+                      {food.category?.name?.en || t("uncategorized")}
                     </div>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ const FoodManagerPage = () => {
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={handleConfirmDelete}
         title={t("delete_food_title", "Delete Food")}
-        message={`Are you sure you want to delete "${confirmModal.name}"?`}
+        message={t("delete_food_confirm", { name: confirmModal.name })}
         confirmText={t("delete", "Delete")}
         isDestructive={true}
       />

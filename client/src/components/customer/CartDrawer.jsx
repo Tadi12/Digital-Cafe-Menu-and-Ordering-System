@@ -183,7 +183,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
                   </p>
                 )}
                 <p className="text-[10px] text-cafe-500 mt-1.5 dark:text-recipe-subtle">
-                  Your session keeps this customer history secure and private.
+                  {t("cart_session_notice")}
                 </p>
               </div>
 

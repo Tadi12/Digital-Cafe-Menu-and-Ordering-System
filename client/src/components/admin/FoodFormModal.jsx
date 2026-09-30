@@ -61,23 +61,23 @@ const FoodFormModal = ({
     e.preventDefault();
     if (!categories.length) {
       setError(
-        "Please create at least one food category before adding a food item.",
+        t("create_food_category_first"),
       );
       return;
     }
 
     if (!nameEn.trim() || !nameAm.trim() || !price || !category) {
-      setError("Name (EN & AM), Price, and Category are required.");
+      setError(t("food_required_fields"));
       return;
     }
 
     if (Number(price) <= 0) {
-      setError("Price must be a positive number.");
+      setError(t("price_positive"));
       return;
     }
 
     if (!food && !imageFile) {
-      setError("Food image file is required.");
+      setError(t("food_image_required"));
       return;
     }
 

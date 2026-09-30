@@ -128,7 +128,7 @@ const OrderTrackerPage = () => {
 
     if (isReadyNow && !previousReadyStatusRef.current) {
       if (!notifiedOrders.includes(order._id)) {
-        const readyMessage = `Your order ${order.orderNumber} is ready!`;
+        const readyMessage = t('order_ready_notif_body', { number: order.orderNumber });
         markReadyOrderNotified(order._id);
         setReadyToastVisible(true);
         previousReadyStatusRef.current = true;
@@ -140,7 +140,7 @@ const OrderTrackerPage = () => {
         if ("Notification" in window) {
           try {
           if (Notification.permission === "granted") {
-            new Notification("Your order is ready", {
+            new Notification(t('order_ready_notif_title'), {
               body: readyMessage,
               tag: `order-ready-${order._id}`,
               icon: "/favicon-32x32.png",
@@ -149,7 +149,7 @@ const OrderTrackerPage = () => {
             Notification.requestPermission()
               .then((permission) => {
                 if (permission === "granted") {
-                  new Notification("Your order is ready", {
+                  new Notification(t('order_ready_notif_title'), {
                     body: readyMessage,
                     tag: `order-ready-${order._id}`,
                     icon: "/favicon-32x32.png",
@@ -250,7 +250,7 @@ const OrderTrackerPage = () => {
             </div>
             <p className="mt-2 text-base text-white">{order.orderNumber}</p>
             <p className="mt-1 text-xs text-cafe-200">
-              Your order is ready, we will bring you here.
+              {t('order_ready_bring_here')}
             </p>
           </div>
         )}
@@ -414,7 +414,7 @@ const OrderTrackerPage = () => {
               if (res.success) setOrder(res.data);
             })
             .catch(err => {
-              setErrorMsg(err.response?.data?.message || "Failed to cancel order.");
+              setErrorMsg(err.response?.data?.message || t("failed_cancel_order"));
             })
             .finally(() => setCancelling(false));
         }}

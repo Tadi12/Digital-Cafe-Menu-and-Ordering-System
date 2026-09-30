@@ -1,9 +1,11 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { loginAdminApi, getAdminProfileApi } from '../api/authApi';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const { t } = useTranslation();
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,7 +36,7 @@ export const AuthProvider = ({ children }) => {
     const handleSessionTermination = () => {
       localStorage.removeItem('cafe_admin_token');
       setAdmin(null);
-      setError('This device session was terminated. Please sign in again.');
+      setError(t('session_terminated'));
     };
     window.addEventListener('admin-session-terminated', handleSessionTermination);
     return () => window.removeEventListener('admin-session-terminated', handleSessionTermination);
@@ -53,7 +55,7 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: res.message };
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed';
+      const msg = err.response?.data?.message || t('login_failed');
       setError(msg);
       return { success: false, message: msg };
     }
