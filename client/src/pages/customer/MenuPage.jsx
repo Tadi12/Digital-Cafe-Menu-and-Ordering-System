@@ -385,7 +385,7 @@ const MenuPage = () => {
               ? t("invalid_table_friendly")
               : tableError}
         </p>
-        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6 dark:text-recipe-muted">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orange"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
+        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6 dark:text-recipe-muted">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
       </div>
     );
   }

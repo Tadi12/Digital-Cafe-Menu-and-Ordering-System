@@ -81,7 +81,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         {order.status === 'Pending' && (
           <button
             onClick={() => onUpdateStatus(order._id, 'Preparing')}
-            className="w-full bg-gold-500 hover:bg-gold-600 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
+            className="w-full bg-gold-500 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
           >
             <ChefHat className="w-4 h-4" />
             <span>{t('start_preparing')}</span>

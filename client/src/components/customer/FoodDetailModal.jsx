@@ -141,7 +141,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
 
             <button
               onClick={handleAdd}
-              className="flex-1 bg-cafe-800 hover:bg-cafe-900 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orange"
+              className="flex-1 bg-cafe-800 hover:bg-cafe-900 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>

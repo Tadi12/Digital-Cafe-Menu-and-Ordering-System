@@ -63,7 +63,7 @@ const FoodCard = ({ food, onSelectFood, onQuickAdd }) => {
                 e.stopPropagation();
                 onQuickAdd(food);
               }}
-              className="w-10 h-10 rounded-full bg-cafe-700 hover:bg-cafe-800 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-recipe-orange"
+              className="w-10 h-10 rounded-full bg-cafe-700 hover:bg-cafe-800 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"
               title={t('add_to_cart')}
             >
               <Plus className="w-4 h-4" />
