@@ -46,7 +46,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3, roles: ['super_admin', 'admin'] },
     { path: "/admin/profile", label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
     { path: "/admin/staff", label: "Staff Management", icon: User, roles: ['super_admin', 'admin'] },
-    { path: "/admin/settings", label: "Cafe Settings", icon: LayoutDashboard, roles: ['super_admin'] },
+    { path: "/admin/settings", label: "Cafe Settings", icon: LayoutDashboard, roles: ['super_admin', 'admin'] },
     { path: "/admin/devices", label: t("admin_page_devices"), icon: MonitorSmartphone, roles: ['super_admin', 'admin'] },
   ];
 
@@ -135,5 +135,6 @@ const AdminSidebar = ({ isOpen, onClose }) => {
 };
 
 export default AdminSidebar;
+
 
 
