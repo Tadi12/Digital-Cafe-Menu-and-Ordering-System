@@ -42,7 +42,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
       icon: Layers,
       roles: ['super_admin', 'admin'],
     },
-    { path: "/admin/tables", label: t("table_management"), icon: QrCode, roles: ['super_admin', 'admin', 'waiter'] },
+    { path: "/admin/tables", label: t("table_management"), icon: QrCode, roles: ['super_admin', 'admin'] },
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3, roles: ['super_admin', 'admin'] },
     { path: "/admin/profile", label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
     { path: "/admin/staff", label: "Staff Management", icon: User, roles: ['super_admin', 'admin'] },
@@ -134,3 +134,4 @@ const AdminSidebar = ({ isOpen, onClose }) => {
 };
 
 export default AdminSidebar;
+
