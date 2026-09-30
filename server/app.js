@@ -47,7 +47,6 @@ app.get('/api/health', (req, res) => {
 
 // A lightweight frontend startup check. The IP is evaluated solely from the
 // server request/proxy chain; no client-provided IP value is accepted.
-});
 
 // API Routes
 app.use('/api/auth', authRoutes);
