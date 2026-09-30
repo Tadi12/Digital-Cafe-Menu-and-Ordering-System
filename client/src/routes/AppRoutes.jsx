@@ -28,6 +28,7 @@ const AnalyticsPage = lazy(() => import("../pages/admin/AnalyticsPage"));
 const AdminProfilePage = lazy(() => import("../pages/admin/AdminProfilePage"));
 const AdminDevicesPage = lazy(() => import("../pages/admin/AdminDevicesPage"));
 const StaffManagerPage = lazy(() => import("../pages/admin/StaffManagerPage"));
+const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
 
 import StatusErrorPage from "../pages/errors/StatusErrorPage";
 // Profile route will be added inside admin routes below
@@ -87,4 +88,5 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
+
 

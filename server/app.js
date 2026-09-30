@@ -9,6 +9,7 @@ const foodRoutes = require('./routes/foodRoutes');
 const tableRoutes = require('./routes/tableRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 const { requireCafeWifi } = require('./middleware/cafeWifiMiddleware');
 const globalRateLimiter = require('./middleware/globalRateLimiter');
 
@@ -46,8 +47,6 @@ app.get('/api/health', (req, res) => {
 
 // A lightweight frontend startup check. The IP is evaluated solely from the
 // server request/proxy chain; no client-provided IP value is accepted.
-app.get('/api/access/menu', requireCafeWifi, (req, res) => {
-  res.json({ success: true });
 });
 
 // API Routes
@@ -57,9 +56,11 @@ app.use('/api/foods', foodRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);
 app.use(errorHandler);
 
 module.exports = app;
+

@@ -9,20 +9,19 @@ const {
   cancelOrder,
 } = require('../controllers/orderController');
 const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
-const { requireGeofence } = require('../middleware/geofenceMiddleware');
 const validate = require('../middleware/validateMiddleware');
 const { createOrderSchema, updateOrderStatusSchema } = require('../validations/order.schema');
 
 router
   .route('/')
-  .post(requireGeofence, validate(createOrderSchema), createOrder)
+  .post(validate(createOrderSchema), createOrder)
   .get(protectAdmin, getOrders);
 
-router.get('/customer', requireGeofence, getCustomerOrders);
-router.get('/customer/:customerName', requireGeofence, getCustomerOrders);
-router.get('/:id', attachAdminIfAuthenticated, requireGeofence, getOrderById);
+router.get('/customer', getCustomerOrders);
+router.get('/customer/:customerName', getCustomerOrders);
+router.get('/:id', attachAdminIfAuthenticated, getOrderById);
 router.patch('/:id/status', protectAdmin, validate(updateOrderStatusSchema), updateOrderStatus);
-router.patch('/:id/cancel', requireGeofence, cancelOrder);
+router.patch('/:id/cancel', cancelOrder);
 
 module.exports = router;
 

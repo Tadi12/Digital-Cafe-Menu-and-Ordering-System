@@ -9,7 +9,6 @@ const {
   getTableQR,
 } = require('../controllers/tableController');
 const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
-const { requireGeofence } = require('../middleware/geofenceMiddleware');
 const validate = require('../middleware/validateMiddleware');
 const { createTableSchema, updateTableSchema } = require('../validations/table.schema');
 
@@ -20,7 +19,7 @@ router
 
 router
   .route('/:id')
-  .get(attachAdminIfAuthenticated, requireGeofence, getTableById)
+  .get(attachAdminIfAuthenticated, getTableById)
   .put(protectAdmin, validate(updateTableSchema), updateTable)
   .delete(protectAdmin, deleteTable);
 
