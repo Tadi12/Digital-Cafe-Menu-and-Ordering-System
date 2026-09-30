@@ -38,9 +38,12 @@ const DashboardPage = () => {
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
         <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-cafe-200 overflow-hidden">
           <img 
-            src={isChef ? "/kitchen-dashboard.jpg" : "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=2000"} 
+            src={isChef 
+              ? "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&q=80&w=800" 
+              : "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800"} 
             alt={isChef ? "Kitchen" : "Service Floor"} 
-            className="w-full h-80 object-cover" 
+            className="w-full h-72 object-cover bg-cafe-100" 
+            fetchPriority="high"
           />
           <div className="p-8 text-center">
             <h1 className="text-3xl font-display font-bold text-cafe-900 mb-2">

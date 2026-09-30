@@ -11,6 +11,7 @@ import {
   BarChart3,
   User,
   MonitorSmartphone,
+  Settings,
   LogOut,
   X,
 } from "lucide-react";
@@ -46,7 +47,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3, roles: ['super_admin', 'admin'] },
     { path: "/admin/profile", label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
     { path: "/admin/staff", label: "Staff Management", icon: User, roles: ['super_admin', 'admin'] },
-    { path: "/admin/settings", label: "Cafe Settings", icon: LayoutDashboard, roles: ['super_admin', 'admin'] },
+    { path: "/admin/settings", label: "Cafe Settings", icon: Settings, roles: ['super_admin', 'admin'] },
     { path: "/admin/devices", label: t("admin_page_devices"), icon: MonitorSmartphone, roles: ['super_admin', 'admin'] },
   ];
 
@@ -103,7 +104,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
                   `relative flex min-h-10 items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors md:justify-center md:px-0 lg:justify-start lg:px-3.5 ${
                     isActive
                       ? "bg-cafe-700 text-white shadow before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-gold-500"
-                      : "text-cafe-300 hover:bg-cafe-800 hover:text-white dark:hover:bg-recipe-cardHover"
+                      : "text-cafe-300 hover:bg-cafe-800 hover:text-white dark:hover:bg-orange-500/20 dark:hover:text-orange-300"
                   }`
                 }
                 title={item.label}
@@ -135,6 +136,8 @@ const AdminSidebar = ({ isOpen, onClose }) => {
 };
 
 export default AdminSidebar;
+
+
 
 
 
