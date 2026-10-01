@@ -371,7 +371,7 @@
   "failed_create_staff": "Failed to create staff",
   "settings_title": "Cafe Settings",
   "access_pin_title": "Customer Access Code (PIN)",
-  "access_pin_description": "This is the 4-digit code that customers must enter to view the menu and place orders. Change this periodically to ensure only people inside the cafe can order.",
+  "access_pin_description": "This is the 4-digit code that customers must enter to view the menu and place orders.",
   "current_pin": "Current PIN",
   "save_pin": "Save PIN",
   "access_pin_updated": "Cafe Access PIN updated successfully!",
@@ -390,7 +390,6 @@
   "category_names_required": "Category names in English and Amharic are required.",
   "category_image_required": "Category image file is required.",
   "uncategorized": "Uncategorized",
-  "table_service_active": "Table service active",
   "access_denied": "Access Denied",
   "cart_session_notice": "Your session keeps this customer history secure and private.",
   "order_ready_bring_here": "Your order is ready, we will bring you here.",
@@ -402,5 +401,13 @@
   "delete_drink_confirm": "Are you sure you want to delete \"{{name}}\"?",
   "new_order_placed": "New Order #{{orderNumber}} placed from Table #{{tableNumber}}!",
   "order_ready_notif_title": "Your order is ready",
-  "order_ready_notif_body": "Your order {{number}} is ready!"
+  "order_ready_notif_body": "Your order {{number}} is ready!",
+  "occupied_table_title": "Table Already In Use",
+  "occupied_table_desc": "Table {{number}} is being used by another guest right now. Please wait for them to finish, or scan the QR code at another free table.",
+  "occupied_table_hint": "This screen checks automatically every few seconds. You can also tap Try again, or scan the QR code at another free table.",
+  "table_occupied": "Occupied",
+  "table_free": "Free",
+  "free_table_action": "Free table",
+  "free_table_confirm": "Free up Table {{number}}? The next guest will be able to scan its QR code immediately.",
+  "free_table_failed": "Could not free the table. Please try again."
 }

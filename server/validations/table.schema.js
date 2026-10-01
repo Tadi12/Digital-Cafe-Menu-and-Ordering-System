@@ -16,7 +16,21 @@ const updateTableSchema = z.object({
   }),
 });
 
+// Occupancy actions (claim / heartbeat / release) are performed by the
+// customer's browser session, identified by the persistent session id that
+// the client already stores in localStorage for order history.
+const occupancyActionSchema = z.object({
+  body: z.object({
+    customerSessionId: z
+      .string()
+      .trim()
+      .min(1, 'customerSessionId is required')
+      .max(200, 'customerSessionId is too long'),
+  }),
+});
+
 module.exports = {
   createTableSchema,
   updateTableSchema,
+  occupancyActionSchema,
 };

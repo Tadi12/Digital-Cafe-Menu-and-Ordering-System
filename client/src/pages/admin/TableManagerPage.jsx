@@ -5,12 +5,13 @@ import {
   createTableApi,
   updateTableApi,
   deleteTableApi,
+  clearTableOccupancyApi,
 } from '../../api/tableApi';
 import TableQRModal from '../../components/admin/TableQRModal';
 import Modal from '../../components/common/Modal';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Plus, QrCode, Edit2, Trash2, CheckCircle2, XCircle, MapPin } from 'lucide-react';
+import { Plus, QrCode, Edit2, Trash2, CheckCircle2, XCircle, MapPin, Users, Unlock } from 'lucide-react';
 
 const TableManagerPage = () => {
   const { t } = useTranslation();
@@ -29,6 +30,9 @@ const TableManagerPage = () => {
   const [saving, setSaving] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null, num: '' });
 
+  // Staff force-free (unlock) confirmation for an occupied table
+  const [freeModal, setFreeModal] = useState({ isOpen: false, id: null, num: '' });
+
   const fetchTables = async () => {
     try {
       const res = await getTablesApi();
@@ -40,8 +44,25 @@ const TableManagerPage = () => {
     }
   };
 
+  // Occupancy can expire server-side; treat an expired claim as free even if
+  // the last poll predates the expiry.
+  const isTableOccupied = (tbl) =>
+    Boolean(
+      tbl &&
+        tbl.occupied &&
+        (!tbl.occupancyExpiresAt || new Date(tbl.occupancyExpiresAt) > new Date()),
+    );
+
   useEffect(() => {
     fetchTables();
+  }, []);
+
+  // Keep occupancy badges fresh: guests claim and release tables at any time.
+  useEffect(() => {
+    const refreshTimer = window.setInterval(() => {
+      fetchTables();
+    }, 30000);
+    return () => window.clearInterval(refreshTimer);
   }, []);
 
   const handleOpenAdd = () => {
@@ -115,6 +136,19 @@ const TableManagerPage = () => {
     }
   };
 
+  const handleConfirmFree = async () => {
+    const { id } = freeModal;
+    try {
+      const res = await clearTableOccupancyApi(id);
+      if (res.success) {
+        setFreeModal({ isOpen: false, id: null, num: '' });
+        fetchTables();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || t('free_table_failed'));
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -171,6 +205,17 @@ const TableManagerPage = () => {
                           </>
                         )}
                       </span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${isTableOccupied(tbl) ? 'text-amber-600' : 'text-emerald-700'}`}>
+                        {isTableOccupied(tbl) ? (
+                          <>
+                            <Users className="w-3 h-3" /> {t('table_occupied')}
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="w-3 h-3" /> {t('table_free')}
+                          </>
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -200,6 +245,16 @@ const TableManagerPage = () => {
                   <QrCode className="w-4 h-4 text-cafe-600" />
                   <span>{t('view_download_qr')}</span>
                 </button>
+
+                {isTableOccupied(tbl) && (
+                  <button
+                    onClick={() => setFreeModal({ isOpen: true, id: tbl._id, num: tbl.tableNumber })}
+                    className="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Unlock className="w-4 h-4 text-amber-600" />
+                    <span>{t('free_table_action')}</span>
+                  </button>
+                )}
               </div>
             ))
           )}
@@ -300,6 +355,14 @@ const TableManagerPage = () => {
         message={t('delete_table_confirm', { number: confirmModal.num })}
         confirmText={t('delete', 'Delete')}
         isDestructive={true}
+      />
+      <ConfirmModal
+        isOpen={freeModal.isOpen}
+        onClose={() => setFreeModal({ isOpen: false, id: null, num: '' })}
+        onConfirm={handleConfirmFree}
+        title={t('free_table_action')}
+        message={t('free_table_confirm', { number: freeModal.num })}
+        confirmText={t('free_table_action')}
       />
     </div>
   );

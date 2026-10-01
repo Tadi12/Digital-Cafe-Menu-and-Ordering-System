@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { getTableByIdApi } from "../../api/tableApi";
+import { getTableByIdApi, claimTableApi } from "../../api/tableApi";
+import { startTableSession } from "../../utils/tableSession";
 import { getCategoriesApi } from "../../api/categoryApi";
 import { getFoodsApi } from "../../api/foodApi";
 import { createOrderApi, getCustomerOrdersApi } from "../../api/orderApi";
@@ -23,7 +24,7 @@ import {
   readCustomerOrderHistory,
   saveCustomerOrderToHistory,
 } from "../../utils/customerOrderHistory";
-import { SearchX, AlertCircle, RotateCw } from "lucide-react";
+import { SearchX, AlertCircle, RotateCw, Hourglass } from "lucide-react";
 
 const MenuPage = () => {
   const { tableId } = useParams();
@@ -124,9 +125,19 @@ const MenuPage = () => {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   useEffect(() => {
-    setIsCustomerNavigationHidden(errorKind === "inactive-table");
+    setIsCustomerNavigationHidden(errorKind === "inactive-table" || errorKind === "occupied-table");
     return () => setIsCustomerNavigationHidden(false);
   }, [errorKind, setIsCustomerNavigationHidden]);
+
+  // "Table in use" waiting screen: re-check automatically so the guest gets
+  // in as soon as the current occupant leaves, without tapping anything.
+  useEffect(() => {
+    if (errorKind !== "occupied-table") return undefined;
+    const retryTimer = window.setInterval(() => {
+      setRetryCount((count) => count + 1);
+    }, 20000);
+    return () => window.clearInterval(retryTimer);
+  }, [errorKind]);
 
   // Validate table and fetch menu data whenever the QR table id changes
   useEffect(() => {
@@ -147,6 +158,48 @@ const MenuPage = () => {
         if (cancelled) return;
         setTable(tableRes.data);
         rememberTableId(tableRes.data._id);
+
+        // Exclusive one-guest-per-table access: claim the table for this
+        // customer session before loading the menu. A 409 means another
+        // guest is already using it — show the waiting screen instead.
+        try {
+          await claimTableApi(tableId, customerSessionId);
+        } catch (claimErr) {
+          if (cancelled) return;
+          if (claimErr.response?.status === 409) {
+            const occupiedError = new Error(
+              claimErr.response?.data?.message || "Table is currently in use.",
+            );
+            occupiedError.isOccupied = true;
+            throw occupiedError;
+          }
+          throw claimErr;
+        }
+        if (cancelled) return;
+
+        // Keep the claim alive with heartbeats for as long as this browser
+        // stays on the customer pages (survives SPA navigation).
+        startTableSession({
+          tableId,
+          customerSessionId,
+          onLost: (lostErr) => {
+            const lostInactive =
+              lostErr.response?.data?.data?.active === false
+                ? lostErr.response.data.data
+                : null;
+            if (lostInactive) {
+              setTable(lostInactive);
+              setErrorKind("inactive-table");
+              setTableError(lostErr.response?.data?.message);
+              return;
+            }
+            setErrorKind("occupied-table");
+            setTableError(
+              lostErr.response?.data?.message ||
+                "Table is currently in use.",
+            );
+          },
+        });
         validatingTable = false;
 
         const [catRes, foodRes] = await Promise.all([
@@ -163,12 +216,31 @@ const MenuPage = () => {
         const inactiveTable = err.response?.data?.data?.active === false
           ? err.response.data.data
           : null;
-        setTable(inactiveTable);
+        if (inactiveTable) {
+          setTable(inactiveTable);
+        } else if (!err.isOccupied && err.response?.status !== 409) {
+          setTable(null);
+        }
         const status = err.response?.status;
         const invalidTable = !inactiveTable && (!!err.isInvalidTable || (validatingTable && [400, 404].includes(status)));
-        setErrorKind(inactiveTable ? "inactive-table" : invalidTable ? "invalid-table" : "network");
+        const occupiedTable =
+          !inactiveTable &&
+          (err.isOccupied ||
+            err.response?.status === 409 ||
+            err.response?.data?.code === "TABLE_OCCUPIED");
+        setErrorKind(
+          occupiedTable
+            ? "occupied-table"
+            : inactiveTable
+              ? "inactive-table"
+              : invalidTable
+                ? "invalid-table"
+                : "network",
+        );
         setTableError(
-          inactiveTable
+          occupiedTable
+            ? err.response?.data?.message || err.message
+            : inactiveTable
             ? err.response?.data?.message
             : invalidTable
               ? (err.response?.data?.message || err.message || invalidTableMessage)
@@ -190,7 +262,7 @@ const MenuPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [tableId, invalidTableMessage, menuFetchFailedMessage, retryCount, rememberTableId]);
+  }, [tableId, invalidTableMessage, menuFetchFailedMessage, retryCount, rememberTableId, customerSessionId]);
 
   // The overlay tab bar links here with ?cart=1 when Cart is tapped on another
   // page; open the drawer once the table for this QR code is known.
@@ -373,22 +445,25 @@ const MenuPage = () => {
 
   if (tableError) {
     const inactiveTable = errorKind === "inactive-table";
+    const occupiedTable = errorKind === "occupied-table";
     return (
       <div className="min-h-screen bg-cafe-50 flex flex-col items-center justify-center p-6 text-center dark:bg-recipe-bg">
-        <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 shadow dark:bg-red-500/15 dark:text-red-400">
-          <AlertCircle className="w-8 h-8" />
+        <div className={occupiedTable ? "w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-4 shadow dark:bg-amber-500/15 dark:text-amber-400" : "w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 shadow dark:bg-red-500/15 dark:text-red-400"}>
+          {occupiedTable ? <Hourglass className="w-8 h-8" /> : <AlertCircle className="w-8 h-8" />}
         </div>
         <h2 className="font-display text-xl font-bold text-cafe-900 mb-2 dark:text-recipe-text">
-          {inactiveTable ? t("inactive_table_title") : errorKind === "invalid-table" ? t("invalid_table_title") : t("menu_network_error_title")}
+          {inactiveTable ? t("inactive_table_title") : occupiedTable ? t("occupied_table_title") : errorKind === "invalid-table" ? t("invalid_table_title") : t("menu_network_error_title")}
         </h2>
         <p className="text-sm text-cafe-600 max-w-xs mb-2 dark:text-recipe-muted">
-          {inactiveTable
+          {occupiedTable
+            ? t("occupied_table_desc", { number: table?.tableNumber ?? "?" })
+            : inactiveTable
             ? t("inactive_table_desc", { number: table?.tableNumber })
             : errorKind === "invalid-table"
               ? t("invalid_table_friendly")
               : tableError}
         </p>
-        {inactiveTable ? null : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6 dark:text-recipe-muted">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
+        {inactiveTable ? null : occupiedTable ? (<><p className="text-xs text-cafe-600 max-w-xs mb-3 dark:text-recipe-muted">{t("occupied_table_hint")}</p><button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-2 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-3 text-sm font-bold text-white hover:bg-amber-700"><RotateCw className="h-4 w-4" />{t("try_again")}</button></>) : errorKind === "invalid-table" ? <p className="text-xs text-cafe-600 max-w-xs mb-6 dark:text-recipe-muted">{t("rescan_qr_hint")}</p> : <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-5 py-3 text-sm font-bold text-white hover:bg-cafe-900 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"><RotateCw className="h-4 w-4" />{t("retry")}</button>}
       </div>
     );
   }

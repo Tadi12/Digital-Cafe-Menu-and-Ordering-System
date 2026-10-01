@@ -12,7 +12,7 @@ const getTables = async (req, res, next) => {
     return res.json({
       success: true,
       count: tables.length,
-      data: tables,
+      data: tables.map((table) => table.toPublicJSON()),
     });
   } catch (error) {
     next(error);
@@ -39,13 +39,13 @@ const getTableById = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: `Table #${table.tableNumber} is currently inactive or out of service.`,
-        data: table,
+        data: table.toPublicJSON(),
       });
     }
 
     return res.json({
       success: true,
-      data: table,
+      data: table.toPublicJSON(),
     });
   } catch (error) {
     if (error.name === 'CastError' || error.kind === 'ObjectId') {
@@ -201,6 +201,292 @@ const getTableQR = async (req, res, next) => {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Table occupancy — one customer session per table at a time
+// ---------------------------------------------------------------------------
+
+// How long a claim survives without a heartbeat. Defaults to 10 minutes so an
+// abandoned session (closed browser, dead phone, lost Wi-Fi) frees the table
+// quickly, while active customers keep it alive with 60-second heartbeats.
+const getOccupancyTtlMs = () => {
+  const configured = Number(process.env.TABLE_OCCUPANCY_TTL_MS);
+  if (Number.isFinite(configured) && configured >= 60 * 1000) {
+    return configured;
+  }
+  return 10 * 60 * 1000;
+};
+
+const normalizeSessionId = (value) =>
+  typeof value === 'string' ? value.trim() : '';
+
+const clearOccupancyFields = {
+  occupiedBy: null,
+  occupiedAt: null,
+  occupancyExpiresAt: null,
+};
+
+/**
+ * @desc    Claim a table for the scanning customer session (exclusive access)
+ * @route   POST /api/tables/:id/claim
+ * @access  Public
+ */
+const claimTable = async (req, res, next) => {
+  try {
+    const customerSessionId = normalizeSessionId(req.body?.customerSessionId);
+    if (!customerSessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'customerSessionId is required to claim a table.',
+      });
+    }
+
+    const table = await Table.findById(req.params.id);
+
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: 'Table not found. Please scan a valid café table QR code.',
+      });
+    }
+
+    if (!table.active) {
+      return res.status(400).json({
+        success: false,
+        message: `Table #${table.tableNumber} is currently inactive or out of service.`,
+        data: table.toPublicJSON(),
+      });
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + getOccupancyTtlMs());
+
+    // Atomic compare-and-set: the table can only be claimed when it is free,
+    // already held by this same session (re-scan / refresh), or its previous
+    // claim has expired. Two devices scanning at the same moment cannot both
+    // win because findOneAndUpdate matches the filter and updates in one step.
+    const claimedTable = await Table.findOneAndUpdate(
+      {
+        _id: table._id,
+        $or: [
+          { occupiedBy: { $in: [null, ''] } },
+          { occupiedBy: customerSessionId },
+          { occupancyExpiresAt: { $lte: now } },
+          { occupancyExpiresAt: null },
+        ],
+      },
+      {
+        $set: {
+          occupiedBy: customerSessionId,
+          occupiedAt: now,
+          occupancyExpiresAt: expiresAt,
+        },
+      },
+      { new: true },
+    );
+
+    if (!claimedTable) {
+      const currentTable = (await Table.findById(req.params.id)) || table;
+      return res.status(409).json({
+        success: false,
+        code: 'TABLE_OCCUPIED',
+        message: `Table #${currentTable.tableNumber} is currently in use by another guest. Please wait for them to finish, or scan the QR code at another free table.`,
+        data: currentTable.toPublicJSON(),
+      });
+    }
+
+    // A session may only hold one table at a time: if this guest moved to a
+    // different table, free the one they claimed earlier.
+    await Table.updateMany(
+      { occupiedBy: customerSessionId, _id: { $ne: claimedTable._id } },
+      { $set: clearOccupancyFields },
+    );
+
+    return res.json({
+      success: true,
+      claimed: true,
+      data: claimedTable.toPublicJSON(),
+    });
+  } catch (error) {
+    if (error.name === 'CastError' || error.kind === 'ObjectId') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid Table ID format. Please scan a valid café table QR code.',
+      });
+    }
+    next(error);
+  }
+};
+
+/**
+ * @desc    Renew the caller's claim on a table (keeps the table occupied)
+ * @route   POST /api/tables/:id/heartbeat
+ * @access  Public
+ */
+const heartbeatTable = async (req, res, next) => {
+  try {
+    const customerSessionId = normalizeSessionId(req.body?.customerSessionId);
+    if (!customerSessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'customerSessionId is required.',
+      });
+    }
+
+    const now = new Date();
+    const renewedTable = await Table.findOneAndUpdate(
+      { _id: req.params.id, occupiedBy: customerSessionId },
+      { $set: { occupancyExpiresAt: new Date(now.getTime() + getOccupancyTtlMs()) } },
+      { new: true },
+    );
+
+    if (renewedTable) {
+      if (!renewedTable.active) {
+        return res.status(400).json({
+          success: false,
+          message: `Table #${renewedTable.tableNumber} is currently inactive or out of service.`,
+          data: renewedTable.toPublicJSON(),
+        });
+      }
+      return res.json({
+        success: true,
+        data: renewedTable.toPublicJSON(),
+      });
+    }
+
+    // The claim was not held by this session — explain why so the client can
+    // either re-claim (claim lost) or show the waiting screen (occupied).
+    const table = await Table.findById(req.params.id);
+
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        message: 'Table not found. Please scan a valid café table QR code.',
+      });
+    }
+
+    if (!table.active) {
+      return res.status(400).json({
+        success: false,
+        message: `Table #${table.tableNumber} is currently inactive or out of service.`,
+        data: table.toPublicJSON(),
+      });
+    }
+
+    if (table.isOccupiedNow()) {
+      return res.status(409).json({
+        success: false,
+        code: 'TABLE_OCCUPIED',
+        message: `Table #${table.tableNumber} is currently in use by another guest. Please wait for them to finish, or scan the QR code at another free table.`,
+        data: table.toPublicJSON(),
+      });
+    }
+
+    return res.status(409).json({
+      success: false,
+      code: 'TABLE_CLAIM_LOST',
+      message: `Your hold on Table #${table.tableNumber} expired. Please claim the table again.`,
+      data: table.toPublicJSON(),
+    });
+  } catch (error) {
+    if (error.name === 'CastError' || error.kind === 'ObjectId') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid Table ID format. Please scan a valid café table QR code.',
+      });
+    }
+    next(error);
+  }
+};
+
+/**
+ * @desc    Release a table held by the caller's session (safe to call twice)
+ * @route   POST /api/tables/:id/release
+ * @access  Public
+ */
+const releaseTable = async (req, res, next) => {
+  try {
+    const customerSessionId = normalizeSessionId(req.body?.customerSessionId);
+    if (!customerSessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'customerSessionId is required.',
+      });
+    }
+
+    // Session-scoped so a stray release can never free a table that another
+    // guest has since claimed.
+    const table = await Table.findOneAndUpdate(
+      { _id: req.params.id, occupiedBy: customerSessionId },
+      { $set: clearOccupancyFields },
+      { new: true },
+    );
+
+    if (!table) {
+      const exists = await Table.findById(req.params.id).select('_id');
+      if (!exists) {
+        return res.status(404).json({
+          success: false,
+          message: 'Table not found.',
+        });
+      }
+      return res.json({
+        success: true,
+        released: false,
+        message: 'Table was not held by this session.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      released: true,
+      data: table.toPublicJSON(),
+    });
+  } catch (error) {
+    if (error.name === 'CastError' || error.kind === 'ObjectId') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid Table ID format.',
+      });
+    }
+    next(error);
+  }
+};
+
+/**
+ * @desc    Force-free a table's occupancy (staff override)
+ * @route   DELETE /api/tables/:id/occupancy
+ * @access  Protected (Admin)
+ */
+const clearTableOccupancy = async (req, res, next) => {
+  try {
+    const table = await Table.findById(req.params.id);
+    if (!table) {
+      return res.status(404).json({ success: false, message: 'Table not found' });
+    }
+
+    if (!table.isOccupiedNow()) {
+      return res.json({
+        success: true,
+        released: false,
+        message: `Table #${table.tableNumber} is already free.`,
+        data: table.toPublicJSON(),
+      });
+    }
+
+    Object.assign(table, clearOccupancyFields);
+    await table.save();
+
+    return res.json({
+      success: true,
+      released: true,
+      message: `Table #${table.tableNumber} is now free.`,
+      data: table.toPublicJSON(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getTables,
   getTableById,
@@ -208,4 +494,8 @@ module.exports = {
   updateTable,
   deleteTable,
   getTableQR,
+  claimTable,
+  heartbeatTable,
+  releaseTable,
+  clearTableOccupancy,
 };

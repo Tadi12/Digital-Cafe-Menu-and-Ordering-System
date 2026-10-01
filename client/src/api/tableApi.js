@@ -29,3 +29,31 @@ export const getTableQRApi = async (id) => {
   const response = await axiosClient.get(`/tables/${id}/qr`);
   return response.data;
 };
+
+// --- One-person-per-table occupancy ---------------------------------------
+
+export const claimTableApi = async (id, customerSessionId) => {
+  const response = await axiosClient.post(`/tables/${id}/claim`, {
+    customerSessionId,
+  });
+  return response.data;
+};
+
+export const heartbeatTableApi = async (id, customerSessionId) => {
+  const response = await axiosClient.post(`/tables/${id}/heartbeat`, {
+    customerSessionId,
+  });
+  return response.data;
+};
+
+export const releaseTableApi = async (id, customerSessionId) => {
+  const response = await axiosClient.post(`/tables/${id}/release`, {
+    customerSessionId,
+  });
+  return response.data;
+};
+
+export const clearTableOccupancyApi = async (id) => {
+  const response = await axiosClient.delete(`/tables/${id}/occupancy`);
+  return response.data;
+};
