@@ -216,3 +216,263 @@
   background-color: #ff7a28 !important;
   color: #17181c !important;
 }
+
+/* ══ Label input ═══════════════════════════════════════════
+   components/common/LabelInput.jsx.
+
+   ── WHY THIS BLOCK IS UNLAYERED ──────────────────────────
+   `@layer base` above force-sets `background-color` and `color`
+   on every input/select/textarea. Tailwind compiles @layer into
+   a real CSS cascade layer, and an UNLAYERED rule outranks a
+   layered one regardless of specificity. This field is outline
+   only — it has to keep `background: transparent` — so it has to
+   live out here, unlayered. This also matches the convention
+   already used by the override rules in this file.
+
+   ── THE TOKENS ───────────────────────────────────────────
+   Bencho reads six custom properties that its own design system
+   defines. This project has none of them: it is Tailwind, with
+   its palette in tailwind.config.js and no CSS-variable layer at
+   all. Declaring `--ink` & co. on :root would invent a parallel
+   token system and leak it across the whole app, so all six are
+   defined HERE, on .lbi, and inherited by everything inside it.
+   Nothing escapes the component.
+
+   Mapping, and why:
+
+   --ink     The strong foreground = `text-cafe-900`, which the
+             dark bridge above already remaps to #f5f5f7. I reuse
+             the bridge's own value rather than inventing a grey,
+             so the field tracks every other piece of text.
+
+   --ink-3   The mid tone = `text-cafe-600` (#8B5A2B / #a8adb6).
+             Bencho uses it for the LIFTED label — readable, but
+             not yet the final word.
+
+   --ink-4   The faint tone, for the label while it is still
+             acting as a placeholder = `text-cafe-500`
+             (#9C5B27 / #8b9099). Deliberately NOT cafe-400: on
+             the #FAF7F2 ground cafe-400 gives only 3.2:1, under
+             WCAG AA, whereas cafe-500 gives 5.0:1.
+
+   --ink-rgb That same ink as three bare numbers, because the ring
+             builds rgba() from it (#2C1A1D → 44, 26, 29).
+
+   --fill-on THE INTERESTING ONE. In Bencho, "fill-on" is the
+             foreground that sits ON a filled surface — and note
+             it gates the typed text UNCONDITIONALLY (`.lbi-field`),
+             not only on focus. The tempting mapping is this
+             project's own filled-action foreground, white on
+             cafe-800. But that would render the email INVISIBLE:
+             this field never gains a fill (it is transparent by
+             design) so it sits directly on the white card, and
+             white-on-white is unreadable. The honest mapping is
+             therefore the strong ink on that card — the same value
+             as --ink. They coincide here precisely BECAUSE the
+             control has no fill of its own. If this field ever
+             grows one, this token is the line to change.
+
+   --font-ui This project's UI face: tailwind's font-sans, already
+             loaded from Google Fonts in index.html. Bencho's own
+             UI stack is not part of the MIT copy. */
+.lbi {
+  --ink: #2C1A1D;
+  --ink-3: #8B5A2B;
+  --ink-4: #9C5B27;
+  --ink-rgb: 44, 26, 29;
+  --fill-on: #2C1A1D;
+  --font-ui: 'Inter', system-ui, sans-serif;
+
+  position: relative;
+  font-family: var(--font-ui);
+  display: grid;
+  place-items: center;
+  /* room above the field for the lifted label */
+  padding-top: 10px;
+}
+
+/* the same six on the dark bridge — the identical ladder, taken
+   from the .dark .text-cafe-* remaps above. */
+.dark .lbi {
+  --ink: #f5f5f7;
+  --ink-3: #a8adb6;
+  --ink-4: #8b9099;
+  --ink-rgb: 245, 245, 247;
+  --fill-on: #f5f5f7;
+}
+
+/* no fill: the field is only its outline */
+.lbi-box {
+  position: relative;
+  background: transparent;
+  cursor: text;
+}
+
+/* ── the outline ────────────────────────────────────────────
+   Always whole. At rest a hairline of grey; focused, the ink
+   at a hair heavier; left filled, a grey a step darker than
+   rest. The gap across the top is the only part that moves. */
+.lbi-ring {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.lbi-ring path {
+  fill: none;
+  stroke: rgba(var(--ink-rgb), 0.18);
+  stroke-width: 1;
+  stroke-linecap: butt;
+  transition: stroke 240ms ease, stroke-width 240ms ease;
+}
+
+.lbi[data-focus="true"] .lbi-ring path {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.lbi[data-filled="true"]:not([data-focus="true"]) .lbi-ring path {
+  stroke: rgba(var(--ink-rgb), 0.3);
+}
+
+/* the gap: whole at rest, parting from its middle when the
+   label lifts. The dash is longer than the path so offset 0
+   is the whole line and -1 is none of it. */
+.lbi-gap {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 0;
+  transition: stroke 240ms ease, stroke-width 240ms ease,
+    stroke-dashoffset 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lbi[data-up="true"] .lbi-gap { stroke-dashoffset: -1; }
+
+/* ── the label ──────────────────────────────────────────────
+   Its placeholder self in the middle of the field, and its
+   lifted self centred on the top edge — the second is the
+   first moved up by half the field and scaled from its left. */
+.lbi-label {
+  position: absolute;
+  left: var(--lbi-x);
+  top: 50%;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  white-space: pre;
+  color: var(--ink-4);
+  transform-origin: left center;
+  transform: translateY(-50%);
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), color 200ms ease;
+  cursor: text;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lbi[data-up="true"] .lbi-label {
+  transform: translateY(-50%) translateY(-26px) scale(0.78);
+  color: var(--ink-3);
+}
+
+.lbi[data-focus="true"] .lbi-label { color: var(--fill-on, var(--ink)); }
+
+.lbi-label span { display: inline-block; }
+
+/* the hop: each letter lifts a hair and settles, one after the
+   next, so the word ripples as it rises */
+.lbi[data-focus="true"] .lbi-label span {
+  animation: lbi-hop 460ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--i) * 24ms);
+}
+
+.lbi-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 0 0 var(--lbi-x);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  color: var(--fill-on, var(--ink));
+  outline: none;
+}
+
+/* Chrome's autofill paints an opaque slab over the field. It is
+   `!important` in the @layer base block above, so it has to be
+   beaten the same way: an opaque white box would land squarely
+   on top of an outline-only control. Transparent is the match. */
+.lbi-field:-webkit-autofill,
+.lbi-field:-webkit-autofill:hover,
+.lbi-field:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--fill-on, var(--ink));
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  caret-color: var(--fill-on, var(--ink));
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* the reveal: the text passes through a soft blur rather than
+   snapping between dots and letters. Two names so a second
+   press restarts it. */
+.lbi-field[data-flip="1"] { animation: lbi-flip-a 260ms ease-out; }
+
+.lbi-field[data-flip="0"] { animation: lbi-flip-b 260ms ease-out; }
+
+.lbi-eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-4);
+  cursor: pointer;
+  transition: color 160ms ease, scale 130ms cubic-bezier(0.3, 0.9, 0.4, 1);
+}
+
+.lbi-eye:hover { color: var(--fill-on, var(--ink)); }
+
+.lbi-eye:active { scale: 0.9; }
+
+/* the two icons in one place, trading places */
+.lbi-eye svg {
+  grid-area: 1 / 1;
+  transition: opacity 200ms ease, scale 260ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms ease;
+}
+
+.lbi-eye svg:last-child { opacity: 0; scale: 0.7; filter: blur(2px); }
+
+.lbi-eye[data-show="true"] svg:first-child { opacity: 0; scale: 0.7; filter: blur(2px); }
+
+.lbi-eye[data-show="true"] svg:last-child { opacity: 1; scale: 1; filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lbi-ring path,
+    .lbi-gap,
+    .lbi-label { transition-duration: 1ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lbi[data-focus="true"] .lbi-label span,
+    .lbi-field { animation: none; }
+}
+
+@keyframes lbi-hop {
+  0% { transform: translateY(0); }
+  38% { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes lbi-flip-a { from { filter: blur(3px); opacity: 0.5; } }
+
+@keyframes lbi-flip-b { from { filter: blur(3px); opacity: 0.5; } }
+

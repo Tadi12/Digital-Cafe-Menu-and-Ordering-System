@@ -134,6 +134,16 @@ const OrderConfirmationPage = () => {
           </div>
         </div>
 
+        {/* Track Order Button */}
+        <button
+          onClick={() => navigate(`/order-track/${order._id}`)}
+          className="-mt-[19px] w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>{t('track_order')}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+
         {/* Payment Status Check */}
         {order.paymentMethod !== 'Cash' && order.paymentStatus === 'Unpaid' && (
           <div className="bg-red-50 rounded-2xl p-5 border border-red-200 text-center space-y-2">
@@ -143,17 +153,6 @@ const OrderConfirmationPage = () => {
         )}
       </div>
 
-      {/* Footer Track Order Button */}
-      <div className="p-5 pb-28 bg-white border-t border-cafe-200">
-        <button
-          onClick={() => navigate(`/order-track/${order._id}`)}
-          className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>{t('track_order')}</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
     </div>
   );
 };
