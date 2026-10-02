@@ -5,7 +5,7 @@ import { LanguageContext } from '../../context/LanguageContext';
 import { useFavorites } from '../../hooks/useFavorites';
 import Modal from '../common/Modal';
 import { formatCurrency } from '../../utils/currencyFormatter';
-import { Plus, Minus, ShoppingBag, CheckCircle, XCircle, Heart } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, CheckCircle, XCircle, Heart } from 'lucide-react';
 
 const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food" }) => {
   const { t } = useTranslation();
@@ -143,7 +143,7 @@ const FoodDetailModal = ({ food, isOpen, onClose, onAddToCart, itemType = "food"
               onClick={handleAdd}
               className="flex-1 bg-cafe-800 hover:bg-cafe-900 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingCart className="w-4 h-4" />
               <span>
                 {t("add_to_cart")} -{" "}
                 {formatCurrency(food.price * quantity, currentLang)}

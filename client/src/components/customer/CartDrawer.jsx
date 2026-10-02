@@ -4,7 +4,7 @@ import { LanguageContext } from "../../context/LanguageContext";
 import { useCart } from "../../hooks/useCart";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import {
-  ShoppingBag,
+  ShoppingCart,
   X,
   Plus,
   Minus,
@@ -60,7 +60,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
         {/* Header */}
         <div className="px-5 py-4 bg-cafe-900 text-white flex items-center justify-between shadow">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-gold-500" />
+            <ShoppingCart className="w-5 h-5 text-gold-500" />
             <h2 className="text-base font-bold tracking-tight">
               {t("cart_title")}
             </h2>
@@ -80,7 +80,7 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
         <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center text-cafe-500 dark:text-recipe-muted">
-              <ShoppingBag className="w-12 h-12 stroke-[1.5] text-cafe-300 mb-2 dark:text-recipe-subtle" />
+              <ShoppingCart className="w-12 h-12 stroke-[1.5] text-cafe-300 mb-2 dark:text-recipe-subtle" />
               <p className="font-semibold text-sm">{t("cart_empty")}</p>
             </div>
           ) : (

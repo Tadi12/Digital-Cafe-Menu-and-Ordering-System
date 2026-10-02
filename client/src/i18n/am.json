@@ -160,6 +160,8 @@
   "qr_modal_title": "ጠረጴዛ #{{number}} QR ኮድ",
   "qr_print_heading": "ሀብል ካፌ ሜኑ",
   "qr_print_instruction": "ሜኑውን ለማየት እና ትዕዛዝ ለመስጠት በስልክዎ ይቃኙ",
+  "generating_qr_card": "ካርድ በመዘጋጀት ላይ...",
+  "qr_card_failed": "ካርዱን መስረት አልተቻለም",
   "remove_item": "እቃውን አስወግድ",
   "refresh": "አድስ",
   "active_sessions": "ንቁ ክፍለ ጊዜዎች ({{count}})",

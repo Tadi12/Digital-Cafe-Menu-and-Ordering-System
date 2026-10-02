@@ -2,7 +2,7 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { Utensils, ReceiptText, Search, Heart, ShoppingBag } from "lucide-react";
+import { Utensils, ReceiptText, Search, Heart, ShoppingCart } from "lucide-react";
 import { useCart } from "../../hooks/useCart";
 import { useFavorites } from "../../hooks/useFavorites";
 import { useCustomerUI } from "../../hooks/useCustomerUI";
@@ -112,7 +112,7 @@ const CustomerTabBar = () => {
     {
       id: "cart",
       label: t("tab_cart"),
-      icon: ShoppingBag,
+      icon: ShoppingCart,
       isActive: isMenuPage && isCartOpen,
       count: totalItemsCount,
       onClick: handleCartTab,

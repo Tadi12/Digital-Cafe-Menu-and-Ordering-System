@@ -217,6 +217,8 @@
   "qr_modal_title": "Table #{{number}} QR Code",
   "qr_print_heading": "Hable Cafe Menu",
   "qr_print_instruction": "Scan with your phone to view menu & place orders",
+  "generating_qr_card": "Preparing card...",
+  "qr_card_failed": "Card could not be generated",
   "remove_item": "Remove item",
   "refresh": "Refresh",
   "active_sessions": "Active sessions ({{count}})",
