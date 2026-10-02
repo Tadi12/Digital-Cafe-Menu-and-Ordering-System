@@ -1,5 +1,4 @@
 const Order = require('../models/Order');
-const axios = require('axios');
 const Table = require('../models/Table');
 const Food = require('../models/Food');
 const { getIO } = require('../sockets/socketHandler');
@@ -19,7 +18,7 @@ const generateOrderNumber = () => {
  */
 const createOrder = async (req, res, next) => {
   try {
-    const { customerName, customerSessionId, tableId, items, paymentMethod, paymentReference, receiptData } = req.body;
+    const { customerName, customerSessionId, tableId, items, paymentMethod } = req.body;
 
     if (!customerName || !customerName.trim()) {
       return res.status(400).json({
@@ -113,7 +112,7 @@ const createOrder = async (req, res, next) => {
       }
     }
 
-    const isVerifiedPaid = paymentMethod !== 'Cash' && paymentReference && receiptData;
+    // No payment verifier exists anymore, so every order starts as Unpaid (cash is settled at the table).
 
     const order = await Order.create({
       orderNumber,
@@ -124,9 +123,7 @@ const createOrder = async (req, res, next) => {
       items: orderItemsSnapshot,
       totalAmount,
       paymentMethod: paymentMethod || 'Cash',
-      paymentStatus: isVerifiedPaid ? 'Paid' : 'Unpaid',
-      paymentReference: paymentReference || null,
-      receiptData: receiptData || null,
+      paymentStatus: 'Unpaid',
       status: 'Pending',
     });
 
@@ -378,206 +375,6 @@ const cancelOrder = async (req, res, next) => {
   }
 };
 
-const verifyPayment = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { bank, reference } = req.body;
-
-    const order = await Order.findById(id);
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-    
-    if (order.paymentStatus === 'Paid') {
-      return res.status(400).json({ success: false, message: 'Order is already paid.' });
-    }
-
-    const pythonService = process.env.RECEIPT_VERIFIER_URL;
-    const cafeAccount = process.env.CAFE_BANK_ACCOUNT;
-
-    if (!pythonService || !cafeAccount) {
-      return res.status(500).json({ success: false, message: 'Server is missing payment verification configuration (.env)' });
-    }
-
-    let receiptData = null;
-
-    try {
-      const accountTail = cafeAccount.slice(-8); // CBE requires last 8 digits
-      const response = await axios.get(`${pythonService}/verify?bank=${encodeURIComponent(bank.trim())}&reference=${encodeURIComponent(reference.trim())}&account_tail=${encodeURIComponent(accountTail)}`);
-      
-      if (!response.data.success) {
-        return res.status(400).json({ success: false, message: 'Invalid receipt: ' + response.data.error });
-      }
-      receiptData = response.data.data;
-      
-    } catch (err) {
-      console.error("[Python Service Error]:", err.message);
-      return res.status(503).json({ 
-        success: false, 
-        message: 'Bank verification service is currently unavailable or the reference is invalid.' 
-      });
-    }
-
-    // Normalize fields due to different bank extraction keys
-    console.log('RECEIPT DATA:', receiptData);
-    
-    const extractedReceiver = receiptData.receiver_account || receiptData.to_account || receiptData.receiver || null;
-    const rawAmount = receiptData.amount || receiptData.transferred_amount || receiptData.total_amount || '0';
-    const extractedAmount = parseFloat(String(rawAmount).replace(/[^0-9.]/g, ''));
-
-    // 1. Check receiver account
-    if (bank.toLowerCase() !== 'cbe') {
-      if (!extractedReceiver) {
-        return res.status(400).json({ success: false, message: 'Unable to read receiver account from receipt data.' });
-      }
-      
-      const cleanReceiver = extractedReceiver.replace(/\*/g, '');
-      if (!cafeAccount.includes(cleanReceiver) && !cleanReceiver.includes(cafeAccount.slice(-4))) {
-        return res.status(400).json({ success: false, message: 'Receipt receiver account does not match cafe account!' });
-      }
-    }
-
-    // 2. Check Amount
-    if (extractedAmount < order.totalAmount) {
-      return res.status(400).json({ success: false, message: `Paid amount (${extractedAmount} ETB) is less than order total (${order.totalAmount} ETB)!` });
-    }
-
-    // 3. Check Status and Currency
-    const status = (receiptData.status || '').toUpperCase();
-    if (status && status !== "SUCCESS" && status !== "COMPLETED") {
-      return res.status(400).json({ success: false, message: 'Receipt status is not SUCCESS!' });
-    }
-    
-    const currency = (receiptData.currency || 'ETB').toUpperCase();
-    if (currency !== "ETB") {
-      return res.status(400).json({ success: false, message: 'Currency must be ETB!' });
-    }
-
-    // 4. Check Freshness (within 30 minutes)
-    const receiptDateStr = receiptData.date || receiptData.payment_date || receiptData.transaction_date;
-    if (receiptDateStr) {
-      const receiptDate = new Date(receiptDateStr);
-      const timeDiffMins = (Date.now() - receiptDate.getTime()) / (1000 * 60);
-      
-      // TEMP DISABLED FOR TESTING:
-      // if (timeDiffMins > 30) {
-      //   return res.status(400).json({ success: false, message: 'Receipt is too old (older than 30 minutes). Please provide a recent receipt.' });
-      // }
-    }
-
-    // 5. Success! Mark order as paid
-    order.paymentStatus = 'Paid';
-    order.paymentReference = reference;
-    order.receiptData = receiptData;
-    await order.save();
-
-    // Re-fetch populated order to send to clients
-    const populatedOrder = await Order.findById(order._id).populate('table', 'tableNumber tableName');
-
-    // Notify Admin
-    try {
-      const io = require('../sockets/socketHandler').getIO();
-      io.to('admin_room').emit('order_status_updated', populatedOrder);
-    } catch (socketErr) {
-      console.warn('[Socket Warning]: Could not emit order_status_updated event:', socketErr.message);
-    }
-
-    return res.json({ success: true, message: 'Payment verified successfully!', data: populatedOrder });
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ success: false, message: 'This receipt reference has already been used for another order!' });
-    }
-    next(error);
-  }
-};
-
-const verifyReceiptOnly = async (req, res, next) => {
-  try {
-    const { bank, reference, expectedAmount } = req.body;
-    if (!bank || !reference || !expectedAmount) {
-      return res.status(400).json({ success: false, message: 'Bank, reference, and expectedAmount are required' });
-    }
-
-    const pythonService = process.env.RECEIPT_VERIFIER_URL;
-    const cafeAccount = process.env.CAFE_BANK_ACCOUNT;
-
-    if (!pythonService || !cafeAccount) {
-      return res.status(500).json({ success: false, message: 'Server is missing payment verification configuration (.env)' });
-    }
-
-    let receiptData = null;
-
-    try {
-      const accountTail = cafeAccount.slice(-8); // CBE requires last 8 digits
-      const response = await axios.get(`${pythonService}/verify?bank=${encodeURIComponent(bank.trim())}&reference=${encodeURIComponent(reference.trim())}&account_tail=${encodeURIComponent(accountTail)}`);
-      
-      if (!response.data.success) {
-        return res.status(400).json({ success: false, message: 'Invalid receipt: ' + response.data.error });
-      }
-      receiptData = response.data.data;
-      
-    } catch (err) {
-      console.error("[Python Service Error]:", err.message);
-      return res.status(503).json({ 
-        success: false, 
-        message: 'Bank verification service is currently unavailable or the reference is invalid.' 
-      });
-    }
-
-    // Normalize fields due to different bank extraction keys
-    const extractedReceiver = receiptData.receiver_account || receiptData.to_account || receiptData.receiver || null;
-    const rawAmount = receiptData.amount || receiptData.transferred_amount || receiptData.total_amount || '0';
-    const extractedAmount = parseFloat(String(rawAmount).replace(/[^0-9.]/g, ''));
-
-    // 1. Check receiver account
-    if (bank.toLowerCase() !== 'cbe') {
-      if (!extractedReceiver) {
-        return res.status(400).json({ success: false, message: 'Unable to read receiver account from receipt data.' });
-      }
-      
-      const cleanReceiver = extractedReceiver.replace(/\*/g, '');
-      if (!cafeAccount.includes(cleanReceiver) && !cleanReceiver.includes(cafeAccount.slice(-4))) {
-        return res.status(400).json({ success: false, message: 'Receipt receiver account does not match cafe account!' });
-      }
-    }
-
-    // 2. Check Amount
-    if (extractedAmount < parseFloat(expectedAmount)) {
-      return res.status(400).json({ success: false, message: `Paid amount (${extractedAmount} ETB) is less than order total (${expectedAmount} ETB)!` });
-    }
-
-    // 3. Check Status and Currency
-    const status = (receiptData.status || '').toUpperCase();
-    if (status && status !== "SUCCESS" && status !== "COMPLETED") {
-      return res.status(400).json({ success: false, message: 'Receipt status is not SUCCESS!' });
-    }
-    
-    const currency = (receiptData.currency || 'ETB').toUpperCase();
-    if (currency !== "ETB") {
-      return res.status(400).json({ success: false, message: 'Currency must be ETB!' });
-    }
-
-    // 4. Check Freshness
-    const receiptDateStr = receiptData.date || receiptData.payment_date || receiptData.transaction_date;
-    if (receiptDateStr) {
-      const receiptDate = new Date(receiptDateStr);
-      const timeDiffMins = (Date.now() - receiptDate.getTime()) / (1000 * 60);
-      // TEMP DISABLED FOR TESTING
-      // if (timeDiffMins > 30) {
-      //   return res.status(400).json({ success: false, message: 'Receipt is too old (older than 30 minutes). Please provide a recent receipt.' });
-      // }
-    }
-
-    // 5. Check Replay Attack
-    const existingOrder = await Order.findOne({ paymentReference: reference });
-    if (existingOrder) {
-      return res.status(400).json({ success: false, message: 'This receipt reference has already been used for another order!' });
-    }
-
-    return res.json({ success: true, message: 'Payment verified successfully!', data: receiptData });
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   createOrder,
   getOrders,
@@ -585,6 +382,4 @@ module.exports = {
   getOrderById,
   updateOrderStatus,
   cancelOrder,
-  verifyPayment,
-  verifyReceiptOnly,
 };

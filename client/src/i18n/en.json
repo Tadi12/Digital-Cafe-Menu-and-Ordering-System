@@ -20,7 +20,6 @@
   "currency": "ETB",
   "customer_name": "Your Name",
   "customer_name_placeholder": "Enter your name for the order...",
-  "payment_method": "Payment Method",
   "cash_on_table": "Cash (Pay at Table)",
   "place_order": "Place Order",
   "order_confirmation_title": "Order Received!",

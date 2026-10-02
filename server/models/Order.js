@@ -71,15 +71,6 @@ const orderSchema = new mongoose.Schema(
       enum: ['Unpaid', 'Paid'],
       default: 'Unpaid',
     },
-    paymentReference: {
-      type: String,
-      sparse: true,
-      unique: true,
-    },
-    receiptData: {
-      type: Object,
-      default: null,
-    },
     status: {
       type: String,
       enum: ['Pending', 'Preparing', 'Ready', 'Completed', 'Cancelled'],

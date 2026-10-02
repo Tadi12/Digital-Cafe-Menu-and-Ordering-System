@@ -21,14 +21,7 @@ const updateOrderStatusSchema = z.object({
   }),
 });
 
-const updatePaymentStatusSchema = z.object({
-  body: z.object({
-    paymentStatus: z.enum(['Unpaid', 'Paid']),
-  }),
-});
-
 module.exports = {
   createOrderSchema,
   updateOrderStatusSchema,
-  updatePaymentStatusSchema,
 };
