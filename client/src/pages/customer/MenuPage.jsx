@@ -355,7 +355,7 @@ const MenuPage = () => {
           new Notification("Your order is ready", {
             body: `Order ${updatedOrder.orderNumber} is ready for pickup.`,
             tag: `menu-ready-${updatedOrder._id}`,
-            icon: "/favicon-32x32.png",
+            icon: "/notification-icon.png",
           });
         } else if (Notification.permission === "default") {
           Notification.requestPermission().then((permission) => {
@@ -363,7 +363,7 @@ const MenuPage = () => {
               new Notification("Your order is ready", {
                 body: `Order ${updatedOrder.orderNumber} is ready for pickup.`,
                 tag: `menu-ready-${updatedOrder._id}`,
-                icon: "/favicon-32x32.png",
+                icon: "/notification-icon.png",
               });
             }
           });

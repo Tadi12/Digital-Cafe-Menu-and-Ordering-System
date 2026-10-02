@@ -71,9 +71,12 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         {/* Brand header */}
         <div className="p-4 border-b border-cafe-800 flex items-center justify-between md:justify-center lg:justify-between">
             <div className="flex items-center gap-3 md:justify-center lg:justify-start">
-            <div className="w-9 h-9 rounded-xl bg-cafe-600 flex items-center justify-center text-amber-300 shadow">
-              <Coffee className="w-5 h-5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt=""
+              aria-hidden="true"
+              className="h-9 w-9 shrink-0 rounded-full object-cover shadow"
+            />
             <div className="md:hidden lg:block">
               <h2 className="font-display text-sm font-bold tracking-tight text-white">
                 {t("admin_sidebar_title")}

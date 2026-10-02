@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
-import { Coffee, Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
@@ -41,9 +41,11 @@ const AdminLoginPage = () => {
       <div className="w-full max-w-sm bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative border border-cafe-700">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-cafe-700 text-amber-300 flex items-center justify-center mx-auto shadow-md">
-            <Coffee className="w-8 h-8" />
-          </div>
+          <img
+            src="/logo.png"
+            alt={t('app_name')}
+            className="mx-auto h-14 w-14 rounded-full object-cover shadow-md"
+          />
           <h1 className="font-display text-xl font-black text-cafe-900 tracking-tight">
             {t('admin_login_title')}
           </h1>

@@ -143,7 +143,7 @@ const OrderTrackerPage = () => {
             new Notification(t('order_ready_notif_title'), {
               body: readyMessage,
               tag: `order-ready-${order._id}`,
-              icon: "/favicon-32x32.png",
+              icon: "/notification-icon.png",
             });
           } else if (Notification.permission === "default") {
             Notification.requestPermission()
@@ -152,7 +152,7 @@ const OrderTrackerPage = () => {
                   new Notification(t('order_ready_notif_title'), {
                     body: readyMessage,
                     tag: `order-ready-${order._id}`,
-                    icon: "/favicon-32x32.png",
+                    icon: "/notification-icon.png",
                   });
                 }
               })
