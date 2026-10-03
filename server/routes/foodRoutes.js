@@ -13,16 +13,16 @@ const upload = require('../middleware/uploadMiddleware');
 const validate = require('../middleware/validateMiddleware');
 const { createFoodSchema, updateFoodSchema } = require('../validations/food.schema');
 const { cacheMiddleware } = require('../middleware/cacheMiddleware');
-const { requireGeofenceAccess } = require('../middleware/geofenceMiddleware');
+const { requirePinAccess } = require('../middleware/pinAccessMiddleware');
 
 router
   .route('/')
-  .get(attachAdminIfAuthenticated, requireGeofenceAccess, cacheMiddleware(600), getFoods) // Cache for 10 minutes
+  .get(attachAdminIfAuthenticated, requirePinAccess, cacheMiddleware(600), getFoods) // Cache for 10 minutes
   .post(protectAdmin, upload.single('image'), validate(createFoodSchema), createFood);
 
 router
   .route('/:id')
-  .get(attachAdminIfAuthenticated, requireGeofenceAccess, cacheMiddleware(600), getFoodById)
+  .get(attachAdminIfAuthenticated, requirePinAccess, cacheMiddleware(600), getFoodById)
   .put(protectAdmin, upload.single('image'), validate(updateFoodSchema), updateFood)
   .delete(protectAdmin, deleteFood);
 

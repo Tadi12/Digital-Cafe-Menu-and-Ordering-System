@@ -1,5 +1,5 @@
 const CafeSettings = require('../models/CafeSettings');
-const { clearGeofenceConfigCache } = require('../middleware/geofenceMiddleware');
+
 
 const MAX_RADIUS_M = 10000;
 
@@ -65,7 +65,7 @@ const updateSettings = async (req, res) => {
   await settings.save();
 
   // Apply the new fence immediately instead of waiting for the config cache.
-  clearGeofenceConfigCache();
+
 
   res.json({ success: true, data: settings });
 };

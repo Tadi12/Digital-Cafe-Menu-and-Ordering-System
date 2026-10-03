@@ -49,19 +49,9 @@ axiosClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Refresh a stale fix before sending. A failure here is not fatal on its
-    // own: the request goes out without coordinates and the API decides.
-    const cached = getCachedCoordinates();
-    if (!cached) {
-      await ensureFreshCoordinates().catch(() => {});
-    }
-
-    const position = getCachedCoordinates();
-    if (position) {
-      config.headers['x-client-lat'] = String(position.lat);
-      config.headers['x-client-lon'] = String(position.lon);
-      config.headers['x-client-accuracy'] = String(position.accuracy ?? '');
-      config.headers['x-client-geo-at'] = String(position.at);
+    const clientPin = localStorage.getItem('cafe_client_pin');
+    if (clientPin) {
+      config.headers['x-client-pin'] = clientPin;
     }
 
     return config;

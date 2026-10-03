@@ -244,7 +244,7 @@ const MenuPage = () => {
             ? err.response?.data?.message
             : invalidTable
               ? (err.response?.data?.message || err.message || invalidTableMessage)
-              : menuFetchFailedMessage,
+              : (err.response?.data?.message || menuFetchFailedMessage),
         );
       } finally {
         if (!cancelled) setLoading(false);
