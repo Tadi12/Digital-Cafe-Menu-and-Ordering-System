@@ -75,7 +75,14 @@ const NotificationsPanel = ({ notifications, onClear, onClose, onSelect, t }) =>
   </div>
 );
 
-const getNotificationDetails = (order, type, t) => {
+const getNotificationDetails = (order, type, t, extraData) => {
+  if (type === 'waiter_called') {
+    return {
+      title: t('waiter_called_title') || 'Waiter Called',
+      message: t('waiter_called_msg', { tableNumber: extraData?.tableNumber }) || `Table ${extraData?.tableNumber || '?'} is asking for the bill.`,
+    };
+  }
+
   const orderNumber = order?.orderNumber || order?._id?.slice(-6) || '';
   const tableNumber = order?.tableNumberSnapshot;
 
@@ -103,7 +110,7 @@ const getNotificationDetails = (order, type, t) => {
 
 const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   const { admin } = useAuth();
-  const { socket, connected } = useSocket();
+  const { socket, connected, playNotificationSound } = useSocket();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -135,11 +142,11 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   useEffect(() => {
     if (!socket || !connected) return undefined;
 
-    const addNotification = (order, type) => {
-      const details = getNotificationDetails(order, type, t);
+    const addNotification = (order, type, extraData) => {
+      const details = getNotificationDetails(order, type, t, extraData);
       setNotifications((current) => [
         {
-          id: `${order?._id || 'order'}-${type}-${Date.now()}`,
+          id: `${order?._id || 'sys'}-${type}-${Date.now()}`,
           orderId: order?._id,
           ...details,
           createdAt: new Date().toISOString(),
@@ -151,18 +158,25 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
     const handleNewOrder = (order) => addNotification(order, 'new');
     const handleOrderUpdated = (order) => addNotification(order, 'updated');
     const handleOrderCancelled = (order) => addNotification(order, 'cancelled');
+    const handleWaiterCalled = (data) => {
+      console.log("Received waiter_called event:", data);
+      addNotification(null, 'waiter_called', data);
+      if (playNotificationSound) playNotificationSound();
+    };
 
     socket.on('new_order', handleNewOrder);
     socket.on('order_updated', handleOrderUpdated);
     socket.on('order_cancelled', handleOrderCancelled);
+    socket.on('waiter_called', handleWaiterCalled);
     socket.emit('join_admin_room');
 
     return () => {
       socket.off('new_order', handleNewOrder);
       socket.off('order_updated', handleOrderUpdated);
       socket.off('order_cancelled', handleOrderCancelled);
+      socket.off('waiter_called', handleWaiterCalled);
     };
-  }, [socket, connected, t]);
+  }, [socket, connected, t, playNotificationSound]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;

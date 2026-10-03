@@ -46,6 +46,12 @@ const initSocket = (io) => {
       }
     });
 
+    socket.on('call_waiter', (data) => {
+      // data should contain { tableNumber, message }
+      console.log(`[Socket]: ${socket.id} called waiter for table ${data.tableNumber}`);
+      io.to('admin_room').emit('waiter_called', data);
+    });
+
     socket.on('disconnect', () => {
       console.log(`[Socket Disconnected]: ${socket.id}`);
     });
