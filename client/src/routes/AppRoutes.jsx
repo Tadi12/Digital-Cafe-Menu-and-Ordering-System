@@ -9,6 +9,7 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 
 // Customer Pages (eager — primary QR-menu entry, keep first paint fast)
 import MenuPage from "../pages/customer/MenuPage";
+import LandingPage from "../pages/LandingPage";
 import OrderConfirmationPage from "../pages/customer/OrderConfirmationPage";
 import OrderTrackerPage from "../pages/customer/OrderTrackerPage";
 import MyOrdersPage from "../pages/customer/MyOrdersPage";
@@ -47,6 +48,9 @@ const AppRoutes = () => {
       }
     >
       <Routes>
+      {/* Public Landing */}
+      <Route path="/" element={<LandingPage />} />
+
       {/* Customer Routes */}
       <Route element={<CustomerLayout />}>
         <Route path="/menu/table/:tableId" element={<MenuPage />} />

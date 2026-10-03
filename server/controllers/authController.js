@@ -262,7 +262,7 @@ const resetPassword = async (req, res, next) => {
     await admin.save();
     await AdminSession.updateMany({ admin: admin._id, isActive: true }, { isActive: false, revokedAt: new Date() });
 
-    return res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
+    return res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
   } catch (error) {
     next(error);
   }

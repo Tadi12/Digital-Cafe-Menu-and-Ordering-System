@@ -87,7 +87,7 @@
   "delete": "ሰርዝ",
   "create": "ፍጠር",
   "update": "አዘምን",
-  "back_to_sign_in": "ወደ መግቢያ ተመለስ",
+  "back_to_login": "ወደ መግቢያ ተመለስ",
   "try_again": "እንደገና ይሞክሩ",
   "home": "መነሻ",
   "go_back": "ወደ ኋላ ተመለስ",
@@ -473,5 +473,9 @@
   "waiter_dashboard_image_alt": "የአገልግሎት አካባቢ",
   "chef_dashboard_title": "እንኳን ደህና መጡ ወደ ኩሽናዎ",
   "chef_dashboard_desc": "ጣቢዎ ዝግጁ ነዎት። የሚደርሱ ትዕዛዞችን ለማየት ወደ የትዕዛዝ አስተዳደር ሂድ",
-  "chef_dashboard_image_alt": "ኩሽና"
+  "chef_dashboard_image_alt": "ኩሽና",
+  "landing_hero_eyebrow": "እንኳን ደህና መጡ",
+  "landing_hero_title": "ሀብል ካፌ እና ሬስቶራንት",
+  "landing_hero_subtitle": "ጥሩ ምግብ, ከጥሩ መስተንግዶ በከተማው መሀል",
+  "landing_hero_image_alt": "የሀብል ካፌ አበባ አዳራሽ"
 }

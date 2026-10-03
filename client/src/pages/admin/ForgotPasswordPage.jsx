@@ -95,7 +95,7 @@ const ForgotPasswordPage = () => {
           to="/admin/login"
           className="block text-center text-xs font-bold text-cafe-600 hover:text-cafe-900"
         >
-          {t("back_to_sign_in")}
+          {t("back_to_login")}
         </Link>
       </div>
     </div>
