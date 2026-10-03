@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useSocket } from '../hooks/useSocket';
 import { ChefHat, LogOut, Radio } from 'lucide-react';
@@ -7,6 +8,7 @@ import ThemeToggle from '../components/common/ThemeToggle';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
 
 const ChefLayout = () => {
+  const { t } = useTranslation();
   const { logout, admin } = useAuth();
   const { connected } = useSocket();
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ const ChefLayout = () => {
         <div className="flex items-center gap-3 text-cafe-900 dark:text-recipe-text">
           <ChefHat className="w-6 h-6 text-orange-500" />
           <h1 className="font-display text-xl font-bold tracking-tight hidden sm:block">
-            Kitchen Display
+            {t('kitchen_display')}
           </h1>
         </div>
 
@@ -36,7 +38,7 @@ const ChefLayout = () => {
             }`}
           >
             <Radio className={`w-3 h-3 ${connected ? "animate-pulse" : ""}`} />
-            <span className="hidden sm:inline">{connected ? "Live" : "Offline"}</span>
+            <span className="hidden sm:inline">{connected ? t('live_sync') : t('offline')}</span>
           </div>
 
           <ThemeToggle />
@@ -49,7 +51,7 @@ const ChefLayout = () => {
             <button
               onClick={handleLogout}
               className="text-cafe-500 hover:text-red-600 transition-colors dark:text-recipe-muted dark:hover:text-red-400"
-              title="Logout"
+              title={t('logout')}
             >
               <LogOut className="w-5 h-5" />
             </button>

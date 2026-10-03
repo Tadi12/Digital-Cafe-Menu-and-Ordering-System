@@ -18,7 +18,7 @@ const OrderTicket = ({ order, onStatusChange, isUpdating }) => {
           className="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <Flame className="w-5 h-5" />
-          Start Cooking
+          {t('start_preparing')}
         </button>
       );
     }
@@ -30,7 +30,7 @@ const OrderTicket = ({ order, onStatusChange, isUpdating }) => {
           className="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <CheckCircle className="w-5 h-5" />
-          Mark Ready
+          {t('mark_ready')}
         </button>
       );
     }
@@ -42,7 +42,7 @@ const OrderTicket = ({ order, onStatusChange, isUpdating }) => {
       <div className="flex justify-between items-start mb-3 border-b border-cafe-100 dark:border-recipe-divider pb-3">
         <div>
           <span className="text-xs font-bold text-cafe-500 uppercase tracking-widest block mb-1">
-            Table {order.tableNumberSnapshot || '?'}
+            {t('table_number_label', { number: order.tableNumberSnapshot || '?' })}
           </span>
           <span className="font-display font-bold text-lg text-cafe-900 dark:text-recipe-text">
             {order.orderNumber || order._id.slice(-6)}
@@ -58,10 +58,10 @@ const OrderTicket = ({ order, onStatusChange, isUpdating }) => {
           <li key={index} className="flex gap-3 text-sm">
             <span className="font-bold text-cafe-900 dark:text-recipe-text">{item.quantity}x</span>
             <div className="flex-1">
-              <span className="font-semibold text-cafe-800 dark:text-recipe-text">{item.menuItem?.name || 'Unknown Item'}</span>
+              <span className="font-semibold text-cafe-800 dark:text-recipe-text">{item.menuItem?.name || t('unknown_item')}</span>
               {item.notes && (
                 <p className="text-xs text-red-600 dark:text-red-400 mt-0.5 bg-red-50 dark:bg-red-500/10 p-1 rounded font-medium">
-                  Note: {item.notes}
+                  {t('note_label')}: {item.notes}
                 </p>
               )}
             </div>
@@ -145,7 +145,7 @@ const KitchenDisplayPage = () => {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <LoadingSpinner message="Loading Kitchen Display..." />
+        <LoadingSpinner message={t('loading_order_stream')} />
       </div>
     );
   }
@@ -162,7 +162,7 @@ const KitchenDisplayPage = () => {
         <div className="bg-cafe-800 text-white p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2 font-bold">
             <Clock className="w-5 h-5" />
-            <span>New Orders</span>
+            <span>{t('kitchen_col_pending')}</span>
           </div>
           <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-sm">{pendingOrders.length}</span>
         </div>
@@ -171,7 +171,7 @@ const KitchenDisplayPage = () => {
             <OrderTicket key={order._id} order={order} onStatusChange={handleStatusChange} isUpdating={updatingId === order._id} />
           ))}
           {pendingOrders.length === 0 && (
-            <div className="text-center text-cafe-500 py-10 text-sm font-medium">No new orders</div>
+            <div className="text-center text-cafe-500 py-10 text-sm font-medium">{t('kitchen_no_pending')}</div>
           )}
         </div>
       </div>
@@ -181,7 +181,7 @@ const KitchenDisplayPage = () => {
         <div className="bg-blue-600 text-white p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2 font-bold">
             <Flame className="w-5 h-5" />
-            <span>Cooking Now</span>
+            <span>{t('kitchen_col_preparing')}</span>
           </div>
           <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-sm">{preparingOrders.length}</span>
         </div>
@@ -190,7 +190,7 @@ const KitchenDisplayPage = () => {
             <OrderTicket key={order._id} order={order} onStatusChange={handleStatusChange} isUpdating={updatingId === order._id} />
           ))}
           {preparingOrders.length === 0 && (
-            <div className="text-center text-blue-500/70 py-10 text-sm font-medium">No orders cooking</div>
+            <div className="text-center text-blue-500/70 py-10 text-sm font-medium">{t('kitchen_no_preparing')}</div>
           )}
         </div>
       </div>
@@ -200,7 +200,7 @@ const KitchenDisplayPage = () => {
         <div className="bg-emerald-600 text-white p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2 font-bold">
             <CheckCircle className="w-5 h-5" />
-            <span>Ready for Pickup</span>
+            <span>{t('kitchen_col_ready')}</span>
           </div>
           <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-sm">{readyOrders.length}</span>
         </div>
@@ -208,16 +208,16 @@ const KitchenDisplayPage = () => {
           {readyOrders.map(order => (
             <div key={order._id} className="bg-white dark:bg-recipe-card border border-emerald-200 dark:border-emerald-900 rounded-xl p-4">
                <div className="flex justify-between items-center">
-                 <span className="font-bold text-lg text-emerald-700 dark:text-emerald-400">Table {order.tableNumberSnapshot || '?'}</span>
+                 <span className="font-bold text-lg text-emerald-700 dark:text-emerald-400">{t('table_number_label', { number: order.tableNumberSnapshot || '?' })}</span>
                  <span className="text-xs font-mono text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded">
                    {order.orderNumber || order._id.slice(-6)}
                  </span>
                </div>
-               <p className="text-xs mt-2 text-cafe-500">Waiting for waiter to serve...</p>
+               <p className="text-xs mt-2 text-cafe-500">{t('kitchen_waiting_waiter')}</p>
             </div>
           ))}
           {readyOrders.length === 0 && (
-            <div className="text-center text-emerald-500/70 py-10 text-sm font-medium">No ready orders</div>
+            <div className="text-center text-emerald-500/70 py-10 text-sm font-medium">{t('kitchen_no_ready')}</div>
           )}
         </div>
       </div>

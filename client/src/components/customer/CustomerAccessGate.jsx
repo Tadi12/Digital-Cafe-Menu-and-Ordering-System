@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Lock, Loader2, ArrowRight } from 'lucide-react';
 import axiosClient from '../../api/axiosClient';
+import { resolveApiError } from '../../utils/apiError';
 
 const CustomerAccessGate = ({ children }) => {
   const { t } = useTranslation();
@@ -53,10 +54,13 @@ const CustomerAccessGate = ({ children }) => {
         setStatus('granted');
       }
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
+      // A 403 means the code itself was wrong; the API also returns PIN_REQUIRED for
+      // it. Anything else goes through the shared resolver so the guest sees a
+      // translated string rather than the server's English message.
+      if (err.response?.status === 403) {
+        setError(t('invalid_pin'));
       } else {
-        setError(t('error_general') || 'An error occurred. Please try again.');
+        setError(resolveApiError(err, t, 'error_general'));
       }
     } finally {
       setSubmitting(false);
@@ -67,6 +71,9 @@ const CustomerAccessGate = ({ children }) => {
     return (
       <div className="fixed inset-0 bg-cafe-50 dark:bg-recipe-bg z-50 flex flex-col items-center justify-center p-4">
         <Loader2 className="w-10 h-10 text-cafe-600 animate-spin mx-auto" />
+        <p className="mt-4 text-sm font-medium text-cafe-600 dark:text-recipe-muted">
+          {t('checking_menu_access')}
+        </p>
       </div>
     );
   }
@@ -79,10 +86,10 @@ const CustomerAccessGate = ({ children }) => {
             <Lock className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-display font-bold text-cafe-900 mb-2">
-            Enter Cafe PIN
+            {t('cafe_menu_access')}
           </h2>
           <p className="text-cafe-600 mb-8 text-sm">
-            Please enter the access PIN provided by the cafe staff to view the menu.
+            {t('pin_instruction')}
           </p>
           
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -90,7 +97,7 @@ const CustomerAccessGate = ({ children }) => {
               type="text"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
-              placeholder="Enter PIN"
+              placeholder={t('pin_placeholder')}
               className="w-full bg-cafe-50 border border-cafe-200 rounded-xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-gold-500"
               maxLength={10}
               disabled={submitting}
@@ -105,7 +112,7 @@ const CustomerAccessGate = ({ children }) => {
               className="w-full bg-cafe-800 text-white font-bold py-4 rounded-xl hover:bg-cafe-900 transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-              {submitting ? 'Verifying...' : 'Access Menu'}
+              {submitting ? t('verifying') : t('unlock_menu')}
             </button>
           </form>
         </div>

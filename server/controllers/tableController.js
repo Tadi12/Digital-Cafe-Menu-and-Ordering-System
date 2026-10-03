@@ -1,3 +1,4 @@
+const { ERROR_CODES } = require('../utils/errorCodes');
 const Table = require('../models/Table');
 const { generateTableQRCode } = require('../services/qrService');
 
@@ -116,7 +117,7 @@ const updateTable = async (req, res, next) => {
     const table = await Table.findById(req.params.id);
 
     if (!table) {
-      return res.status(404).json({ success: false, message: 'Table not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.TABLE_NOT_FOUND, message: 'Table not found' });
     }
 
     if (tableNumber && Number(tableNumber) !== table.tableNumber) {
@@ -157,7 +158,7 @@ const deleteTable = async (req, res, next) => {
   try {
     const table = await Table.findById(req.params.id);
     if (!table) {
-      return res.status(404).json({ success: false, message: 'Table not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.TABLE_NOT_FOUND, message: 'Table not found' });
     }
 
     await table.deleteOne();
@@ -180,7 +181,7 @@ const getTableQR = async (req, res, next) => {
   try {
     const table = await Table.findById(req.params.id);
     if (!table) {
-      return res.status(404).json({ success: false, message: 'Table not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.TABLE_NOT_FOUND, message: 'Table not found' });
     }
 
     if (!table.qrCodeUrl) {
@@ -288,7 +289,7 @@ const claimTable = async (req, res, next) => {
       const currentTable = (await Table.findById(req.params.id)) || table;
       return res.status(409).json({
         success: false,
-        code: 'TABLE_OCCUPIED',
+        code: ERROR_CODES.TABLE_OCCUPIED,
         message: `Table #${currentTable.tableNumber} is currently in use by another guest. Please wait for them to finish, or scan the QR code at another free table.`,
         data: currentTable.toPublicJSON(),
       });
@@ -375,7 +376,7 @@ const heartbeatTable = async (req, res, next) => {
     if (table.isOccupiedNow()) {
       return res.status(409).json({
         success: false,
-        code: 'TABLE_OCCUPIED',
+        code: ERROR_CODES.TABLE_OCCUPIED,
         message: `Table #${table.tableNumber} is currently in use by another guest. Please wait for them to finish, or scan the QR code at another free table.`,
         data: table.toPublicJSON(),
       });
@@ -383,7 +384,7 @@ const heartbeatTable = async (req, res, next) => {
 
     return res.status(409).json({
       success: false,
-      code: 'TABLE_CLAIM_LOST',
+      code: ERROR_CODES.TABLE_CLAIM_LOST,
       message: `Your hold on Table #${table.tableNumber} expired. Please claim the table again.`,
       data: table.toPublicJSON(),
     });
@@ -461,7 +462,7 @@ const clearTableOccupancy = async (req, res, next) => {
   try {
     const table = await Table.findById(req.params.id);
     if (!table) {
-      return res.status(404).json({ success: false, message: 'Table not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.TABLE_NOT_FOUND, message: 'Table not found' });
     }
 
     if (!table.isOccupiedNow()) {

@@ -1,3 +1,4 @@
+const { ERROR_CODES } = require('../utils/errorCodes');
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const Food = require('../models/Food');
@@ -234,7 +235,7 @@ const getOrderById = async (req, res, next) => {
     const order = await Order.findById(req.params.id).populate('table', 'tableNumber tableName');
 
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.ORDER_NOT_FOUND, message: 'Order not found' });
     }
 
     return res.json({
@@ -260,7 +261,7 @@ const updateOrderStatus = async (req, res, next) => {
     const order = await Order.findById(req.params.id).populate('table', 'tableNumber tableName');
 
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.ORDER_NOT_FOUND, message: 'Order not found' });
     }
 
     const allowedStatuses = ['Pending', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
@@ -296,7 +297,9 @@ const updateOrderStatus = async (req, res, next) => {
       if (!validTransitions[order.status].includes(status)) {
         return res.status(400).json({
           success: false,
-          message: `Invalid transition from ${order.status} to ${status}. Transition flow must be Pending → Preparing → Ready → Completed.`,
+          code: ERROR_CODES.INVALID_STATUS_TRANSITION,
+        code: ERROR_CODES.INVALID_STATUS_TRANSITION,
+        message: `Invalid transition from ${order.status} to ${status}. Transition flow must be Pending → Preparing → Ready → Completed.`,
         });
       }
 
@@ -340,13 +343,14 @@ const cancelOrder = async (req, res, next) => {
     const order = await Order.findById(req.params.id).populate('table', 'tableNumber tableName');
 
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.ORDER_NOT_FOUND, message: 'Order not found' });
     }
 
     // Business Rule: Customers can cancel an order ONLY when the order status is Pending
     if (order.status !== 'Pending') {
       return res.status(400).json({
         success: false,
+        code: ERROR_CODES.ORDER_CANCEL_NOT_ALLOWED,
         message: `Cannot cancel order. Orders can only be cancelled while status is Pending. Current status is ${order.status}.`,
       });
     }

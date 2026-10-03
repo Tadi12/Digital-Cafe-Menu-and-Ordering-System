@@ -6,6 +6,7 @@ import OrderCard from "../../components/admin/OrderCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
 import { Search, Volume2, VolumeX, Bell } from "lucide-react";
+import { resolveApiError } from '../../utils/apiError';
 
 const OrderManagerPage = () => {
   const { t } = useTranslation();
@@ -97,7 +98,7 @@ const OrderManagerPage = () => {
         );
       }
     } catch (err) {
-      setErrorModal({ isOpen: true, message: err.response?.data?.message || t("failed_update_order") });
+      setErrorModal({ isOpen: true, message: resolveApiError(err, t, "failed_update_order") });
     }
   };
 

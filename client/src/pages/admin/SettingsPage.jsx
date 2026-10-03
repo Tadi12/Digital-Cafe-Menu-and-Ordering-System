@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
 import { useTranslation } from 'react-i18next';
+import { resolveApiError } from '../../utils/apiError';
 
 const SettingsPage = () => {
   const { t } = useTranslation();
@@ -37,7 +38,7 @@ const SettingsPage = () => {
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || t('failed_create_staff'));
+      setError(resolveApiError(err, t, 'failed_create_staff'));
     }
   };
 

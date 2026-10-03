@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { updateAdminProfileApi } from '../../api/authApi';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import { resolveApiError } from '../../utils/apiError';
 
 const AdminProfilePage = () => {
   const { admin, refreshAdmin } = useAuth();
@@ -46,7 +47,7 @@ const AdminProfilePage = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || t('update_failed'));
+      toast.error(resolveApiError(err, t, 'update_failed'));
     } finally {
       setLoading(false);
     }

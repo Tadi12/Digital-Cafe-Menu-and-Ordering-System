@@ -1,5 +1,7 @@
+import { resolveApiError } from '../../utils/apiError';
 import React, { useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import { LanguageContext } from "../../context/LanguageContext";
 import {
   getFoodsApi,
@@ -109,7 +111,7 @@ const DrinkManagerPage = () => {
         fetchDrinksAndCategories();
       }
     } catch (err) {
-      alert(err.response?.data?.message || t("failed_save_drink"));
+      toast.error(resolveApiError(err, t, "failed_save_drink"));
     } finally {
       setIsSaving(false);
     }
@@ -126,7 +128,7 @@ const DrinkManagerPage = () => {
         );
       }
     } catch (err) {
-      alert(t("update_failed"));
+      toast.error(resolveApiError(err, t, "update_failed"));
     }
   };
 
@@ -142,7 +144,7 @@ const DrinkManagerPage = () => {
         setFoods((prev) => prev.filter((item) => item._id !== id));
       }
     } catch (err) {
-      alert(t("failed_delete"));
+      toast.error(resolveApiError(err, t, "failed_delete"));
     }
   };
 

@@ -19,9 +19,9 @@ const AdminLayout = () => {
     if (path.includes("/categories")) return t("admin_page_categories");
     if (path.includes("/tables")) return t("admin_page_tables");
     if (path.includes("/analytics")) return t("admin_page_analytics");
-    if (path.includes("/staff")) return "Staff Management";
+    if (path.includes("/staff")) return t("staff_management");
     if (path.includes("/devices")) return t("admin_page_devices");
-    if (path.includes("/settings")) return "Cafe Settings";
+    if (path.includes("/settings")) return t("settings_title");
     if (path.includes("/profile")) return t("profile");
 
     return t("admin_portal");

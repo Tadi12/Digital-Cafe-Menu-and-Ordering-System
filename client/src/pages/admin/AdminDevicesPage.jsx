@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAdminSessionsApi, terminateAdminSessionApi } from '../../api/authApi';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import { useAuth } from '../../hooks/useAuth';
+import { resolveApiError } from '../../utils/apiError';
 
 const formatDate = (value) => new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium', timeStyle: 'short',
@@ -26,7 +27,7 @@ const AdminDevicesPage = () => {
       const response = await getAdminSessionsApi();
       setSessions(response.data || []);
     } catch (error) {
-      toast.error(error.response?.data?.message || t('devices_load_failed'));
+      toast.error(resolveApiError(error, t, 'devices_load_failed'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +52,7 @@ const AdminDevicesPage = () => {
       setSessions((current) => current.filter((item) => item._id !== session._id));
       toast.success(t('device_terminated'));
     } catch (error) {
-      toast.error(error.response?.data?.message || t('device_terminate_failed'));
+      toast.error(resolveApiError(error, t, 'device_terminate_failed'));
     } finally {
       setTerminatingId(null);
     }

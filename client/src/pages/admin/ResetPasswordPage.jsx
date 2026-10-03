@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, CheckCircle2, Lock, ShieldCheck } from "lucide-react";
 import { resetPasswordApi } from "../../api/authApi";
+import { resolveApiError } from '../../utils/apiError';
 
 const ResetPasswordPage = () => {
   const { t } = useTranslation();
@@ -47,7 +48,7 @@ const ResetPasswordPage = () => {
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(err.response?.data?.message || t("reset_password_failed"));
+      setError(resolveApiError(err, t, "reset_password_failed"));
     } finally {
       setLoading(false);
     }

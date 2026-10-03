@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import {
   getTablesApi,
   createTableApi,
@@ -12,6 +13,7 @@ import Modal from '../../components/common/Modal';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Plus, QrCode, Edit2, Trash2, CheckCircle2, XCircle, MapPin, Users, Unlock } from 'lucide-react';
+import { resolveApiError } from '../../utils/apiError';
 
 const TableManagerPage = () => {
   const { t } = useTranslation();
@@ -114,7 +116,7 @@ const TableManagerPage = () => {
         fetchTables();
       }
     } catch (err) {
-      setError(err.response?.data?.message || t('failed_save_table'));
+      setError(resolveApiError(err, t, 'failed_save_table'));
     } finally {
       setSaving(false);
     }
@@ -132,7 +134,7 @@ const TableManagerPage = () => {
         setTables((prev) => prev.filter((t) => t._id !== id));
       }
     } catch (err) {
-      alert(t('failed_delete'));
+      toast.error(resolveApiError(err, t, 'failed_delete'));
     }
   };
 
@@ -145,7 +147,7 @@ const TableManagerPage = () => {
         fetchTables();
       }
     } catch (err) {
-      alert(err.response?.data?.message || t('free_table_failed'));
+      toast.error(resolveApiError(err, t, 'free_table_failed'));
     }
   };
 

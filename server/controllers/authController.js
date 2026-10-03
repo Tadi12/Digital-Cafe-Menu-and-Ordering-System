@@ -1,3 +1,5 @@
+const { ERROR_CODES } = require('../utils/errorCodes');
+
 const Admin = require('../models/Admin');
 const AdminSession = require('../models/AdminSession');
 const mongoose = require('mongoose');
@@ -56,6 +58,7 @@ const loginAdmin = async (req, res, next) => {
     } else {
       return res.status(401).json({
         success: false,
+        code: ERROR_CODES.AUTH_INVALID_CREDENTIALS,
         message: 'Invalid email or password',
       });
     }
@@ -139,7 +142,7 @@ const updateAdminProfile = async (req, res, next) => {
     if (email && email.toLowerCase() !== admin.email) {
       const emailExists = await Admin.findOne({ email: email.toLowerCase() });
       if (emailExists) {
-        return res.status(400).json({ success: false, message: 'Email already in use' });
+        return res.status(400).json({ success: false, code: ERROR_CODES.EMAIL_IN_USE, message: 'Email already in use' });
       }
       admin.email = email.toLowerCase();
     }

@@ -78,8 +78,8 @@ const NotificationsPanel = ({ notifications, onClear, onClose, onSelect, t }) =>
 const getNotificationDetails = (order, type, t, extraData) => {
   if (type === 'waiter_called') {
     return {
-      title: t('waiter_called_title') || 'Waiter Called',
-      message: t('waiter_called_msg', { tableNumber: extraData?.tableNumber }) || `Table ${extraData?.tableNumber || '?'} is asking for the bill.`,
+      title: t('waiter_called_title'),
+      message: t('waiter_called_msg', { tableNumber: extraData?.tableNumber || '?' }),
     };
   }
 

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loginAdminApi, getAdminProfileApi } from '../api/authApi';
+import { resolveApiError } from '../utils/apiError';
 
 export const AuthContext = createContext();
 
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       }
       return { success: false, message: res.message };
     } catch (err) {
-      const msg = err.response?.data?.message || t('login_failed');
+      const msg = resolveApiError(err, t, 'login_failed');
       setError(msg);
       return { success: false, message: msg };
     }

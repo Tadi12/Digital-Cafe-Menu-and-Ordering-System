@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import axiosClient from '../../api/axiosClient';
+import { resolveApiError } from '../../utils/apiError';
 
 const StaffManagerPage = () => {
   const [staff, setStaff] = useState([]);
@@ -39,7 +40,7 @@ const StaffManagerPage = () => {
         fetchStaff();
       }
     } catch (err) {
-      setError(err.response?.data?.message || t('failed_create_staff'));
+      setError(resolveApiError(err, t, 'failed_create_staff'));
     }
   };
 

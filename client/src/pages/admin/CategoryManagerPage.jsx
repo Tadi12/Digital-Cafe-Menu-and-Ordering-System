@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import {
   getCategoriesApi,
   createCategoryApi,
@@ -10,6 +11,7 @@ import CategoryFormModal from "../../components/admin/CategoryFormModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { Plus, Edit2, Trash2, Layers } from "lucide-react";
+import { resolveApiError } from '../../utils/apiError';
 
 const CategoryManagerPage = () => {
   const { t } = useTranslation();
@@ -64,7 +66,7 @@ const CategoryManagerPage = () => {
         fetchCategories();
       }
     } catch (err) {
-      alert(err.response?.data?.message || t("failed_save_category"));
+      toast.error(resolveApiError(err, t, "failed_save_category"));
     } finally {
       setIsSaving(false);
     }
@@ -82,7 +84,7 @@ const CategoryManagerPage = () => {
         setCategories((prev) => prev.filter((c) => c._id !== id));
       }
     } catch (err) {
-      alert(err.response?.data?.message || t("failed_delete"));
+      toast.error(resolveApiError(err, t, "failed_delete"));
     }
   };
 

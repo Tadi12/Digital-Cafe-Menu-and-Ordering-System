@@ -1,3 +1,4 @@
+const { ERROR_CODES } = require('../utils/errorCodes');
 const CafeSettings = require('../models/CafeSettings');
 
 const requirePinAccess = async (req, res, next) => {
@@ -17,7 +18,7 @@ const requirePinAccess = async (req, res, next) => {
       return next();
     }
     
-    return res.status(403).json({ success: false, code: 'PIN_REQUIRED', message: 'Invalid or missing PIN.' });
+    return res.status(403).json({ success: false, code: ERROR_CODES.PIN_REQUIRED, message: 'Invalid or missing PIN.' });
   } catch (error) {
     console.error('[PIN Access] Internal Error:', error);
     return res.status(500).json({ success: false, message: 'Internal server error verifying PIN.' });

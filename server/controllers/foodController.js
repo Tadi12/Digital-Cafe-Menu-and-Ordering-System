@@ -1,4 +1,5 @@
 const { clearCache } = require('../middleware/cacheMiddleware');
+const { ERROR_CODES } = require('../utils/errorCodes');
 const Food = require('../models/Food');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
 
@@ -53,7 +54,7 @@ const getFoodById = async (req, res, next) => {
   try {
     const food = await Food.findById(req.params.id).populate('category', 'name image type');
     if (!food) {
-      return res.status(404).json({ success: false, message: 'Food item not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.FOOD_NOT_FOUND, message: 'Food item not found' });
     }
     return res.json({
       success: true,
@@ -154,7 +155,7 @@ const updateFood = async (req, res, next) => {
     const food = await Food.findById(req.params.id);
 
     if (!food) {
-      return res.status(404).json({ success: false, message: 'Food item not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.FOOD_NOT_FOUND, message: 'Food item not found' });
     }
 
     if (nameEn) food.name.en = nameEn;
@@ -214,7 +215,7 @@ const toggleFoodAvailability = async (req, res, next) => {
   try {
     const food = await Food.findById(req.params.id);
     if (!food) {
-      return res.status(404).json({ success: false, message: 'Food item not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.FOOD_NOT_FOUND, message: 'Food item not found' });
     }
 
     food.available = !food.available;
@@ -239,7 +240,7 @@ const deleteFood = async (req, res, next) => {
   try {
     const food = await Food.findById(req.params.id);
     if (!food) {
-      return res.status(404).json({ success: false, message: 'Food item not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.FOOD_NOT_FOUND, message: 'Food item not found' });
     }
 
     if (food.image.publicId) {

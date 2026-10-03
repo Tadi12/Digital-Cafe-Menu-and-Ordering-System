@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, CheckCircle2, KeyRound, Mail } from "lucide-react";
 import { forgotPasswordApi } from "../../api/authApi";
+import { resolveApiError } from "../../utils/apiError";
 
 const ForgotPasswordPage = () => {
   const { t } = useTranslation();
@@ -21,10 +22,7 @@ const ForgotPasswordPage = () => {
       const response = await forgotPasswordApi(email);
       setMessage(response.message);
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          t("send_reset_failed"),
-      );
+      setError(resolveApiError(err, t, "send_reset_failed"));
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { resolveApiError } from "../../utils/apiError";
 import { getTableByIdApi, claimTableApi } from "../../api/tableApi";
 import { startTableSession } from "../../utils/tableSession";
 import { getCategoriesApi } from "../../api/categoryApi";
@@ -35,6 +36,10 @@ const MenuPage = () => {
   // may receive a new reference during a render and would restart menu loading.
   const invalidTableMessage = t("invalid_table_desc");
   const menuFetchFailedMessage = t("menu_fetch_failed");
+  // Translated up front so the waiting / out-of-service screens never fall
+  // back to the API's English prose.
+  const occupiedTableMessage = t("occupied_table_desc", { number: "?" });
+  const inactiveTableMessage = t("inactive_table_desc", { number: "?" });
   const { socket, joinOrderRoom, playNotificationSound } = useSocket();
   const {
     cartItems,
@@ -167,9 +172,7 @@ const MenuPage = () => {
         } catch (claimErr) {
           if (cancelled) return;
           if (claimErr.response?.status === 409) {
-            const occupiedError = new Error(
-              claimErr.response?.data?.message || "Table is currently in use.",
-            );
+            const occupiedError = new Error(occupiedTableMessage);
             occupiedError.isOccupied = true;
             throw occupiedError;
           }
@@ -190,14 +193,11 @@ const MenuPage = () => {
             if (lostInactive) {
               setTable(lostInactive);
               setErrorKind("inactive-table");
-              setTableError(lostErr.response?.data?.message);
+              setTableError(inactiveTableMessage);
               return;
             }
             setErrorKind("occupied-table");
-            setTableError(
-              lostErr.response?.data?.message ||
-                "Table is currently in use.",
-            );
+            setTableError(occupiedTableMessage);
           },
         });
         validatingTable = false;
@@ -239,12 +239,12 @@ const MenuPage = () => {
         );
         setTableError(
           occupiedTable
-            ? err.response?.data?.message || err.message
+            ? occupiedTableMessage
             : inactiveTable
-            ? err.response?.data?.message
+            ? inactiveTableMessage
             : invalidTable
-              ? (err.response?.data?.message || err.message || invalidTableMessage)
-              : (err.response?.data?.message || menuFetchFailedMessage),
+              ? invalidTableMessage
+              : menuFetchFailedMessage,
         );
       } finally {
         if (!cancelled) setLoading(false);
@@ -262,7 +262,7 @@ const MenuPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [tableId, invalidTableMessage, menuFetchFailedMessage, retryCount, rememberTableId, customerSessionId]);
+  }, [tableId, invalidTableMessage, menuFetchFailedMessage, occupiedTableMessage, inactiveTableMessage, retryCount, rememberTableId, customerSessionId]);
 
   // The overlay tab bar links here with ?cart=1 when Cart is tapped on another
   // page; open the drawer once the table for this QR code is known.
@@ -416,10 +416,7 @@ const MenuPage = () => {
         navigate(`/order-confirmation/${res.data._id}`);
       }
     } catch (err) {
-      toast.error(
-        err.response?.data?.message ||
-          t("failed_submit_order"),
-      );
+      toast.error(resolveApiError(err, t, "failed_submit_order"));
     } finally {
       setIsSubmittingOrder(false);
     }

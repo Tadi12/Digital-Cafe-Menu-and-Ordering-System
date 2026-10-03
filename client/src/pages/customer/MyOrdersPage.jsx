@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import { useCart } from "../../hooks/useCart";
 import { useSocket } from "../../hooks/useSocket";
 import { getCustomerOrdersApi } from "../../api/orderApi";
@@ -30,7 +31,7 @@ const MyOrdersPage = () => {
   const handleAskForBill = () => {
     console.log("Ask for bill clicked. Socket:", socket?.id, "Connected:", connected);
     if (!socket || !connected) {
-      alert("Real-time connection is currently offline. Please try again in a moment.");
+      toast.error(t("realtime_offline_message"));
       return;
     }
     if (orders.length === 0) return;
@@ -195,11 +196,11 @@ const MyOrdersPage = () => {
               ) : (
                 <Receipt className="w-5 h-5 text-gold-400" />
               )}
-              {callingWaiter ? t('calling_waiter', 'Calling Waiter...') : t('ask_for_bill', 'Ask for Bill')}
+              {callingWaiter ? t('calling_waiter') : t('ask_for_bill')}
             </button>
             {callSuccess && (
               <div className="text-center text-sm font-bold text-emerald-600 mt-3 animate-fade-in">
-                {t('waiter_notified', 'The waiter has been notified!')}
+                {t('waiter_notified')}
               </div>
             )}
           </div>

@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useContext, useRef } from "react";
+import { resolveApiError } from '../../utils/apiError';
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -417,7 +418,7 @@ const OrderTrackerPage = () => {
               if (res.success) setOrder(res.data);
             })
             .catch(err => {
-              setErrorMsg(err.response?.data?.message || t("failed_cancel_order"));
+              setErrorMsg(resolveApiError(err, t, "failed_cancel_order"));
             })
             .finally(() => setCancelling(false));
         }}

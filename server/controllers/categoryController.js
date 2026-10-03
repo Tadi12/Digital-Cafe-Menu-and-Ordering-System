@@ -1,4 +1,5 @@
 const { clearCache } = require('../middleware/cacheMiddleware');
+const { ERROR_CODES } = require('../utils/errorCodes');
 const Category = require('../models/Category');
 const Food = require('../models/Food');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
@@ -104,7 +105,7 @@ const updateCategory = async (req, res, next) => {
     const category = await Category.findById(req.params.id);
 
     if (!category) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.CATEGORY_NOT_FOUND, message: 'Category not found' });
     }
 
     if (nameEn) category.name.en = nameEn;
@@ -145,7 +146,7 @@ const deleteCategory = async (req, res, next) => {
     const category = await Category.findById(req.params.id);
 
     if (!category) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
+      return res.status(404).json({ success: false, code: ERROR_CODES.CATEGORY_NOT_FOUND, message: 'Category not found' });
     }
 
     const associatedFoodsCount = await Food.countDocuments({ category: category._id });
