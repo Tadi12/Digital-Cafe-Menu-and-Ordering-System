@@ -7,6 +7,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
 import { Search, Volume2, VolumeX, Bell } from "lucide-react";
 import { resolveApiError } from '../../utils/apiError';
+import { orderStatusLabel } from '../../utils/orderStatus';
 
 const OrderManagerPage = () => {
   const { t } = useTranslation();
@@ -150,7 +151,7 @@ const OrderManagerPage = () => {
                     : "bg-cafe-50 text-cafe-700 hover:bg-cafe-100"
                 }`}
               >
-                <span>{tab}</span>
+                <span>{orderStatusLabel(tab, t)}</span>
                 <span
                   className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                     isSelected

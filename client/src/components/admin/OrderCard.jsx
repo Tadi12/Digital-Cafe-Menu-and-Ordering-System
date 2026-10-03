@@ -5,6 +5,10 @@ import OrderStatusBadge from '../customer/OrderStatusBadge';
 import { formatCurrency } from '../../utils/currencyFormatter';
 import { Clock, User, MapPin, ChefHat, CheckCircle2, Check, Banknote } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import {
+  paymentMethodLabel,
+  paymentStatusLabel,
+} from '../../utils/orderStatus';
 
 const OrderCard = ({ order, onUpdateStatus }) => {
   const { t } = useTranslation();
@@ -68,7 +72,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         <div className="flex items-center justify-between border-t border-cafe-100 pt-2.5">
           <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded">
             <Banknote className="w-3.5 h-3.5" />
-            <span>{order.paymentMethod} ({order.paymentStatus})</span>
+            <span>{paymentMethodLabel(order.paymentMethod, t)} ({paymentStatusLabel(order.paymentStatus, t)})</span>
           </div>
           <div className="text-right">
             <span className="text-[10px] text-cafe-500 block uppercase font-bold">{t('total')}</span>
@@ -92,7 +96,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             </button>
           ) : (
             <div className="text-center py-1 text-xs font-bold text-gray-500">
-              Waiting for Kitchen
+              {t('waiting_for_kitchen')}
             </div>
           )
         )}
@@ -108,7 +112,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             </button>
           ) : (
             <div className="text-center py-1 text-xs font-bold text-gray-500">
-              Cooking...
+              {t('cooking_in_progress')}
             </div>
           )
         )}
@@ -124,7 +128,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             </button>
           ) : (
             <div className="text-center py-1 text-xs font-bold text-gray-500">
-              Waiting for Waiter
+              {t('waiting_for_waiter')}
             </div>
           )
         )}

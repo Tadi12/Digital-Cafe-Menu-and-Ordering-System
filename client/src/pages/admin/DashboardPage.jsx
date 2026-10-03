@@ -7,6 +7,7 @@ import MetricCard from '../../components/admin/MetricCard';
 import OrderStatusBadge from '../../components/customer/OrderStatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { formatCurrency } from '../../utils/currencyFormatter';
+import { orderStatusLabel } from '../../utils/orderStatus';
 
 import {
   BarChart,
@@ -31,41 +32,45 @@ import {
 } from 'lucide-react';
 
 const DashboardPage = () => {
+  // Every hook must run before any early return. This staff shortcut used to sit
+  // above useTranslation/useState/useEffect, which broke the rules of hooks and
+  // left the whole staff dashboard stuck in English.
+  const { t } = useTranslation();
+  const { currentLang } = useContext(LanguageContext);
   const { admin } = useAuth();
-  if (admin?.role === 'chef' || admin?.role === 'waiter') {
-    const isChef = admin.role === 'chef';
+
+  const [metrics, setMetrics] = useState(null);
+  const [revenueData, setRevenueData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const isChef = admin?.role === 'chef';
+  const isWaiter = admin?.role === 'waiter';
+  const isStaff = isChef || isWaiter;
+
+  if (isStaff) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
         <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-cafe-200 overflow-hidden">
-          <img 
-            src={isChef 
-              ? "/kitchen-dashboard.jpg" 
-              : "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800"} 
-            alt={isChef ? "Kitchen" : "Service Floor"} 
-            className="w-full h-72 object-cover bg-cafe-100" 
+          <img
+            src={isChef
+              ? "/kitchen-dashboard.jpg"
+              : "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800"}
+            alt={isChef ? t('chef_dashboard_image_alt') : t('waiter_dashboard_image_alt')}
+            className="w-full h-72 object-cover bg-cafe-100"
             fetchPriority="high"
           />
           <div className="p-8 text-center">
             <h1 className="text-3xl font-display font-bold text-cafe-900 mb-2">
-              {isChef ? "Welcome to the Kitchen" : "Service Dashboard"}
+              {isChef ? t('chef_dashboard_title') : t('waiter_dashboard_title')}
             </h1>
             <p className="text-cafe-600 mb-6">
-              {isChef 
-                ? "Your station is ready. Head over to the Order Management tab to see incoming tickets." 
-                : "Your station is ready. Head over to the Order Management tab to serve ready tickets."}
+              {isChef ? t('chef_dashboard_desc') : t('waiter_dashboard_desc')}
             </p>
           </div>
         </div>
       </div>
     );
   }
-
-  const { t } = useTranslation();
-  const { currentLang } = useContext(LanguageContext);
-
-  const [metrics, setMetrics] = useState(null);
-  const [revenueData, setRevenueData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,8 +89,9 @@ const DashboardPage = () => {
       }
     };
 
+    if (isStaff) { setLoading(false); return; }
     fetchData();
-  }, []);
+  }, [isStaff]);
 
   if (loading) {
     return <LoadingSpinner message={t("loading_dashboard")} />;
@@ -193,7 +199,7 @@ const DashboardPage = () => {
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }}
                 />
-                <span>{item.name}: {item.value}</span>
+                <span>{orderStatusLabel(item.name, t)}: {item.value}</span>
               </div>
             ))}
           </div>
@@ -227,7 +233,7 @@ const DashboardPage = () => {
                   <tr key={ord._id} className="hover:bg-cafe-50/50 transition-colors">
                     <td className="p-3 font-bold">{ord.orderNumber}</td>
                     <td className="p-3">{ord.customerName}</td>
-                    <td className="p-3 font-bold">Table #{ord.tableNumberSnapshot}</td>
+                    <td className="p-3 font-bold">{t('table_number_label', { number: ord.tableNumberSnapshot })}</td>
                     <td className="p-3 font-extrabold">
                       {formatCurrency(ord.totalAmount, currentLang)}
                     </td>

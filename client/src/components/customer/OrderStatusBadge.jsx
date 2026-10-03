@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Clock, ChefHat, CheckCircle2, Check, XCircle } from 'lucide-react';
+import { orderStatusLabel } from '../../utils/orderStatus';
 
 const OrderStatusBadge = ({ status, className = '' }) => {
   const { t } = useTranslation();
@@ -39,7 +40,7 @@ const OrderStatusBadge = ({ status, className = '' }) => {
         };
       default:
         return {
-          label: status,
+          label: orderStatusLabel(status, t),
           bg: 'bg-gray-100 text-gray-700 border-gray-200',
           icon: Clock,
         };

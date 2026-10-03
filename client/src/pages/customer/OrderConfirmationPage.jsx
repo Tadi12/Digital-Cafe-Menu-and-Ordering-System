@@ -7,6 +7,7 @@ import Header from '../../components/common/Header';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import OrderStatusBadge from '../../components/customer/OrderStatusBadge';
 import { formatCurrency } from '../../utils/currencyFormatter';
+import { paymentMethodLabel } from '../../utils/orderStatus';
 import { CheckCircle2, MapPin, User, Banknote, ArrowRight, RefreshCw } from 'lucide-react';
 
 const OrderConfirmationPage = () => {
@@ -123,7 +124,7 @@ const OrderConfirmationPage = () => {
           <div className="pt-3 border-t border-cafe-200 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1 rounded-lg">
               <Banknote className="w-4 h-4" />
-              <span>{order.paymentMethod} {order.paymentMethod === 'Cash' && `(${t('cash_on_table')})`}</span>
+              <span>{paymentMethodLabel(order.paymentMethod, t)} {order.paymentMethod === 'Cash' && `(${t('cash_on_table')})`}</span>
             </div>
             <div className="text-right">
               <span className="text-[10px] text-cafe-400 block font-bold">{t('total')}</span>
@@ -147,8 +148,8 @@ const OrderConfirmationPage = () => {
         {/* Payment Status Check */}
         {order.paymentMethod !== 'Cash' && order.paymentStatus === 'Unpaid' && (
           <div className="bg-red-50 rounded-2xl p-5 border border-red-200 text-center space-y-2">
-            <h3 className="font-bold text-red-900">Payment Pending</h3>
-            <p className="text-xs text-red-700">This order is marked as unpaid. Please contact the cashier.</p>
+            <h3 className="font-bold text-red-900">{t('payment_pending_title')}</h3>
+            <p className="text-xs text-red-700">{t('payment_pending_desc')}</p>
           </div>
         )}
       </div>

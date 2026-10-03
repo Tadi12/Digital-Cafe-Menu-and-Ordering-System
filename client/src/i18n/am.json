@@ -457,5 +457,21 @@
   "api_code_food_not_found": "ያን እቃ አልተገኘም። መደበኛው ተሰርዟል ሊሆን ይችላል።",
   "api_code_category_not_found": "ያምድቡ አልተገኘም።",
   "api_code_order_not_found": "ያትዕዛዙ አልተገኘም።",
-  "api_code_invalid_transition": "ይህ የሁኔታ ለውጥ ለዚህ ትዕዛዝ አይፈቀድም።"
+  "api_code_invalid_transition": "ይህ የሁኔታ ለውጥ ለዚህ ትዕዛዝ አይፈቀድም።",
+  "status_all": "ሁሉም",
+  "status_unknown": "ያልታወቀ",
+  "payment_paid": "ተከፍሏል",
+  "payment_unpaid": "አልተከፍለም",
+  "payment_method_cash": "ጥሬ ገንዘብ",
+  "payment_pending_title": "የክፍያ ክብር በመጠባበቅ ላይ",
+  "payment_pending_desc": "ይህ ትዕዛዝ ያልተከፈለ ተብሎ ይቆጠራል። እባክዎ ካሽከርኑ ያግኙ።",
+  "waiting_for_kitchen": "ኩሽናውን በመጠባበቅ ላይ",
+  "cooking_in_progress": "በመፈጸም ላይ...",
+  "waiting_for_waiter": "አስተናጋጅን በመጠባበቅ ላይ",
+  "waiter_dashboard_title": "የአገልግሎት ዳሽቦርድ",
+  "waiter_dashboard_desc": "ጣቢዎ ዝግጁ ነዎት። ዝግጁ የሆኑ ትዕዛዞችን ለማገልገል ወደ የትዕዛዝ አስተዳደር ሂድ",
+  "waiter_dashboard_image_alt": "የአገልግሎት አካባቢ",
+  "chef_dashboard_title": "እንኳን ደህና መጡ ወደ ኩሽናዎ",
+  "chef_dashboard_desc": "ጣቢዎ ዝግጁ ነዎት። የሚደርሱ ትዕዛዞችን ለማየት ወደ የትዕዛዝ አስተዳደር ሂድ",
+  "chef_dashboard_image_alt": "ኩሽና"
 }

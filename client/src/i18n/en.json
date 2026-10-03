@@ -457,5 +457,21 @@
   "api_code_food_not_found": "That item could not be found. It may have been deleted.",
   "api_code_category_not_found": "That category could not be found.",
   "api_code_order_not_found": "That order could not be found.",
-  "api_code_invalid_transition": "That status change is not allowed for this order."
+  "api_code_invalid_transition": "That status change is not allowed for this order.",
+  "status_all": "All",
+  "status_unknown": "Unknown",
+  "payment_paid": "Paid",
+  "payment_unpaid": "Unpaid",
+  "payment_method_cash": "Cash",
+  "payment_pending_title": "Payment Pending",
+  "payment_pending_desc": "This order is marked as unpaid. Please contact the cashier.",
+  "waiting_for_kitchen": "Waiting for Kitchen",
+  "cooking_in_progress": "Cooking...",
+  "waiting_for_waiter": "Waiting for Waiter",
+  "waiter_dashboard_title": "Service Dashboard",
+  "waiter_dashboard_desc": "Your station is ready. Head over to the Order Management tab to serve ready tickets.",
+  "waiter_dashboard_image_alt": "Service Floor",
+  "chef_dashboard_title": "Welcome to the Kitchen",
+  "chef_dashboard_desc": "Your station is ready. Head over to the Order Management tab to see incoming tickets.",
+  "chef_dashboard_image_alt": "Kitchen"
 }
