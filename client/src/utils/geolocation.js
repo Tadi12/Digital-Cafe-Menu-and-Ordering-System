@@ -13,7 +13,7 @@ const FRESH_FOR_MS = 60 * 1000;
 
 const POSITION_OPTIONS = {
   enableHighAccuracy: true,
-  timeout: 10000,
+  timeout: 20000,
   maximumAge: 30000,
 };
 
@@ -114,7 +114,7 @@ export const requestCurrentPosition = () => {
             : error?.code === 3
               ? 'timeout'
               : 'unavailable';
-        resolve({ ok: false, reason });
+        resolve({ ok: false, reason, details: error?.message, code: error?.code });
       },
       POSITION_OPTIONS,
     );

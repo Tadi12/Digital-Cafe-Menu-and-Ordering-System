@@ -18,6 +18,7 @@ const CustomerAccessGate = ({ children }) => {
   const { t } = useTranslation();
   const [status, setStatus] = useState('checking');
   const [reason, setReason] = useState(null);
+  const [details, setDetails] = useState(null);
 
   const checkLocation = useCallback(async () => {
     setStatus('checking');
@@ -31,6 +32,7 @@ const CustomerAccessGate = ({ children }) => {
 
     setStatus('denied');
     setReason(result.reason);
+    setDetails(result.details ? `${result.code}: ${result.details}` : null);
   }, []);
 
   useEffect(() => {
@@ -70,6 +72,11 @@ const CustomerAccessGate = ({ children }) => {
           <p className="text-cafe-600 mb-8 text-sm">
             {t(REASON_TO_MESSAGE_KEY[reason] || 'geofence_outside_message')}
           </p>
+          {details && (
+            <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl mb-6 text-left break-words">
+              <strong>Raw Error:</strong> {details}
+            </div>
+          )}
 
           <button
             type="button"
