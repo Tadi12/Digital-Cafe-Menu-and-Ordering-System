@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCachedCoordinates, ensureFreshCoordinates } from '../utils/geolocation';
 
 const API_BASE_URL = import.meta.env.DEV
   ? '/api'
@@ -39,19 +40,28 @@ axiosClient.interceptors.response.use(
   }
 );
 
-// Interceptor to attach Authorization Bearer token and GPS coordinates
+// Interceptor to attach the Authorization Bearer token and the customer's
+// current position, which the server's geofence middleware checks.
 axiosClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const token = localStorage.getItem('cafe_admin_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    const lat = localStorage.getItem('cafe_client_lat');
-    const lon = localStorage.getItem('cafe_client_lon');
-    if (lat && lon) {
-      config.headers['x-client-lat'] = lat;
-      config.headers['x-client-lon'] = lon;
+    // Refresh a stale fix before sending. A failure here is not fatal on its
+    // own: the request goes out without coordinates and the API decides.
+    const cached = getCachedCoordinates();
+    if (!cached) {
+      await ensureFreshCoordinates().catch(() => {});
+    }
+
+    const position = getCachedCoordinates();
+    if (position) {
+      config.headers['x-client-lat'] = String(position.lat);
+      config.headers['x-client-lon'] = String(position.lon);
+      config.headers['x-client-accuracy'] = String(position.accuracy ?? '');
+      config.headers['x-client-geo-at'] = String(position.at);
     }
 
     return config;

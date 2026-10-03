@@ -10,7 +10,6 @@ const tableRoutes = require('./routes/tableRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
-const { requireCafeWifi } = require('./middleware/cafeWifiMiddleware');
 const globalRateLimiter = require('./middleware/globalRateLimiter');
 
 const app = express();

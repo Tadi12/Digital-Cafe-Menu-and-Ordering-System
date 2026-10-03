@@ -410,5 +410,21 @@
   "table_free": "Free",
   "free_table_action": "Free table",
   "free_table_confirm": "Free up Table {{number}}? The next guest will be able to scan its QR code immediately.",
-  "free_table_failed": "Could not free the table. Please try again."
+  "free_table_failed": "Could not free the table. Please try again.",
+  "geofence_checking": "Checking your location...",
+  "geofence_outside_title": "Cafe Menu Access",
+  "geofence_outside_message": "Please open the menu while you are inside the cafe.",
+  "geofence_denied": "Location access is blocked. Allow it in your browser settings, then try again.",
+  "geofence_unavailable": "We could not determine your location. Make sure location services are enabled and try again.",
+  "geofence_insecure": "The menu needs a secure (https) connection to verify your location.",
+  "geofence_unsupported": "This browser cannot share your location, so the menu cannot be opened.",
+  "geofence_retry": "Try again",
+  "geofence_settings_title": "Menu Geofence",
+  "geofence_settings_description": "Customers can only view the menu and order while their device is inside this area.",
+  "geofence_enabled_label": "Restrict the menu to the cafe area",
+  "geofence_lat_label": "Cafe latitude",
+  "geofence_lon_label": "Cafe longitude",
+  "geofence_radius_label": "Allowed radius (meters)",
+  "geofence_settings_saved": "Geofence updated successfully!",
+  "geofence_radius_hint": "Keep this generous (150-250m) so customers with weaker GPS signals are not blocked."
 }
