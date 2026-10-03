@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ allowedRoles = [] }) => {
   const { t } = useTranslation();
   const { admin, loading } = useAuth();
   const hasToken = Boolean(localStorage.getItem('cafe_admin_token'));
@@ -19,6 +19,14 @@ const ProtectedRoute = () => {
 
   if (!admin) {
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // Check role-based access if allowedRoles is provided
+  if (allowedRoles.length > 0 && !allowedRoles.includes(admin.role)) {
+    // If they don't have access, redirect them to a safe default page based on their role
+    if (admin.role === 'chef') return <Navigate to="/chef/orders" replace />;
+    if (admin.role === 'waiter') return <Navigate to="/waiter/dashboard" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <Outlet />;

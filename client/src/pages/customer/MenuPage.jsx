@@ -352,16 +352,16 @@ const MenuPage = () => {
 
       if ("Notification" in window) {
         if (Notification.permission === "granted") {
-          new Notification("Your order is ready", {
-            body: `Order ${updatedOrder.orderNumber} is ready for pickup.`,
+          new Notification(t('order_ready_notif_title'), {
+            body: t('order_ready_notif_body', { number: updatedOrder.orderNumber }),
             tag: `menu-ready-${updatedOrder._id}`,
             icon: "/notification-icon.png",
           });
         } else if (Notification.permission === "default") {
           Notification.requestPermission().then((permission) => {
             if (permission === "granted") {
-              new Notification("Your order is ready", {
-                body: `Order ${updatedOrder.orderNumber} is ready for pickup.`,
+              new Notification(t('order_ready_notif_title'), {
+                body: t('order_ready_notif_body', { number: updatedOrder.orderNumber }),
                 tag: `menu-ready-${updatedOrder._id}`,
                 icon: "/notification-icon.png",
               });
@@ -488,33 +488,37 @@ const MenuPage = () => {
 
         <div className="relative min-h-screen w-full max-w-md border-x border-cafe-200 bg-cafe-50 pb-28 shadow-xl dark:border-recipe-border dark:bg-recipe-bg">
           {readyToastVisible && readyToastOrder && (
-            <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-cafe-200 bg-cafe-900 px-4 py-3 text-sm font-bold text-white shadow-xl ring-4 ring-amber-200/40 dark:border-recipe-border dark:bg-recipe-card dark:ring-recipe-orange/30">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-cafe-900 dark:bg-recipe-orange dark:text-[#17181c]">
-                    ✓
-                  </span>
-                  <span className="tracking-[0.12em] uppercase text-[10px] text-amber-200">
-                    {t('ready')}
-                  </span>
+            <div className="fixed inset-x-4 top-24 z-50 mx-auto max-w-sm rounded-2xl border border-emerald-200 bg-white p-4 shadow-2xl ring-4 ring-emerald-500/10 dark:border-recipe-border dark:bg-recipe-card dark:ring-emerald-500/5 animate-in slide-in-from-top-4 fade-in duration-300">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={dismissReadyToast}
-                    aria-label={t('close_notification')}
-                    className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs text-cafe-100 transition hover:bg-white/20"
-                  >
-                    ×
-                  </button>
+                <div className="flex-1">
+                  <h3 className="text-sm font-extrabold text-emerald-800 dark:text-emerald-400">
+                    {t('order_ready_notif_title')}!
+                  </h3>
+                  <p className="mt-1 text-xs font-medium text-cafe-600 dark:text-cafe-400 leading-relaxed">
+                    {t('order_ready_bring_here')}
+                  </p>
+                  <div className="mt-3 inline-block rounded-lg bg-cafe-50 px-3 py-1.5 border border-cafe-100 dark:bg-white/5 dark:border-white/10">
+                    <p className="text-xs font-bold text-cafe-800 dark:text-cafe-200">
+                      Order <span className="text-cafe-900 dark:text-white font-black">{readyToastOrder.orderNumber}</span>
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={dismissReadyToast}
+                  aria-label={t('close_notification')}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cafe-50 text-cafe-400 hover:bg-cafe-100 hover:text-cafe-700 transition-colors dark:bg-white/5 dark:hover:bg-white/10 dark:text-cafe-400 dark:hover:text-white"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <p className="mt-2 text-base text-white">
-                {readyToastOrder.orderNumber}
-              </p>
-              <p className="mt-1 text-xs text-cafe-200">
-                {t('order_ready_bring_here')}
-              </p>
             </div>
           )}
 

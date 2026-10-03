@@ -30,6 +30,10 @@ const AdminDevicesPage = lazy(() => import("../pages/admin/AdminDevicesPage"));
 const StaffManagerPage = lazy(() => import("../pages/admin/StaffManagerPage"));
 const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
 
+// Chef Pages
+import ChefLayout from "../layouts/ChefLayout";
+const KitchenDisplayPage = lazy(() => import("../pages/chef/KitchenDisplayPage"));
+
 import StatusErrorPage from "../pages/errors/StatusErrorPage";
 // Profile route will be added inside admin routes below
 
@@ -55,13 +59,32 @@ const AppRoutes = () => {
         <Route path="/favorites" element={<FavoritesPage />} />
       </Route>
 
-      {/* Admin Auth Route */}
+      {/* Auth Routes */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/admin/reset-password/:token" element={<ResetPasswordPage />} />
 
+      {/* Protected Chef Routes */}
+      <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'chef']} />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/chef" element={<Navigate to="/chef/orders" replace />} />
+          <Route path="/chef/orders" element={<OrderManagerPage />} />
+          <Route path="/chef/profile" element={<AdminProfilePage />} />
+        </Route>
+      </Route>
+
+      {/* Protected Waiter Routes */}
+      <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'waiter']} />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/waiter" element={<Navigate to="/waiter/dashboard" replace />} />
+          <Route path="/waiter/dashboard" element={<DashboardPage />} />
+          <Route path="/waiter/orders" element={<OrderManagerPage />} />
+          <Route path="/waiter/profile" element={<AdminProfilePage />} />
+        </Route>
+      </Route>
+
       {/* Protected Admin Routes */}
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin']} />}>
         <Route element={<AdminLayout />}>
           <Route
             path="/admin"

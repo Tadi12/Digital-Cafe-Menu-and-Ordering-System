@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -217,19 +217,19 @@
   color: #17181c !important;
 }
 
-/* ══ Label input ═══════════════════════════════════════════
+/* â•â• Label input â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    components/common/LabelInput.jsx.
 
-   ── WHY THIS BLOCK IS UNLAYERED ──────────────────────────
+   â”€â”€ WHY THIS BLOCK IS UNLAYERED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    `@layer base` above force-sets `background-color` and `color`
    on every input/select/textarea. Tailwind compiles @layer into
    a real CSS cascade layer, and an UNLAYERED rule outranks a
    layered one regardless of specificity. This field is outline
-   only — it has to keep `background: transparent` — so it has to
+   only â€” it has to keep `background: transparent` â€” so it has to
    live out here, unlayered. This also matches the convention
    already used by the override rules in this file.
 
-   ── THE TOKENS ───────────────────────────────────────────
+   â”€â”€ THE TOKENS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Bencho reads six custom properties that its own design system
    defines. This project has none of them: it is Tailwind, with
    its palette in tailwind.config.js and no CSS-variable layer at
@@ -246,7 +246,7 @@
              so the field tracks every other piece of text.
 
    --ink-3   The mid tone = `text-cafe-600` (#8B5A2B / #a8adb6).
-             Bencho uses it for the LIFTED label — readable, but
+             Bencho uses it for the LIFTED label â€” readable, but
              not yet the final word.
 
    --ink-4   The faint tone, for the label while it is still
@@ -256,10 +256,10 @@
              WCAG AA, whereas cafe-500 gives 5.0:1.
 
    --ink-rgb That same ink as three bare numbers, because the ring
-             builds rgba() from it (#2C1A1D → 44, 26, 29).
+             builds rgba() from it (#2C1A1D â†’ 44, 26, 29).
 
    --fill-on THE INTERESTING ONE. In Bencho, "fill-on" is the
-             foreground that sits ON a filled surface — and note
+             foreground that sits ON a filled surface â€” and note
              it gates the typed text UNCONDITIONALLY (`.lbi-field`),
              not only on focus. The tempting mapping is this
              project's own filled-action foreground, white on
@@ -267,7 +267,7 @@
              this field never gains a fill (it is transparent by
              design) so it sits directly on the white card, and
              white-on-white is unreadable. The honest mapping is
-             therefore the strong ink on that card — the same value
+             therefore the strong ink on that card â€” the same value
              as --ink. They coincide here precisely BECAUSE the
              control has no fill of its own. If this field ever
              grows one, this token is the line to change.
@@ -291,7 +291,7 @@
   padding-top: 10px;
 }
 
-/* the same six on the dark bridge — the identical ladder, taken
+/* the same six on the dark bridge â€” the identical ladder, taken
    from the .dark .text-cafe-* remaps above. */
 .dark .lbi {
   --ink: #f5f5f7;
@@ -308,7 +308,7 @@
   cursor: text;
 }
 
-/* ── the outline ────────────────────────────────────────────
+/* â”€â”€ the outline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Always whole. At rest a hairline of grey; focused, the ink
    at a hair heavier; left filled, a grey a step darker than
    rest. The gap across the top is the only part that moves. */
@@ -348,9 +348,9 @@
 
 .lbi[data-up="true"] .lbi-gap { stroke-dashoffset: -1; }
 
-/* ── the label ──────────────────────────────────────────────
+/* â”€â”€ the label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Its placeholder self in the middle of the field, and its
-   lifted self centred on the top edge — the second is the
+   lifted self centred on the top edge â€” the second is the
    first moved up by half the field and scaled from its left. */
 .lbi-label {
   position: absolute;
@@ -408,8 +408,8 @@
 .lbi-field:-webkit-autofill,
 .lbi-field:-webkit-autofill:hover,
 .lbi-field:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--fill-on, var(--ink));
-  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  -webkit-text-fill-color: var(--fill-on, var(--ink)) !important;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
   caret-color: var(--fill-on, var(--ink));
   transition: background-color 5000s ease-in-out 0s;
 }
@@ -475,4 +475,5 @@
 @keyframes lbi-flip-a { from { filter: blur(3px); opacity: 0.5; } }
 
 @keyframes lbi-flip-b { from { filter: blur(3px); opacity: 0.5; } }
+
 

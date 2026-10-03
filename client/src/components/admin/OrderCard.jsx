@@ -4,10 +4,13 @@ import { LanguageContext } from '../../context/LanguageContext';
 import OrderStatusBadge from '../customer/OrderStatusBadge';
 import { formatCurrency } from '../../utils/currencyFormatter';
 import { Clock, User, MapPin, ChefHat, CheckCircle2, Check, Banknote } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 const OrderCard = ({ order, onUpdateStatus }) => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
+  const { admin } = useAuth();
+  const role = admin?.role || 'waiter';
 
   const formattedTime = new Date(order.createdAt).toLocaleTimeString([], {
     hour: '2-digit',
@@ -79,33 +82,51 @@ const OrderCard = ({ order, onUpdateStatus }) => {
       {/* Action Footer Button based on Status */}
       <div className="p-3 bg-cafe-50 border-t border-cafe-100">
         {order.status === 'Pending' && (
-          <button
-            onClick={() => onUpdateStatus(order._id, 'Preparing')}
-            className="w-full bg-gold-500 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
-          >
-            <ChefHat className="w-4 h-4" />
-            <span>{t('start_preparing')}</span>
-          </button>
+          (role === 'admin' || role === 'super_admin' || role === 'chef') ? (
+            <button
+              onClick={() => onUpdateStatus(order._id, 'Preparing')}
+              className="w-full bg-gold-500 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <ChefHat className="w-4 h-4" />
+              <span>{t('start_preparing')}</span>
+            </button>
+          ) : (
+            <div className="text-center py-1 text-xs font-bold text-gray-500">
+              Waiting for Kitchen
+            </div>
+          )
         )}
 
         {order.status === 'Preparing' && (
-          <button
-            onClick={() => onUpdateStatus(order._id, 'Ready')}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>{t('mark_ready')}</span>
-          </button>
+          (role === 'admin' || role === 'super_admin' || role === 'chef') ? (
+            <button
+              onClick={() => onUpdateStatus(order._id, 'Ready')}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{t('mark_ready')}</span>
+            </button>
+          ) : (
+            <div className="text-center py-1 text-xs font-bold text-gray-500">
+              Cooking...
+            </div>
+          )
         )}
 
         {order.status === 'Ready' && (
-          <button
-            onClick={() => onUpdateStatus(order._id, 'Completed')}
-            className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
-          >
-            <Check className="w-4 h-4" />
-            <span>{t('complete_order')}</span>
-          </button>
+          (role === 'admin' || role === 'super_admin' || role === 'waiter') ? (
+            <button
+              onClick={() => onUpdateStatus(order._id, 'Completed')}
+              className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Check className="w-4 h-4" />
+              <span>{t('complete_order')}</span>
+            </button>
+          ) : (
+            <div className="text-center py-1 text-xs font-bold text-gray-500">
+              Waiting for Waiter
+            </div>
+          )
         )}
 
         {order.status === 'Completed' && (

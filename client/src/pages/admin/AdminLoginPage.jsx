@@ -32,13 +32,13 @@ const AdminLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cafe-900 flex flex-col justify-center items-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-cafe-900 dark:bg-cafe-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
       {/* Top right language switcher */}
       <div className="absolute top-4 right-4 z-10">
         <LanguageSwitcher />
       </div>
 
-      <div className="w-full max-w-sm bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative border border-cafe-700">
+      <div className="w-full max-w-sm bg-white dark:bg-cafe-900 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative border border-cafe-700 dark:border-cafe-800">
         {/* Header */}
         <div className="text-center space-y-2">
           <img
@@ -46,16 +46,16 @@ const AdminLoginPage = () => {
             alt={t('app_name')}
             className="mx-auto h-14 w-14 rounded-full object-cover shadow-md"
           />
-          <h1 className="font-display text-xl font-black text-cafe-900 tracking-tight">
+          <h1 className="font-display text-xl font-black text-cafe-900 dark:text-white tracking-tight">
             {t('admin_login_title')}
           </h1>
-          <p className="text-xs text-cafe-500 font-medium">
+          <p className="text-xs text-cafe-500 dark:text-cafe-400 font-medium">
             {t('admin_work')}
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl font-medium text-center border border-red-200">
+          <div className="p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded-xl font-medium text-center border border-red-200 dark:border-red-800/30">
             {errorMsg}
           </div>
         )}
@@ -85,7 +85,7 @@ const AdminLoginPage = () => {
             required
           />
           <div className="text-right -mt-1">
-            <Link to="/admin/forgot-password" className="text-xs font-bold text-cafe-600 hover:text-cafe-900">
+            <Link to="/admin/forgot-password" className="text-xs font-bold text-cafe-600 dark:text-cafe-400 hover:text-cafe-900 dark:hover:text-white transition-colors">
               {t('forgot_password')}
             </Link>
           </div>
@@ -93,7 +93,7 @@ const AdminLoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-cafe-800 dark:bg-cafe-700 hover:bg-cafe-900 dark:hover:bg-cafe-600 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

@@ -22,10 +22,14 @@ const AdminSidebar = ({ isOpen, onClose }) => {
   const { logout, admin } = useAuth();
   const role = admin?.role || 'waiter'; // fallback to waiter if undefined
 
+  let basePath = "/admin";
+  if (role === "chef") basePath = "/chef";
+  if (role === "waiter") basePath = "/waiter";
+
   const allNavItems = [
-    { path: "/admin/dashboard", label: t("dashboard"), icon: LayoutDashboard, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
+    { path: `${basePath}/dashboard`, label: t("dashboard"), icon: LayoutDashboard, roles: ['super_admin', 'admin', 'waiter'] },
     {
-      path: "/admin/orders",
+      path: `${basePath}/orders`,
       label: t("order_management"),
       icon: ClipboardList,
       roles: ['super_admin', 'admin', 'chef', 'waiter'],
@@ -45,7 +49,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     },
     { path: "/admin/tables", label: t("table_management"), icon: QrCode, roles: ['super_admin', 'admin'] },
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3, roles: ['super_admin', 'admin'] },
-    { path: "/admin/profile", label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
+    { path: `${basePath}/profile`, label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
     { path: "/admin/staff", label: "Staff Management", icon: User, roles: ['super_admin', 'admin'] },
     { path: "/admin/settings", label: "Cafe Settings", icon: Settings, roles: ['super_admin', 'admin'] },
     { path: "/admin/devices", label: t("admin_page_devices"), icon: MonitorSmartphone, roles: ['super_admin', 'admin'] },
@@ -79,10 +83,10 @@ const AdminSidebar = ({ isOpen, onClose }) => {
             />
             <div className="md:hidden lg:block">
               <h2 className="font-display text-sm font-bold tracking-tight text-white">
-                {t("admin_sidebar_title")}
+                {role === 'chef' ? 'Hable Cafe Chef' : role === 'waiter' ? 'Hable Cafe Waiter' : t("admin_sidebar_title") || "Hable Cafe Admin"}
               </h2>
               <p className="text-[10px] text-cafe-300 uppercase tracking-wider font-semibold">
-                {t("management_portal")}
+                {role === 'chef' ? 'Kitchen Portal' : role === 'waiter' ? 'Service Portal' : t("management_portal")}
               </p>
             </div>
           </div>
@@ -139,8 +143,3 @@ const AdminSidebar = ({ isOpen, onClose }) => {
 };
 
 export default AdminSidebar;
-
-
-
-
-

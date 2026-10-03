@@ -10,28 +10,21 @@ const AdminLayout = () => {
   const { t } = useTranslation();
 
   const getPageTitle = () => {
-    switch (location.pathname) {
-      case "/admin/dashboard":
-        return t("admin_page_dashboard");
-      case "/admin/orders":
-        return t("admin_page_orders");
-      case "/admin/foods":
-        return t("admin_page_foods");
-      case "/admin/drinks":
-        return t("admin_page_drinks");
-      case "/admin/categories":
-        return t("admin_page_categories");
-      case "/admin/tables":
-        return t("admin_page_tables");
-      case "/admin/analytics":
-        return t("admin_page_analytics");
-      case "/admin/staff":
-        return "Staff Management";
-      case "/admin/devices":
-        return t("admin_page_devices");
-      default:
-        return t("admin_portal");
-    }
+    const path = location.pathname;
+    
+    if (path.includes("/dashboard")) return t("admin_page_dashboard");
+    if (path.includes("/orders")) return t("admin_page_orders");
+    if (path.includes("/foods")) return t("admin_page_foods");
+    if (path.includes("/drinks")) return t("admin_page_drinks");
+    if (path.includes("/categories")) return t("admin_page_categories");
+    if (path.includes("/tables")) return t("admin_page_tables");
+    if (path.includes("/analytics")) return t("admin_page_analytics");
+    if (path.includes("/staff")) return "Staff Management";
+    if (path.includes("/devices")) return t("admin_page_devices");
+    if (path.includes("/settings")) return "Cafe Settings";
+    if (path.includes("/profile")) return t("profile");
+
+    return t("admin_portal");
   };
 
   return (
@@ -57,4 +50,3 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
-

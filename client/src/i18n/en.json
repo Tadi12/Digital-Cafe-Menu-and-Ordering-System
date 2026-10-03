@@ -393,7 +393,7 @@
   "uncategorized": "Uncategorized",
   "access_denied": "Access Denied",
   "cart_session_notice": "Your session keeps this customer history secure and private.",
-  "order_ready_bring_here": "Your order is ready, we will bring you here.",
+  "order_ready_bring_here": "Your order is ready, we will bring it to your table.",
   "login_failed": "Login failed",
   "session_terminated": "This device session was terminated. Please sign in again.",
   "loading_menu": "Loading digital menu...",
