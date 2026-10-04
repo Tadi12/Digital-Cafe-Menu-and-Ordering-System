@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
 import { useTranslation } from 'react-i18next';
 import { resolveApiError } from '../../utils/apiError';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ActionButton from '../../components/common/ActionButton';
 
 const SettingsPage = () => {
   const { t } = useTranslation();
@@ -9,6 +11,7 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [pinSuccess, setPinSuccess] = useState('');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -30,6 +33,7 @@ const SettingsPage = () => {
   const handleSavePin = async (e) => {
     e.preventDefault();
     setError('');
+    setSaving(true);
     try {
       const res = await axiosClient.put('/settings', { accessPin: pin });
       if (res.data?.success) {
@@ -39,10 +43,13 @@ const SettingsPage = () => {
     } catch (err) {
       console.error(err);
       setError(resolveApiError(err, t, 'failed_create_staff'));
+    } finally {
+      // Always released so the Save button can never stay stuck mid-spin.
+      setSaving(false);
     }
   };
 
-  if (loading) return <div className="p-8">{t('loading')}</div>;
+  if (loading) return <LoadingSpinner message={t('loading_settings')} />;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -74,12 +81,14 @@ const SettingsPage = () => {
               required
             />
           </div>
-          <button
+          <ActionButton
             type="submit"
+            loading={saving}
+            loadingText={t('saving_pin')}
             className="bg-cafe-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-cafe-900 transition h-12"
           >
             {t('save_pin')}
-          </button>
+          </ActionButton>
         </form>
       </div>
     </div>

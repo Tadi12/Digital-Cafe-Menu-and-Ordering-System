@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../../api/categoryApi";
 import CategoryFormModal from "../../components/admin/CategoryFormModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import ActionButton from "../../components/common/ActionButton";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { Plus, Edit2, Trash2, Layers } from "lucide-react";
 import { resolveApiError } from '../../utils/apiError';
@@ -22,6 +23,8 @@ const CategoryManagerPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const deletingIdRef = useRef(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null, name: "" });
 
   const fetchCategories = async () => {
@@ -78,6 +81,10 @@ const CategoryManagerPage = () => {
 
   const handleConfirmDelete = async () => {
     const { id } = confirmModal;
+    // Ref lock: a second confirm click cannot send a second DELETE.
+    if (deletingIdRef.current === id) return;
+    deletingIdRef.current = id;
+    setDeletingId(id);
     try {
       const res = await deleteCategoryApi(id);
       if (res.success) {
@@ -85,6 +92,9 @@ const CategoryManagerPage = () => {
       }
     } catch (err) {
       toast.error(resolveApiError(err, t, "failed_delete"));
+    } finally {
+      deletingIdRef.current = null;
+      setDeletingId((current) => (current === id ? null : current));
     }
   };
 
@@ -162,13 +172,15 @@ const CategoryManagerPage = () => {
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button
+                  <ActionButton
                     onClick={() => openDeleteConfirm(cat._id, cat.name.en)}
-                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    loading={deletingId === cat._id}
+                    icon={Trash2}
+                    iconClassName="w-4 h-4 shrink-0"
+                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50"
                     title={t("delete_category_title")}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    aria-label={t("delete_category_title")}
+                  />
                 </div>
               </div>
             ))

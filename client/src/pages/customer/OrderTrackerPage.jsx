@@ -9,6 +9,7 @@ import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
+import ActionButton from "../../components/common/ActionButton";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import StatusErrorPage, { getErrorPageType } from "../errors/StatusErrorPage";
 import {
@@ -201,6 +202,12 @@ const OrderTrackerPage = () => {
   const currentStepIndex = steps.findIndex((step) => step.key === order.status);
   const isCancelled = order.status === "Cancelled";
   const canCancel = order.status === "Pending";
+
+  // Re-key the progress row on the status so React remounts it and the
+  // fade/slide transition replays on every change. Without this the tracker
+  // swapped steps instantly, which read as a frozen page when a socket update
+  // arrived while the customer was looking at it.
+  const statusRevision = `${order._id}:${order.status}`;
   // The API populates `table`, so it may be an object rather than an ID string.
   const tableId = order.table?._id || order.table;
 
@@ -286,7 +293,7 @@ const OrderTrackerPage = () => {
               {t("live_tracking_title")}
             </h3>
 
-            <div className="relative flex items-center justify-between px-2">
+            <div key={statusRevision} className="relative flex items-center justify-between px-2 animate-fadeIn">
               {/* Connector line behind circles */}
               <div className="absolute top-5 left-8 right-8 h-1 bg-cafe-100 -z-0">
                 <div
@@ -390,14 +397,15 @@ const OrderTrackerPage = () => {
         {!isCancelled && order.status !== "Completed" && (
           <div className="pt-2">
             {canCancel ? (
-              <button
+              <ActionButton
                 onClick={() => setIsCancelModalOpen(true)}
-                disabled={cancelling}
-                className="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 px-4 rounded-xl font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                loading={cancelling}
+                loadingText={t("cancelling_order")}
+                icon={Ban}
+                className="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 px-4 rounded-xl font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                <Ban className="w-4 h-4" />
-                <span>{cancelling ? "Cancelling..." : t("cancel_order")}</span>
-              </button>
+                {t("cancel_order")}
+              </ActionButton>
             ) : (
               <p className="text-center text-xs font-semibold text-cafe-500 bg-cafe-100 p-3 rounded-xl">
                 {t("cannot_cancel_notice")}

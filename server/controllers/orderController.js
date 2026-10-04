@@ -258,6 +258,9 @@ const getOrderById = async (req, res, next) => {
 const updateOrderStatus = async (req, res, next) => {
   try {
     const { status, paymentStatus } = req.body;
+    // Set when the status transition is applied by the conditional update below.
+    let updatedOrder = null;
+    let statusChanged = false;
     const order = await Order.findById(req.params.id).populate('table', 'tableNumber tableName');
 
     if (!order) {
@@ -303,14 +306,46 @@ const updateOrderStatus = async (req, res, next) => {
         });
       }
 
-      order.status = status;
+      // Apply the status change as one conditional write instead of an
+      // unconditional save below.
+      //
+      // The value this request validated against becomes part of the update
+      // filter, so if two admins (or one admin whose button was double-tapped)
+      // both read "Pending", only the first write matches. The second finds the
+      // document already at "Preparing", matches nothing, and is rejected below
+      // instead of silently writing the status a second time.
+      updatedOrder = await Order.findOneAndUpdate(
+        { _id: order._id, status: order.status },
+        { $set: { status } },
+        { new: true },
+      );
+      
+      if (!updatedOrder) {
+        return res.status(409).json({
+          success: false,
+          code: ERROR_CODES.INVALID_STATUS_TRANSITION,
+          message:
+            'The order status changed while this request was in flight. Refresh and try again.',
+        });
+      }
+      
+      statusChanged = true;
     }
-
+    
     if (paymentStatus && ['Unpaid', 'Paid'].includes(paymentStatus)) {
-      order.paymentStatus = paymentStatus;
+      if (statusChanged) {
+        // The status was already applied by the conditional update; patch only
+        // the payment field so the status is not written a second time.
+        await Order.updateOne({ _id: order._id }, { $set: { paymentStatus } });
+        updatedOrder.paymentStatus = paymentStatus;
+      } else {
+        order.paymentStatus = paymentStatus;
+        updatedOrder = await order.save();
+      }
+    } else if (!statusChanged) {
+      updatedOrder = await order.save();
     }
 
-    const updatedOrder = await order.save();
     const populatedUpdatedOrder = await Order.findById(updatedOrder._id)
       .populate('table', 'tableNumber tableName');
 

@@ -1,5 +1,5 @@
 import { resolveApiError } from '../../utils/apiError';
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -13,6 +13,7 @@ import {
 import { getCategoriesApi } from "../../api/categoryApi";
 import DrinkFormModal from "../../components/admin/DrinkFormModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import ActionButton from "../../components/common/ActionButton";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import {
@@ -38,7 +39,14 @@ const DrinkManagerPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFood, setEditingFood] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [recentlyUpdated, setRecentlyUpdated] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null, name: "" });
+
+  // Ref locks make the duplicate-click guard synchronous; see FoodManagerPage.
+  const togglingIdRef = useRef(null);
+  const deletingIdRef = useRef(null);
 
   const drinkCategories = categories;
   const visibleFoods = foods.filter((food) => {
@@ -118,6 +126,9 @@ const DrinkManagerPage = () => {
   };
 
   const handleToggleAvailability = async (id) => {
+    if (togglingIdRef.current === id) return;
+    togglingIdRef.current = id;
+    setTogglingId(id);
     try {
       const res = await toggleFoodAvailabilityApi(id);
       if (res.success) {
@@ -126,9 +137,14 @@ const DrinkManagerPage = () => {
             item._id === id ? { ...item, available: res.data.available } : item,
           ),
         );
+        setRecentlyUpdated(id);
+        window.setTimeout(() => setRecentlyUpdated(null), 1200);
       }
     } catch (err) {
       toast.error(resolveApiError(err, t, "update_failed"));
+    } finally {
+      togglingIdRef.current = null;
+      setTogglingId((current) => (current === id ? null : current));
     }
   };
 
@@ -138,6 +154,9 @@ const DrinkManagerPage = () => {
 
   const handleConfirmDelete = async () => {
     const { id } = confirmModal;
+    if (deletingIdRef.current === id) return;
+    deletingIdRef.current = id;
+    setDeletingId(id);
     try {
       const res = await deleteFoodApi(id);
       if (res.success) {
@@ -145,6 +164,9 @@ const DrinkManagerPage = () => {
       }
     } catch (err) {
       toast.error(resolveApiError(err, t, "failed_delete"));
+    } finally {
+      deletingIdRef.current = null;
+      setDeletingId((current) => (current === id ? null : current));
     }
   };
 
@@ -235,26 +257,21 @@ const DrinkManagerPage = () => {
                   <div className="font-black text-cafe-900">
                     {formatCurrency(food.price, currentLang)}
                   </div>
-                  <button
+                  <ActionButton
                     onClick={() => handleToggleAvailability(food._id)}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
+                    loading={togglingId === food._id}
+                    loadingText={t("updating")}
+                    success={togglingId === null && recentlyUpdated === food._id}
+                    successText={food.available ? t("unavailable") : t("available")}
+                    icon={food.available ? CheckCircle2 : XCircle}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors disabled:opacity-70 ${
                       food.available
                         ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                         : "bg-red-100 text-red-800 hover:bg-red-200"
                     }`}
                   >
-                    {food.available ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>{t("available")}</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-3.5 h-3.5 text-red-600" />
-                        <span>{t("unavailable")}</span>
-                      </>
-                    )}
-                  </button>
+                    {food.available ? t("available") : t("unavailable")}
+                  </ActionButton>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-cafe-100">
@@ -265,13 +282,15 @@ const DrinkManagerPage = () => {
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button
+                  <ActionButton
                     onClick={() => openDeleteConfirm(food._id, food.name?.en)}
-                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    loading={deletingId === food._id}
+                    icon={Trash2}
+                    iconClassName="w-4 h-4 shrink-0"
+                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50"
                     title={t("delete_drink_title")}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    aria-label={t("delete_drink_title")}
+                  />
                 </div>
               </div>
             ))

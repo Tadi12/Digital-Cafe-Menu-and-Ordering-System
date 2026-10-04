@@ -1,41 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useSocket } from "../../hooks/useSocket";
-import { getOrdersApi, updateOrderStatusApi } from "../../api/orderApi";
+import { getOrdersApi } from "../../api/orderApi";
+import { useOrderStatusActions } from "../../hooks/useOrderStatusActions";
+import OrderStatusActionButton from "../../components/common/OrderStatusActionButton";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { Flame, Clock, CheckCircle } from "lucide-react";
 
-// Helper component for an individual order ticket
-const OrderTicket = ({ order, onStatusChange, isUpdating }) => {
+// Helper component for an individual order ticket.
+// The action button is shared with the admin order cards so the kitchen gets the
+// same loading copy, disabled-while-busy behaviour and duplicate-click guard.
+const OrderTicket = ({ order, onStatusChange, pendingTarget, succeededStatus }) => {
   const { t } = useTranslation();
-  
-  const getActionBtn = () => {
-    if (order.status === 'Pending') {
-      return (
-        <button
-          onClick={() => onStatusChange(order._id, 'Preparing')}
-          disabled={isUpdating}
-          className="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <Flame className="w-5 h-5" />
-          {t('start_preparing')}
-        </button>
-      );
-    }
-    if (order.status === 'Preparing') {
-      return (
-        <button
-          onClick={() => onStatusChange(order._id, 'Ready')}
-          disabled={isUpdating}
-          className="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <CheckCircle className="w-5 h-5" />
-          {t('mark_ready')}
-        </button>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="bg-white dark:bg-recipe-card border border-cafe-200 dark:border-recipe-border rounded-xl shadow-sm p-4 flex flex-col h-full">
@@ -69,7 +45,16 @@ const OrderTicket = ({ order, onStatusChange, isUpdating }) => {
         ))}
       </ul>
       
-      {getActionBtn()}
+      <div className="mt-4">
+        <OrderStatusActionButton
+          order={order}
+          role="chef"
+          onUpdate={onStatusChange}
+          pendingTarget={pendingTarget}
+          succeededStatus={succeededStatus}
+          buttonClassName="py-3 text-sm"
+        />
+      </div>
     </div>
   );
 };
@@ -79,7 +64,6 @@ const KitchenDisplayPage = () => {
   const { socket, joinAdminRoom, playNotificationSound } = useSocket();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState(null);
 
   const fetchOrders = async () => {
     try {
@@ -128,19 +112,13 @@ const KitchenDisplayPage = () => {
     };
   }, [socket]);
 
-  const handleStatusChange = async (orderId, newStatus) => {
-    setUpdatingId(orderId);
-    try {
-      const response = await updateOrderStatusApi(orderId, newStatus);
-      if (response?.success) {
-        setOrders((prev) => prev.map((o) => (o._id === orderId ? response.data : o)));
-      }
-    } catch (err) {
-      console.error("Failed to update status", err);
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+  const applyUpdatedOrder = useCallback((updatedOrder) => {
+    setOrders((prev) => prev.map((o) => (o._id === updatedOrder._id ? updatedOrder : o)));
+  }, []);
+
+  // Shared hook: per-order loading/success state plus the duplicate-click lock.
+  // This also sends the { status } body the endpoint's schema requires.
+  const { updateStatus, succeededStatus, pendingTarget } = useOrderStatusActions(applyUpdatedOrder);
 
   if (loading) {
     return (
@@ -168,7 +146,7 @@ const KitchenDisplayPage = () => {
         </div>
         <div className="p-4 flex-1 overflow-y-auto space-y-4 custom-scrollbar">
           {pendingOrders.map(order => (
-            <OrderTicket key={order._id} order={order} onStatusChange={handleStatusChange} isUpdating={updatingId === order._id} />
+            <OrderTicket key={order._id} order={order} onStatusChange={updateStatus} pendingTarget={pendingTarget(order._id)} succeededStatus={succeededStatus[order._id]} />
           ))}
           {pendingOrders.length === 0 && (
             <div className="text-center text-cafe-500 py-10 text-sm font-medium">{t('kitchen_no_pending')}</div>
@@ -187,7 +165,7 @@ const KitchenDisplayPage = () => {
         </div>
         <div className="p-4 flex-1 overflow-y-auto space-y-4 custom-scrollbar">
           {preparingOrders.map(order => (
-            <OrderTicket key={order._id} order={order} onStatusChange={handleStatusChange} isUpdating={updatingId === order._id} />
+            <OrderTicket key={order._id} order={order} onStatusChange={updateStatus} pendingTarget={pendingTarget(order._id)} succeededStatus={succeededStatus[order._id]} />
           ))}
           {preparingOrders.length === 0 && (
             <div className="text-center text-blue-500/70 py-10 text-sm font-medium">{t('kitchen_no_preparing')}</div>

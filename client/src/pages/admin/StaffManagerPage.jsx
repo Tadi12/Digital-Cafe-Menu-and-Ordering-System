@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axiosClient from '../../api/axiosClient';
 import { resolveApiError } from '../../utils/apiError';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ActionButton from '../../components/common/ActionButton';
 
 const StaffManagerPage = () => {
   const [staff, setStaff] = useState([]);
@@ -11,6 +13,9 @@ const StaffManagerPage = () => {
   const [role, setRole] = useState('waiter');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const creatingRef = useRef(false);
   const { t } = useTranslation();
 
   const fetchStaff = async () => {
@@ -21,6 +26,8 @@ const StaffManagerPage = () => {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -32,17 +39,29 @@ const StaffManagerPage = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Synchronous ref lock: `creating` is state and does not update until the
+    // next render, so without this a double submit creates two staff accounts.
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+    setCreating(true);
+
     try {
       const res = await axiosClient.post('/auth/staff', { name, email, password, role });
       if (res.data?.success) {
         setSuccess(t('staff_created_success'));
         setName(''); setEmail(''); setPassword('');
-        fetchStaff();
+        await fetchStaff();
       }
     } catch (err) {
       setError(resolveApiError(err, t, 'failed_create_staff'));
+    } finally {
+      creatingRef.current = false;
+      setCreating(false);
     }
   };
+
+  if (loading) return <LoadingSpinner message={t('loading_staff')} />;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4">
@@ -76,7 +95,14 @@ const StaffManagerPage = () => {
               </select>
             </div>
           </div>
-          <button type="submit" className="bg-cafe-800 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-cafe-900 transition">{t('create_account')}</button>
+          <ActionButton
+            type="submit"
+            loading={creating}
+            loadingText={t('creating_account')}
+            className="bg-cafe-800 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-cafe-900 transition"
+          >
+            {t('create_account')}
+          </ActionButton>
         </form>
       </div>
 

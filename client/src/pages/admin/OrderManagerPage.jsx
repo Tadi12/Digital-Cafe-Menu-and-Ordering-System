@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useSocket } from "../../hooks/useSocket";
-import { getOrdersApi, updateOrderStatusApi } from "../../api/orderApi";
+import { getOrdersApi } from "../../api/orderApi";
+import { useOrderStatusActions } from "../../hooks/useOrderStatusActions";
 import OrderCard from "../../components/admin/OrderCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Modal from "../../components/common/Modal";
 import { Search, Volume2, VolumeX, Bell } from "lucide-react";
-import { resolveApiError } from '../../utils/apiError';
 import { orderStatusLabel } from '../../utils/orderStatus';
 
 const OrderManagerPage = () => {
@@ -90,18 +89,24 @@ const OrderManagerPage = () => {
     }
   }, [socket, soundEnabled, joinAdminRoom, playNotificationSound]);
 
-  const handleUpdateStatus = async (id, nextStatus) => {
-    try {
-      const res = await updateOrderStatusApi(id, { status: nextStatus });
-      if (res.success) {
-        setOrders((prev) =>
-          prev.map((ord) => (ord._id === id ? res.data : ord)),
-        );
-      }
-    } catch (err) {
-      setErrorModal({ isOpen: true, message: resolveApiError(err, t, "failed_update_order") });
-    }
-  };
+  // Replace the order in place once the server has confirmed the new status.
+  // Keyed by _id so several orders can be updated independently.
+  const applyUpdatedOrder = useCallback((updatedOrder) => {
+    setOrders((prev) =>
+      prev.map((ord) => (ord._id === updatedOrder._id ? updatedOrder : ord)),
+    );
+  }, []);
+
+  // Owns the per-order loading / success state and the duplicate-click lock.
+  const {
+    updateStatus,
+    pendingStatus,
+    succeededStatus,
+    pendingTarget,
+  } = useOrderStatusActions(applyUpdatedOrder);
+
+  // The access-denied modal is no longer raised here — a failed status change
+  // surfaces as a toast from the hook, which keeps the button usable for a retry.
 
   const statusTabs = [
     "All",
@@ -219,18 +224,14 @@ const OrderManagerPage = () => {
               <OrderCard
                 key={order._id}
                 order={order}
-                onUpdateStatus={handleUpdateStatus}
+                onUpdateStatus={updateStatus}
+                pendingTarget={pendingTarget(order._id)}
+                succeededStatus={succeededStatus[order._id]}
               />
             ))
           )}
         </div>
       )}
-      <Modal isOpen={errorModal.isOpen} onClose={() => setErrorModal({ isOpen: false, message: "" })} title={t('access_denied')} maxWidth="max-w-sm">
-        <div className="p-4 text-center">
-          <p className="mb-6 text-cafe-700">{errorModal.message}</p>
-          <button className="w-full bg-cafe-800 text-white rounded-xl py-3 font-bold hover:bg-cafe-900 transition" onClick={() => setErrorModal({ isOpen: false, message: "" })}>Understood</button>
-        </div>
-      </Modal>
     </div>
   );
 };

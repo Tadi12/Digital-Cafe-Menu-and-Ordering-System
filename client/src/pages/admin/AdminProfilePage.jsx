@@ -4,10 +4,17 @@ import { updateAdminProfileApi } from '../../api/authApi';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { resolveApiError } from '../../utils/apiError';
+import { staffProfileTitle } from '../../utils/staffRoles';
+import ActionButton from '../../components/common/ActionButton';
 
 const AdminProfilePage = () => {
   const { admin, refreshAdmin } = useAuth();
   const { t } = useTranslation();
+  const role = admin?.role;
+
+  // /admin/profile, /chef/profile and /waiter/profile all render this page, so
+  // the heading follows the signed-in role instead of always saying "Admin".
+  const pageTitle = staffProfileTitle(role, t);
 
   const [name, setName] = useState(admin?.name || '');
   const [email, setEmail] = useState(admin?.email || '');
@@ -55,7 +62,7 @@ const AdminProfilePage = () => {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="font-display text-xl font-bold mb-4">{t('admin_profile')}</h2>
+      <h2 className="font-display text-xl font-bold mb-4">{pageTitle}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="name">{t('name')}</label>
@@ -101,13 +108,14 @@ const AdminProfilePage = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
-        <button
+        <ActionButton
           type="submit"
-          disabled={loading}
+          loading={loading}
+          loadingText={t('updating')}
           className="bg-cafe-600 text-white px-4 py-2 rounded hover:bg-cafe-700 disabled:opacity-50"
         >
-          {loading ? t('updating') : t('save_changes')}
-        </button>
+          {t('save_changes')}
+        </ActionButton>
       </form>
     </div>
   );

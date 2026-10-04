@@ -2,15 +2,16 @@ import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageContext } from '../../context/LanguageContext';
 import OrderStatusBadge from '../customer/OrderStatusBadge';
+import OrderStatusActionButton from '../common/OrderStatusActionButton';
 import { formatCurrency } from '../../utils/currencyFormatter';
-import { Clock, User, MapPin, ChefHat, CheckCircle2, Check, Banknote } from 'lucide-react';
+import { Clock, User, MapPin, Banknote } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   paymentMethodLabel,
   paymentStatusLabel,
 } from '../../utils/orderStatus';
 
-const OrderCard = ({ order, onUpdateStatus }) => {
+const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus }) => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
   const { admin } = useAuth();
@@ -83,67 +84,16 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         </div>
       </div>
 
-      {/* Action Footer Button based on Status */}
+      {/* Action Footer: exactly one action for the current status, with its own
+          loading and success states. Terminal orders render no button at all. */}
       <div className="p-3 bg-cafe-50 border-t border-cafe-100">
-        {order.status === 'Pending' && (
-          (role === 'admin' || role === 'super_admin' || role === 'chef') ? (
-            <button
-              onClick={() => onUpdateStatus(order._id, 'Preparing')}
-              className="w-full bg-gold-500 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <ChefHat className="w-4 h-4" />
-              <span>{t('start_preparing')}</span>
-            </button>
-          ) : (
-            <div className="text-center py-1 text-xs font-bold text-gray-500">
-              {t('waiting_for_kitchen')}
-            </div>
-          )
-        )}
-
-        {order.status === 'Preparing' && (
-          (role === 'admin' || role === 'super_admin' || role === 'chef') ? (
-            <button
-              onClick={() => onUpdateStatus(order._id, 'Ready')}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{t('mark_ready')}</span>
-            </button>
-          ) : (
-            <div className="text-center py-1 text-xs font-bold text-gray-500">
-              {t('cooking_in_progress')}
-            </div>
-          )
-        )}
-
-        {order.status === 'Ready' && (
-          (role === 'admin' || role === 'super_admin' || role === 'waiter') ? (
-            <button
-              onClick={() => onUpdateStatus(order._id, 'Completed')}
-              className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-2 px-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <Check className="w-4 h-4" />
-              <span>{t('complete_order')}</span>
-            </button>
-          ) : (
-            <div className="text-center py-1 text-xs font-bold text-gray-500">
-              {t('waiting_for_waiter')}
-            </div>
-          )
-        )}
-
-        {order.status === 'Completed' && (
-          <div className="text-center py-1 text-xs font-bold text-gray-500">
-            {t('order_completed_label')}
-          </div>
-        )}
-
-        {order.status === 'Cancelled' && (
-          <div className="text-center py-1 text-xs font-bold text-red-500">
-            {t('order_cancelled_label')}
-          </div>
-        )}
+        <OrderStatusActionButton
+          order={order}
+          role={role}
+          onUpdate={onUpdateStatus}
+          pendingTarget={pendingTarget}
+          succeededStatus={succeededStatus}
+        />
       </div>
     </div>
   );

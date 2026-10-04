@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { LanguageContext } from "../../context/LanguageContext";
 import { useCart } from "../../hooks/useCart";
+import ActionButton from "../common/ActionButton";
 import { formatCurrency } from "../../utils/currencyFormatter";
 import {
   ShoppingCart,
@@ -208,20 +209,15 @@ const CartDrawer = ({ isOpen, onClose, onPlaceOrder, table, isSubmitting }) => {
               </span>
             </div>
 
-            <button
+            <ActionButton
               onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"
+              loading={isSubmitting}
+              loadingText={t("placing_order")}
+              icon={ChevronRight}
+              className="w-full bg-cafe-800 hover:bg-cafe-900 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md active:scale-[0.98] transition-all disabled:opacity-70 disabled:active:scale-100 dark:bg-recipe-orange dark:text-[#17181c] dark:hover:bg-gold-500"
             >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  <span>{t("place_order")}</span>
-                  <ChevronRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+              {t("place_order")}
+            </ActionButton>
           </div>
         )}
       </div>

@@ -1,21 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import { getFoodsApi } from "../../api/foodApi";
 import { useCart } from "../../hooks/useCart";
 import { useFavorites } from "../../hooks/useFavorites";
+import { useCustomerUI } from "../../hooks/useCustomerUI";
 import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import FoodCard from "../../components/customer/FoodCard";
 import FoodDetailModal from "../../components/customer/FoodDetailModal";
 import DrinkDetailModal from "../../components/customer/DrinkDetailModal";
-import { ArrowLeft, Heart } from "lucide-react";
+import { ArrowLeft, Heart, Utensils } from "lucide-react";
 
 const FavoritesPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { addToCart } = useCart();
   const { favoriteItems, removeFavorite, replaceFavorites } = useFavorites();
+  const { lastTableId, closeSearch, closeCart } = useCustomerUI();
 
   const [loading, setLoading] = useState(true);
   const [selectedFood, setSelectedFood] = useState(null);
@@ -71,6 +74,22 @@ const FavoritesPage = () => {
 
   const getCategoryType = (category) => category?.type || "food";
 
+  // The menu lives at /menu/table/:tableId and that id only comes from the QR
+  // link, so reuse the last scanned table — the same rule the bottom Menu tab
+  // follows. `navigate(-1)` was wrong here: it walks browser history, so on a
+  // refreshed or shared /favorites link it either did nothing or left the app.
+  const goToMenu = () => {
+    closeSearch();
+    closeCart();
+
+    if (lastTableId) {
+      navigate(`/menu/table/${lastTableId}`);
+      return;
+    }
+
+    toast.info(t("rescan_qr_hint"));
+  };
+
   const handleSelectItem = (item) => {
     if (getCategoryType(item.category) === "drink") {
       setSelectedDrink(item);
@@ -125,9 +144,10 @@ const FavoritesPage = () => {
             <p className="text-sm text-cafe-600">{t("no_favorites")}</p>
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={goToMenu}
               className="inline-flex items-center gap-2 rounded-xl bg-cafe-800 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-cafe-900"
             >
+              <Utensils className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t("browse_menu")}
             </button>
           </div>

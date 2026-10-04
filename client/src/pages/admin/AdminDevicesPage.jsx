@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { getAdminSessionsApi, terminateAdminSessionApi } from '../../api/authApi';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveApiError } from '../../utils/apiError';
 
@@ -80,7 +81,7 @@ const AdminDevicesPage = () => {
           </button>
         </div>
         {loading ? (
-          <p className="p-6 text-sm text-cafe-600">{t('loading_devices')}</p>
+          <LoadingSpinner message={t('loading_devices')} compact />
         ) : sessions.length === 0 ? (
           <p className="p-6 text-sm text-cafe-600">{t('no_device_sessions')}</p>
         ) : (

@@ -50,5 +50,53 @@ export const paymentMethodLabel = (method, t) => {
   return key ? t(key) : method;
 };
 
-export { ORDER_STATUS_KEYS };
+/**
+ * The admin/kitchen order-status flow, in one place.
+ *
+ * Each entry owns the *next* status a click will request, the copy shown while
+ * that request is in flight, and which roles are allowed to make it. Keeping
+ * this beside the label helpers means the buttons, the loading copy and the
+ * role rules can never drift apart — the card used to hard-code all three in
+ * three separate branches.
+ *
+ * `waitingKey` is the passive message shown to a role that cannot act yet.
+ */
+const ORDER_STATUS_FLOW = {
+  Pending: {
+    next: 'Preparing',
+    actionKey: 'start_preparing',
+    loadingKey: 'preparing_action_loading',
+    successKey: 'status_preparing',
+    waitingKey: 'waiting_for_kitchen',
+    roles: ['admin', 'super_admin', 'chef'],
+    classes: 'bg-gold-500 hover:bg-cafe-900',
+  },
+  Preparing: {
+    next: 'Ready',
+    actionKey: 'mark_ready',
+    loadingKey: 'marking_ready_loading',
+    successKey: 'status_ready',
+    waitingKey: 'cooking_in_progress',
+    roles: ['admin', 'super_admin', 'chef'],
+    classes: 'bg-emerald-600 hover:bg-emerald-700',
+  },
+  Ready: {
+    next: 'Completed',
+    actionKey: 'complete_order',
+    loadingKey: 'completing_order_loading',
+    successKey: 'status_completed',
+    waitingKey: 'waiting_for_waiter',
+    roles: ['admin', 'super_admin', 'waiter'],
+    classes: 'bg-cafe-800 hover:bg-cafe-900',
+  },
+};
+
+/** @returns the flow step for a status, or undefined when it is terminal. */
+export const orderStatusFlow = (status) => ORDER_STATUS_FLOW[status];
+
+/** @returns true when `role` may advance an order that is in `status`. */
+export const canAdvanceOrderStatus = (status, role) =>
+  Boolean(ORDER_STATUS_FLOW[status]?.roles.includes(role));
+
+export { ORDER_STATUS_KEYS, ORDER_STATUS_FLOW };
 export default orderStatusLabel;

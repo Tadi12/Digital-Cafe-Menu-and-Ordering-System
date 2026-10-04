@@ -128,6 +128,7 @@ const MenuPage = () => {
   const [errorKind, setErrorKind] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const orderInFlightRef = useRef(false);
 
   useEffect(() => {
     setIsCustomerNavigationHidden(errorKind === "inactive-table" || errorKind === "occupied-table");
@@ -395,6 +396,13 @@ const MenuPage = () => {
   const handlePlaceOrder = async (selectedPaymentMethod = "Cash") => {
     if (cartItems.length === 0 || !table) return;
 
+    // Synchronous in-flight lock. `isSubmittingOrder` is React state and does not
+    // change until the next render, so on its own it cannot stop a second tap
+    // that lands in the same tick — which would create a duplicate order. This
+    // ref flips immediately, so only the first tap ever reaches createOrderApi.
+    if (orderInFlightRef.current) return;
+    orderInFlightRef.current = true;
+
     setIsSubmittingOrder(true);
     try {
       const orderPayload = {
@@ -414,10 +422,15 @@ const MenuPage = () => {
         clearCart();
         closeCart();
         navigate(`/order-confirmation/${res.data._id}`);
+      } else {
+        // The API answered, but without success — report it and keep the cart.
+        toast.error(t("failed_submit_order"));
       }
     } catch (err) {
       toast.error(resolveApiError(err, t, "failed_submit_order"));
     } finally {
+      // Always released, so a failed order can be retried immediately.
+      orderInFlightRef.current = false;
       setIsSubmittingOrder(false);
     }
   };

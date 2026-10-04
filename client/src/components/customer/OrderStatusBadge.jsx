@@ -52,7 +52,10 @@ const OrderStatusBadge = ({ status, className = '' }) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${config.bg} ${className}`}
+      // Re-keying on the status replays the transition every time the order
+      // moves, so a socket update is visible rather than a silent swap.
+      key={status}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-colors duration-300 animate-fadeIn ${config.bg} ${className}`}
     >
       <Icon className="w-3.5 h-3.5 shrink-0" />
       <span>{config.label}</span>
