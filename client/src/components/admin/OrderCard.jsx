@@ -3,19 +3,28 @@ import { useTranslation } from 'react-i18next';
 import { LanguageContext } from '../../context/LanguageContext';
 import OrderStatusBadge from '../customer/OrderStatusBadge';
 import OrderStatusActionButton from '../common/OrderStatusActionButton';
+import PreparationStatusButton from '../common/PreparationStatusButton';
 import { formatCurrency } from '../../utils/currencyFormatter';
-import { Clock, User, MapPin, Banknote } from 'lucide-react';
+import { Clock, User, MapPin, Banknote, Coffee, UtensilsCrossed } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   paymentMethodLabel,
   paymentStatusLabel,
+  preparationStatusLabel,
 } from '../../utils/orderStatus';
+import { roleTrack, isStationRole } from '../../utils/staffRoles';
 
-const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus }) => {
+const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUpdatePreparation, pendingPreparationTarget, succeededPreparation }) => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
   const { admin } = useAuth();
   const role = admin?.role || 'waiter';
+
+  // A chef or a barista sees only the items for their own station. The API has
+  // already narrowed `order.items` to that half and set `stationStatus`, so this
+  // is a display concern only — it never decides what they may change.
+  const track = roleTrack(role);
+  const stationOnly = isStationRole(role);
 
   const formattedTime = new Date(order.createdAt).toLocaleTimeString([], {
     hour: '2-digit',
@@ -23,6 +32,8 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus }) =>
   });
 
   const formattedDate = new Date(order.createdAt).toLocaleDateString();
+
+  const StationIcon = track === 'drink' ? Coffee : UtensilsCrossed;
 
   return (
     <div className="bg-white rounded-2xl border border-cafe-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
@@ -32,7 +43,16 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus }) =>
           <span className="font-extrabold text-sm text-cafe-900">{order.orderNumber}</span>
           <span className="text-xs text-cafe-400 font-mono">({formattedTime})</span>
         </div>
-        <OrderStatusBadge status={order.status} />
+        {stationOnly ? (
+          // A station shows the status of the half it actually owns, not the
+          // overall order status, which may still be held back by the other half.
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-cafe-100 text-cafe-800">
+            <StationIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span>{preparationStatusLabel(order.stationStatus, t)}</span>
+          </span>
+        ) : (
+          <OrderStatusBadge status={order.status} />
+        )}
       </div>
 
       {/* Body Details */}
@@ -84,16 +104,45 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus }) =>
         </div>
       </div>
 
-      {/* Action Footer: exactly one action for the current status, with its own
-          loading and success states. Terminal orders render no button at all. */}
-      <div className="p-3 bg-cafe-50 border-t border-cafe-100">
-        <OrderStatusActionButton
-          order={order}
-          role={role}
-          onUpdate={onUpdateStatus}
-          pendingTarget={pendingTarget}
-          succeededStatus={succeededStatus}
-        />
+      {/* Action Footer: a station drives its own track; everyone else keeps the
+          single overall-status button they always had. */}
+      <div className="p-3 bg-cafe-50 border-t border-cafe-100 space-y-2">
+        {!stationOnly && (
+          <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
+            <div className="flex items-center justify-between gap-1 rounded-lg px-2 py-1 bg-white border border-cafe-100">
+              <span className="flex items-center gap-1 text-cafe-600">
+                <UtensilsCrossed className="w-3 h-3" aria-hidden="true" />
+                {t('food_section_label')}
+              </span>
+              <span className="text-cafe-900">{preparationStatusLabel(order.foodStatus, t)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-1 rounded-lg px-2 py-1 bg-white border border-cafe-100">
+              <span className="flex items-center gap-1 text-cafe-600">
+                <Coffee className="w-3 h-3" aria-hidden="true" />
+                {t('drink_section_label')}
+              </span>
+              <span className="text-cafe-900">{preparationStatusLabel(order.drinkStatus, t)}</span>
+            </div>
+          </div>
+        )}
+
+        {stationOnly ? (
+          <PreparationStatusButton
+            order={order}
+            track={track}
+            onUpdate={onUpdatePreparation}
+            pendingTarget={pendingPreparationTarget}
+            succeededStatus={succeededPreparation}
+          />
+        ) : (
+          <OrderStatusActionButton
+            order={order}
+            role={role}
+            onUpdate={onUpdateStatus}
+            pendingTarget={pendingTarget}
+            succeededStatus={succeededStatus}
+          />
+        )}
       </div>
     </div>
   );

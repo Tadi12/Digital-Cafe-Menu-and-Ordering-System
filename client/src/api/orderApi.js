@@ -27,6 +27,16 @@ export const updateOrderStatusApi = async (id, statusData) => {
   return response.data;
 };
 
+/**
+ * Move ONE preparation track of an order (food for the chef, drink for the
+ * barista). Separate from updateOrderStatusApi, which still sets the single
+ * overall status the admin and the waiter use.
+ */
+export const updatePreparationStatusApi = async (id, { track, status }) => {
+  const response = await axiosClient.patch(`/orders/${id}/preparation`, { track, status });
+  return response.data;
+};
+
 export const cancelOrderApi = async (id) => {
   const response = await axiosClient.patch(`/orders/${id}/cancel`);
   return response.data;

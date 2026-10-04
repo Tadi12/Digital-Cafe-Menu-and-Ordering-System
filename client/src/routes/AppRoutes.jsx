@@ -72,6 +72,15 @@ const AppRoutes = () => {
         </Route>
       </Route>
 
+      {/* Protected Barista Routes */}
+      <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'barista']} />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/barista" element={<Navigate to="/barista/orders" replace />} />
+          <Route path="/barista/orders" element={<OrderManagerPage />} />
+          <Route path="/barista/profile" element={<AdminProfilePage />} />
+        </Route>
+      </Route>
+
       {/* Protected Waiter Routes */}
       <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'waiter']} />}>
         <Route element={<AdminLayout />}>

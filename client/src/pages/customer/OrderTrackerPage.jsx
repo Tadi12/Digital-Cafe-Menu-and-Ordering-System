@@ -11,6 +11,7 @@ import ConfirmModal from "../../components/common/ConfirmModal";
 import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
 import ActionButton from "../../components/common/ActionButton";
 import { formatCurrency } from "../../utils/currencyFormatter";
+import { preparationStatusLabel } from "../../utils/orderStatus";
 import StatusErrorPage, { getErrorPageType } from "../errors/StatusErrorPage";
 import {
   Clock,
@@ -356,6 +357,30 @@ const OrderTrackerPage = () => {
         {errorMsg && (
           <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl font-medium text-center border border-red-200">
             {errorMsg}
+          </div>
+        )}
+
+        {/* Per-station progress. The customer still sees ONE order with ONE
+            overall status above; this only explains which half is still being
+            prepared when the two halves move at different speeds. A half with no
+            items in this order is hidden rather than shown as an empty row. */}
+        {!isCancelled && (order.foodStatus !== 'not_required' || order.drinkStatus !== 'not_required') && (
+          <div className="bg-white rounded-2xl p-5 border border-cafe-200 shadow-sm space-y-2">
+            <h4 className="text-xs font-bold text-cafe-800 uppercase tracking-wider">
+              {t('preparation_progress_title')}
+            </h4>
+            {order.foodStatus !== 'not_required' && (
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-cafe-700">{t('food_section_label')}</span>
+                <span className="text-cafe-900">{preparationStatusLabel(order.foodStatus, t)}</span>
+              </div>
+            )}
+            {order.drinkStatus !== 'not_required' && (
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-cafe-700">{t('drink_section_label')}</span>
+                <span className="text-cafe-900">{preparationStatusLabel(order.drinkStatus, t)}</span>
+              </div>
+            )}
           </div>
         )}
 

@@ -91,6 +91,7 @@ const StaffManagerPage = () => {
               <select value={role} onChange={e => setRole(e.target.value)} className="w-full border rounded-xl px-4 py-2">
                 <option value="waiter">{t('role_waiter')}</option>
                 <option value="chef">{t('role_chef')}</option>
+                <option value="barista">{t('role_barista')}</option>
                 <option value="super_admin">{t('role_super_admin')}</option>
               </select>
             </div>

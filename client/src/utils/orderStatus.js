@@ -98,5 +98,52 @@ export const orderStatusFlow = (status) => ORDER_STATUS_FLOW[status];
 export const canAdvanceOrderStatus = (status, role) =>
   Boolean(ORDER_STATUS_FLOW[status]?.roles.includes(role));
 
-export { ORDER_STATUS_KEYS, ORDER_STATUS_FLOW };
+/**
+ * The per-station preparation flow, in one place.
+ *
+ * Mirrors TRACK_TRANSITIONS in server/utils/orderStatus.js, which is what the API
+ * actually enforces. This copy exists so the button can label itself, but the
+ * server is the authority — an out-of-order click is refused there, not here.
+ *
+ * `waitingKey` is the passive copy shown while the other station still holds the
+ * order back, which is what a chef sees when the barista's drinks are not ready.
+ */
+const PREPARATION_FLOW = {
+  pending: {
+    next: 'preparing',
+    actionKey: 'start_preparing',
+    loadingKey: 'preparing_action_loading',
+    successKey: 'status_preparing',
+    waitingKey: 'waiting_for_kitchen',
+    classes: 'bg-gold-500 hover:bg-cafe-900',
+  },
+  preparing: {
+    next: 'ready',
+    actionKey: 'mark_ready',
+    loadingKey: 'marking_ready_loading',
+    successKey: 'status_ready',
+    waitingKey: 'cooking_in_progress',
+    classes: 'bg-emerald-600 hover:bg-emerald-700',
+  },
+  ready: {
+    next: 'completed',
+    actionKey: 'complete_order',
+    loadingKey: 'completing_order_loading',
+    successKey: 'status_completed',
+    waitingKey: 'waiting_for_waiter',
+    classes: 'bg-cafe-800 hover:bg-cafe-900',
+  },
+};
+
+/** @returns the flow step for a preparation status, or undefined when terminal. */
+export const preparationFlow = (preparationStatus) => PREPARATION_FLOW[preparationStatus];
+
+/** Human copy for a preparation status, reusing the existing status wording. */
+export const preparationStatusLabel = (preparationStatus, t) => {
+  if (preparationStatus === 'not_required') return t('preparation_not_required');
+  const key = ORDER_STATUS_KEYS[preparationStatus];
+  return key ? t(key) : t('status_unknown');
+};
+
+export { ORDER_STATUS_KEYS, ORDER_STATUS_FLOW, PREPARATION_FLOW };
 export default orderStatusLabel;

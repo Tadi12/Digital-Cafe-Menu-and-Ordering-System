@@ -1,6 +1,23 @@
 let ioInstance = null;
 const jwt = require('jsonwebtoken');
+const Admin = require('../models/Admin');
 const AdminSession = require('../models/AdminSession');
+const { itemsForTrack, ROLE_TRACK, trackStatusField } = require('../utils/orderStatus');
+
+/**
+ * Narrows a shared order to the items one preparation station owns.
+ *
+ * The chef and the barista read the SAME order document; this only trims the item
+ * list on the way out so a barista is never handed the kitchen's tickets. The
+ * order number, totals and status are passed through untouched, so this cannot
+ * create or duplicate a customer order.
+ */
+const scopeForStation = (order, track) => ({
+  ...order.toObject(),
+  items: itemsForTrack(order.items, track),
+  station: track,
+  stationStatus: order[trackStatusField(track)],
+});
 
 const initSocket = (io) => {
   ioInstance = io;
@@ -12,6 +29,33 @@ const initSocket = (io) => {
     socket.on('join_admin_room', () => {
       socket.join('admin_room');
       console.log(`[Socket]: ${socket.id} joined admin_room`);
+    });
+
+    // A chef or a barista joins the room for the half of the order they prepare.
+    // The role is taken from the token, never from the payload, so a client cannot
+    // ask to join the other station's room.
+    socket.on('join_station_room', async (token) => {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (!decoded.sessionId) return;
+
+        const admin = await Admin.findById(decoded.id).select('role');
+        const session = admin && await AdminSession.exists({
+          _id: decoded.sessionId,
+          admin: admin._id,
+          isActive: true,
+          expiresAt: { $gt: new Date() },
+        });
+        if (!session) return;
+
+        const track = ROLE_TRACK[admin.role];
+        if (!track) return;
+
+        socket.join(`${track}_room`);
+        console.log(`[Socket]: ${socket.id} joined ${track}_room as ${admin.role}`);
+      } catch (error) {
+        // An invalid or expired token must never join a station room.
+      }
     });
 
     // A device-specific room lets the API immediately notify a browser when
@@ -66,4 +110,4 @@ const getIO = () => {
   return ioInstance;
 };
 
-module.exports = { initSocket, getIO };
+module.exports = { initSocket, getIO, scopeForStation };

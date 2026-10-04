@@ -2,7 +2,18 @@ const { ERROR_CODES } = require('../utils/errorCodes');
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const Food = require('../models/Food');
-const { getIO } = require('../sockets/socketHandler');
+const { getIO, scopeForStation } = require('../sockets/socketHandler');
+const {
+  initialTrackStatuses,
+  deriveOverallStatus,
+  syncTracksToOverall,
+  mayUpdateTrack,
+  isValidTrackTransition,
+  itemsForTrack,
+  ROLE_TRACK,
+  trackStatusField,
+  ACTIONABLE_TRACK_STATUSES,
+} = require('../utils/orderStatus');
 
 const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -72,7 +83,9 @@ const createOrder = async (req, res, next) => {
         });
       }
 
-      const food = await Food.findById(item.foodId);
+      // The category is populated in the same query as the food, so resolving the
+      // food/drink split costs no extra round trip per item.
+      const food = await Food.findById(item.foodId).populate('category', 'type');
       if (!food) {
         return res.status(404).json({
           success: false,
@@ -91,6 +104,11 @@ const createOrder = async (req, res, next) => {
       const itemTotal = food.price * Number(item.quantity);
       totalAmount += itemTotal;
 
+      // Food and drinks share one collection, so the owning category is what
+      // decides the station. Categories created before `type` existed report no
+      // type at all, and the schema default treats those as food.
+      const itemType = food.category?.type === 'drink' ? 'drink' : 'food';
+
       orderItemsSnapshot.push({
         food: food._id,
         foodName: {
@@ -99,6 +117,7 @@ const createOrder = async (req, res, next) => {
         },
         price: food.price,
         quantity: Number(item.quantity),
+        itemType,
       });
     }
 
@@ -115,6 +134,11 @@ const createOrder = async (req, res, next) => {
 
     // No payment verifier exists anymore, so every order starts as Unpaid (cash is settled at the table).
 
+    // The chef and the barista get their own track seeded from what was actually
+    // ordered. An order with no drinks leaves drinkStatus 'not_required' so the
+    // overall status can still reach Ready without a barista.
+    const trackStatuses = initialTrackStatuses(orderItemsSnapshot);
+
     const order = await Order.create({
       orderNumber,
       customerName: customerName.trim(),
@@ -125,15 +149,26 @@ const createOrder = async (req, res, next) => {
       totalAmount,
       paymentMethod: paymentMethod || 'Cash',
       paymentStatus: 'Unpaid',
-      status: 'Pending',
+      foodStatus: trackStatuses.foodStatus,
+      drinkStatus: trackStatuses.drinkStatus,
+      status: deriveOverallStatus(trackStatuses),
     });
 
     const populatedOrder = await Order.findById(order._id).populate('table', 'tableNumber tableName');
 
-    // Emit Real-time Socket.IO event to Admin room
+    // Real-time Socket.IO event to Admin room
     try {
       const io = getIO();
       io.to('admin_room').emit('new_order', populatedOrder);
+
+      // One new customer order, fanned out to the stations that have work on it.
+      // A burger + coffee order reaches the chef with the burger and the barista
+      // with the coffee, both pointing at the SAME order id — and a station with
+      // no items in this order is not sent anything at all.
+      for (const track of ['food', 'drink']) {
+        if (itemsForTrack(populatedOrder.items, track).length === 0) continue;
+        io.to(`${track}_room`).emit('new_order', scopeForStation(populatedOrder, track));
+      }
     } catch (socketErr) {
       console.warn('[Socket Warning]: Could not emit new_order event:', socketErr.message);
     }
@@ -170,14 +205,38 @@ const getOrders = async (req, res, next) => {
       ];
     }
 
+    // A chef only has work on orders that contain food, and a barista only on
+    // orders that contain drinks. Filtering in the query (rather than hiding rows
+    // in the UI) keeps the counts on the filter tabs honest. 'not_required' is the
+    // marker the schema uses for "this order has none of these".
+    const stationTrack = ROLE_TRACK[req.user?.role];
+    if (stationTrack) {
+      query[trackStatusField(stationTrack)] = { $ne: 'not_required' };
+    }
+
     const orders = await Order.find(query)
       .populate('table', 'tableNumber tableName')
       .sort({ createdAt: -1 });
 
+    // Same order document for everyone — only the item list is narrowed to the
+    // caller's station. totalAmount, the order number and the payment fields are
+    // untouched, so this can never double-count revenue or duplicate an order.
+    const scoped = stationTrack
+      ? orders.map((order) => {
+          const trackItems = itemsForTrack(order.items, stationTrack);
+          return {
+            ...order.toObject(),
+            items: trackItems,
+            station: stationTrack,
+            stationStatus: order[trackStatusField(stationTrack)],
+          };
+        })
+      : orders;
+
     return res.json({
       success: true,
-      count: orders.length,
-      data: orders,
+      count: scoped.length,
+      data: scoped,
     });
   } catch (error) {
     next(error);
@@ -314,9 +373,22 @@ const updateOrderStatus = async (req, res, next) => {
       // both read "Pending", only the first write matches. The second finds the
       // document already at "Preparing", matches nothing, and is rejected below
       // instead of silently writing the status a second time.
+      //
+      // The two preparation tracks are raised to match, because this endpoint
+      // predates the split and is still how the admin and the waiter move an
+      // order. Leaving them behind would let an overall status contradict the
+      // food/drink state the kitchen and the barista are working to.
+      const syncedTracks = syncTracksToOverall(order, status);
+
       updatedOrder = await Order.findOneAndUpdate(
         { _id: order._id, status: order.status },
-        { $set: { status } },
+        {
+          $set: {
+            status,
+            foodStatus: syncedTracks.foodStatus,
+            drinkStatus: syncedTracks.drinkStatus,
+          },
+        },
         { new: true },
       );
       
@@ -361,6 +433,158 @@ const updateOrderStatus = async (req, res, next) => {
     return res.json({
       success: true,
       message: `Order status updated to ${updatedOrder.status}`,
+      data: populatedUpdatedOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update ONE preparation track (foodStatus / drinkStatus)
+ * @route   PATCH /api/orders/:id/preparation
+ * @access  Protected (chef -> food, barista -> drink, admin -> both)
+ *
+ * This is the endpoint the chef and the barista use. It is deliberately separate
+ * from PATCH /:id/status, which stays the single overall-status endpoint the admin
+ * and the waiter already use, so no existing workflow changes.
+ *
+ * Authorization is enforced here on the server, not in the UI: `mayUpdateTrack`
+ * reads the role off the verified token, so a barista posting { track: 'food' }
+ * gets a 403 no matter what the client rendered.
+ */
+const updatePreparationStatus = async (req, res, next) => {
+  try {
+    const { track, status } = req.body || {};
+    const role = req.user?.role;
+
+    if (!['food', 'drink'].includes(track)) {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.BAD_REQUEST,
+        message: 'Track must be either food or drink',
+      });
+    }
+
+    if (!ACTIONABLE_TRACK_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.BAD_REQUEST,
+        message: `Invalid preparation status. Allowed values: ${ACTIONABLE_TRACK_STATUSES.join(', ')}`,
+      });
+    }
+
+    // Backend-enforced role/track separation. 403 rather than 400: the caller is
+    // authenticated but is not allowed to touch this half of the order.
+    if (!mayUpdateTrack(role, track)) {
+      return res.status(403).json({
+        success: false,
+        code: ERROR_CODES.AUTH_FORBIDDEN,
+        message:
+          role === 'chef'
+            ? 'Access Denied: Chefs can only update the food preparation status.'
+            : role === 'barista'
+              ? 'Access Denied: Baristas can only update the drink preparation status.'
+              : 'Access Denied: Your role cannot update preparation statuses.',
+      });
+    }
+
+    const field = trackStatusField(track);
+    const order = await Order.findById(req.params.id).populate('table', 'tableNumber tableName');
+
+    if (!order) {
+      return res.status(404).json({ success: false, code: ERROR_CODES.ORDER_NOT_FOUND, message: 'Order not found' });
+    }
+
+    // A cancelled order is closed for good; neither station may reopen it.
+    if (order.status === 'Cancelled') {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.INVALID_STATUS_TRANSITION,
+        message: 'Cannot change the preparation status of a cancelled order.',
+      });
+    }
+
+    const currentTrackStatus = order[field];
+
+    // Nothing for this station to do on this order (e.g. a drink-only order where
+    // the chef calls in). Rejected rather than silently accepted.
+    if (currentTrackStatus === 'not_required') {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.BAD_REQUEST,
+        message: `This order has no ${track} items, so there is nothing to prepare.`,
+      });
+    }
+
+    if (currentTrackStatus === status) {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.INVALID_STATUS_TRANSITION,
+        message: `The ${track} preparation status is already ${status}.`,
+      });
+    }
+
+    if (!isValidTrackTransition(currentTrackStatus, status)) {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.INVALID_STATUS_TRANSITION,
+        message: `Invalid ${track} transition from ${currentTrackStatus} to ${status}. Each track must move forward one step at a time.`,
+      });
+    }
+
+    // Derive the overall status from BOTH tracks before writing, so the single
+    // status the customer, waiter and analytics read can never disagree with the
+    // two preparation tracks.
+    const nextTracks = {
+      foodStatus: track === 'food' ? status : order.foodStatus,
+      drinkStatus: track === 'drink' ? status : order.drinkStatus,
+    };
+    const overallStatus = deriveOverallStatus(nextTracks);
+
+    // Conditional write: the value validated above is part of the filter, so two
+    // simultaneous clicks (or a socket echo landing mid-flight) cannot both apply.
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: order._id, [field]: currentTrackStatus },
+      { $set: { [field]: status, status: overallStatus } },
+      { new: true },
+    );
+
+    if (!updatedOrder) {
+      return res.status(409).json({
+        success: false,
+        code: ERROR_CODES.INVALID_STATUS_TRANSITION,
+        message:
+          'The preparation status changed while this request was in flight. Refresh and try again.',
+      });
+    }
+
+    const populatedUpdatedOrder = await Order.findById(updatedOrder._id)
+      .populate('table', 'tableNumber tableName');
+
+    // Real-time: the customer room and the admin room already receive the whole
+    // order. The station room receives it too, but narrowed to its own items, so
+    // the barista is never handed the kitchen's tickets (and vice versa).
+    try {
+      const io = getIO();
+      io.to(`order_${updatedOrder._id}`).emit('order_status_updated', populatedUpdatedOrder);
+      io.to('admin_room').emit('order_updated', populatedUpdatedOrder);
+
+      if (ROLE_TRACK[role]) {
+        io.to(`${ROLE_TRACK[role]}_room`).emit('order_updated', {
+          ...populatedUpdatedOrder.toObject(),
+          items: itemsForTrack(populatedUpdatedOrder.items, ROLE_TRACK[role]),
+          station: ROLE_TRACK[role],
+          stationStatus: populatedUpdatedOrder[trackStatusField(ROLE_TRACK[role])],
+        });
+      }
+    } catch (socketErr) {
+      console.warn('[Socket Warning]: Could not emit preparation update:', socketErr.message);
+    }
+
+    return res.json({
+      success: true,
+      message: `${track === 'food' ? 'Food' : 'Drink'} preparation status updated to ${status}`,
       data: populatedUpdatedOrder,
     });
   } catch (error) {
@@ -420,5 +644,6 @@ module.exports = {
   getCustomerOrders,
   getOrderById,
   updateOrderStatus,
+  updatePreparationStatus,
   cancelOrder,
 };

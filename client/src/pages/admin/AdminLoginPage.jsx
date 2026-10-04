@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import LabelInput from '../../components/common/LabelInput';
+import { staffHomePath } from '../../utils/staffRoles';
 import { ArrowRight } from 'lucide-react';
 
 const AdminLoginPage = () => {
@@ -25,7 +26,10 @@ const AdminLoginPage = () => {
     setLoading(false);
 
     if (res.success) {
-      navigate('/admin/dashboard');
+      // Send each role to the screen it actually owns. Without this a chef or a
+      // barista would land on /admin/dashboard, be bounced by ProtectedRoute, and
+      // only reach their own screen after a visible redirect.
+      navigate(staffHomePath(res.data?.role));
     } else {
       setErrorMsg(res.message || t('invalid_credentials'));
     }

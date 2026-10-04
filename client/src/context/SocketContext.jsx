@@ -65,6 +65,18 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Join the room for the half of the order this staff member prepares (the chef's
+   * food tickets, the barista's drink tickets). The server derives the room from the
+   * token, so this cannot be used to subscribe to the other station's items.
+   */
+  const joinStationRoom = () => {
+    const token = localStorage.getItem('cafe_admin_token');
+    if (socket && connected && token) {
+      socket.emit('join_station_room', token);
+    }
+  };
+
   const joinOrderRoom = (orderId) => {
     if (socket && connected && orderId) {
       socket.emit('join_order_room', orderId);
@@ -77,6 +89,7 @@ export const SocketProvider = ({ children }) => {
         socket,
         connected,
         joinAdminRoom,
+        joinStationRoom,
         joinOrderRoom,
         playNotificationSound,
         playWaiterNotificationSound,

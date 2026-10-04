@@ -32,7 +32,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
       path: `${basePath}/orders`,
       label: t("order_management"),
       icon: ClipboardList,
-      roles: ['super_admin', 'admin', 'chef', 'waiter'],
+      roles: ['super_admin', 'admin', 'chef', 'waiter', 'barista'],
     },
     {
       path: "/admin/foods",
@@ -49,7 +49,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     },
     { path: "/admin/tables", label: t("table_management"), icon: QrCode, roles: ['super_admin', 'admin'] },
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3, roles: ['super_admin', 'admin'] },
-    { path: `${basePath}/profile`, label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter'] },
+    { path: `${basePath}/profile`, label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter', 'barista'] },
     { path: "/admin/staff", label: t("staff_management"), icon: Users, roles: ['super_admin', 'admin'] },
     { path: "/admin/settings", label: t("settings_title"), icon: Settings, roles: ['super_admin', 'admin'] },
     { path: "/admin/devices", label: t("admin_page_devices"), icon: MonitorSmartphone, roles: ['super_admin', 'admin'] },
@@ -83,10 +83,10 @@ const AdminSidebar = ({ isOpen, onClose }) => {
             />
             <div className="md:hidden lg:block">
               <h2 className="font-display text-sm font-bold tracking-tight text-white">
-                {role === 'chef' ? t('admin_sidebar_title_chef') : role === 'waiter' ? t('admin_sidebar_title_waiter') : t("admin_sidebar_title")}
+                {role === 'chef' ? t('admin_sidebar_title_chef') : role === 'barista' ? t('admin_sidebar_title_barista') : role === 'waiter' ? t('admin_sidebar_title_waiter') : t("admin_sidebar_title")}
               </h2>
               <p className="text-[10px] text-cafe-300 uppercase tracking-wider font-semibold">
-                {role === 'chef' ? t('kitchen_portal') : role === 'waiter' ? t('service_portal') : t("management_portal")}
+                {role === 'chef' ? t('kitchen_portal') : role === 'barista' ? t('barista_portal') : role === 'waiter' ? t('service_portal') : t("management_portal")}
               </p>
             </div>
           </div>

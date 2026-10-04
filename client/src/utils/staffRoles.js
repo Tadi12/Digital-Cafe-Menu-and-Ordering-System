@@ -13,6 +13,19 @@ const STAFF_ROLE_LABEL_KEYS = {
   admin: 'role_admin',
   chef: 'role_chef',
   waiter: 'role_waiter',
+  barista: 'role_barista',
+};
+
+/**
+ * Which half of a shared order each preparation role works on.
+ *
+ * Mirrors ROLE_TRACK in server/utils/orderStatus.js, which is what actually
+ * enforces the rule on the API. The client copy exists only so the UI can decide
+ * what to render — never to decide what is permitted.
+ */
+const ROLE_TRACK = {
+  chef: 'food',
+  barista: 'drink',
 };
 
 /** @returns the translation key for a role, or null when it is not recognised. */
@@ -50,6 +63,7 @@ export const staffProfileTitle = (role, t) =>
  */
 const staffBasePath = (role) => {
   if (role === 'chef') return '/chef';
+  if (role === 'barista') return '/barista';
   if (role === 'waiter') return '/waiter';
   return '/admin';
 };
@@ -64,5 +78,43 @@ const staffBasePath = (role) => {
  */
 const isFloorStaffRole = (role) => role === 'waiter' || role === 'admin' || role === 'super_admin';
 
-export { STAFF_ROLE_LABEL_KEYS, staffBasePath, isFloorStaffRole };
+/**
+ * The preparation track a role owns ('food' / 'drink'), or null for roles that
+ * see the whole order. A chef or barista only ever sees their own half; an admin,
+ * a waiter or a customer sees everything.
+ *
+ * @param {string} role stored role value
+ * @returns {'food'|'drink'|null}
+ */
+const roleTrack = (role) => ROLE_TRACK[role] || null;
+
+/**
+ * Where a role should land straight after logging in.
+ *
+ * The kitchen roles (chef, barista) work a ticket queue and have no dashboard, so
+ * they go straight to their orders screen; the floor and management roles keep the
+ * dashboard they have always opened on.
+ *
+ * @param {string} role stored role value
+ * @returns {string} an absolute route
+ */
+const staffHomePath = (role) => {
+  if (role === 'chef') return '/chef/orders';
+  if (role === 'barista') return '/barista/orders';
+  if (role === 'waiter') return '/waiter/dashboard';
+  return '/admin/dashboard';
+};
+
+/** @returns {boolean} true when the role prepares one half of a shared order. */
+const isStationRole = (role) => Boolean(ROLE_TRACK[role]);
+
+export {
+  STAFF_ROLE_LABEL_KEYS,
+  ROLE_TRACK,
+  staffBasePath,
+  staffHomePath,
+  isFloorStaffRole,
+  roleTrack,
+  isStationRole,
+};
 export default staffRoleLabel;

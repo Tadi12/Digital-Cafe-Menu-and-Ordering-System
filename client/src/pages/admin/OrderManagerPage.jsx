@@ -4,12 +4,12 @@ import { useSocket } from "../../hooks/useSocket";
 import { useAuth } from "../../hooks/useAuth";
 import { useSoundEnabled } from "../../hooks/useSoundEnabled";
 import { getOrdersApi } from "../../api/orderApi";
-import { useOrderStatusActions } from "../../hooks/useOrderStatusActions";
+import { useOrderStatusActions, usePreparationStatusActions } from "../../hooks/useOrderStatusActions";
 import OrderCard from "../../components/admin/OrderCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { Search, Volume2, VolumeX, Bell, CheckCircle, Hand } from "lucide-react";
 import { orderStatusLabel } from '../../utils/orderStatus';
-import { isFloorStaffRole } from '../../utils/staffRoles';
+import { isFloorStaffRole, isStationRole } from '../../utils/staffRoles';
 
 const ALERT_VISIBLE_MS = 6000;
 
@@ -32,7 +32,7 @@ const orderLabel = (order) =>
 const OrderManagerPage = () => {
   const { t } = useTranslation();
   const { admin } = useAuth();
-  const { socket, joinAdminRoom, playNotificationSound } = useSocket();
+  const { socket, joinAdminRoom, joinStationRoom, playNotificationSound } = useSocket();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
 
   const [orders, setOrders] = useState([]);
@@ -48,6 +48,10 @@ const OrderManagerPage = () => {
   const statusRef = useRef({});
 
   const isFloorStaff = isFloorStaffRole(admin?.role);
+  // True for a chef or a barista: the API returns only that station's items and
+  // the page must therefore use the per-track status button instead of the single
+  // overall-status one.
+  const stationOnly = isStationRole(admin?.role);
 
   const fetchOrders = async () => {
     try {
@@ -88,12 +92,31 @@ const OrderManagerPage = () => {
 
   // Socket.IO Room setup & event listeners
   useEffect(() => {
-    joinAdminRoom();
+    // A chef or a barista joins the room for the half of the order they prepare, so
+    // the socket delivers only their items. Everyone else keeps the full admin
+    // feed exactly as before.
+    if (stationOnly) {
+      joinStationRoom();
+    } else {
+      joinAdminRoom();
+    }
 
     if (socket) {
+      // Guard against a stale row: an echo for an order this station has no items
+      // for (or that is no longer in the current filter) is ignored rather than
+      // appended as a card with nothing in it.
+      const applyIncoming = (incoming) => {
+        if (stationOnly && !(incoming.items || []).length) return;
+        statusRef.current[incoming._id] = incoming.status;
+        setOrders((prev) =>
+          prev.some((ord) => ord._id === incoming._id)
+            ? prev.map((ord) => (ord._id === incoming._id ? incoming : ord))
+            : [incoming, ...prev],
+        );
+      };
+
       const handleNewOrder = (newOrder) => {
-        statusRef.current[newOrder._id] = newOrder.status;
-        setOrders((prev) => [newOrder, ...prev]);
+        applyIncoming(newOrder);
         showAlert(
           'new',
           t('new_order_placed', {
@@ -163,7 +186,7 @@ const OrderManagerPage = () => {
         socket.off("waiter_called", handleWaiterCalled);
       };
     }
-  }, [socket, soundEnabled, isFloorStaff, joinAdminRoom, playNotificationSound, showAlert, t]);
+  }, [socket, soundEnabled, isFloorStaff, stationOnly, joinAdminRoom, joinStationRoom, playNotificationSound, showAlert, t]);
 
   // Replace the order in place once the server has confirmed the new status.
   // Keyed by _id so several orders can be updated independently.
@@ -180,6 +203,14 @@ const OrderManagerPage = () => {
     succeededStatus,
     pendingTarget,
   } = useOrderStatusActions(applyUpdatedOrder);
+
+  // The same guarantees, scoped to the chef's / barista's own preparation track.
+  const {
+    updatePreparation,
+    pendingPreparation,
+    succeededPreparation,
+    pendingPreparationTarget,
+  } = usePreparationStatusActions(applyUpdatedOrder);
 
   // The access-denied modal is no longer raised here — a failed status change
   // surfaces as a toast from the hook, which keeps the button usable for a retry.
@@ -309,6 +340,9 @@ const OrderManagerPage = () => {
                 onUpdateStatus={updateStatus}
                 pendingTarget={pendingTarget(order._id)}
                 succeededStatus={succeededStatus[order._id]}
+                onUpdatePreparation={updatePreparation}
+                pendingPreparationTarget={pendingPreparationTarget(order._id)}
+                succeededPreparation={succeededPreparation[order._id]}
               />
             ))
           )}

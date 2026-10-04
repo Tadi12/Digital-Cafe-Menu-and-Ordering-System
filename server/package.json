@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node utils/seedData.js"
+    "seed": "node utils/seedData.js",
+    "migrate:barista": "node utils/migrateBarista.js",
+    "test:barista": "node utils/orderStatus.test.js"
   },
   "dependencies": {
     "axios": "^1.20.0",

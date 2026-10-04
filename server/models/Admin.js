@@ -25,7 +25,8 @@ const adminSchema = new mongoose.Schema(
     role: {
       type: String,
       default: 'super_admin',
-      enum: ['super_admin', 'admin', 'waiter', 'chef'],
+      // 'barista' prepares the drink half of an order; see utils/orderStatus.js.
+      enum: ['super_admin', 'admin', 'waiter', 'chef', 'barista'],
     },
   },
   {

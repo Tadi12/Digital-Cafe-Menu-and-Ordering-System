@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { updateOrderStatusApi } from '../api/orderApi';
+import { updateOrderStatusApi, updatePreparationStatusApi } from '../api/orderApi';
 import { resolveApiError } from '../utils/apiError';
 
 /** How long the success state stays on the button before the card re-renders. */
@@ -101,6 +101,94 @@ const useOrderStatusActions = (onOrderUpdated) => {
       [pendingStatus],
     ),
     pendingTarget: useCallback((orderId) => pendingStatus[orderId], [pendingStatus]),
+  };
+};
+
+/**
+ * Drives the chef's and the barista's per-track status buttons.
+ *
+ * Identical guarantees to the hook above, applied to a single preparation track:
+ * a synchronous per-order lock blocks double clicks, the button is disabled while
+ * the PATCH is open, the card only changes once the server confirms, and a failure
+ * leaves the card exactly as it was with a toast explaining why.
+ *
+ * The lock is per order rather than per track because one screen only ever owns one
+ * track — a chef cannot have the barista's drink button on the same card.
+ *
+ * @param {Function} onOrderUpdated receives the updated order from the API
+ */
+export const usePreparationStatusActions = (onOrderUpdated) => {
+  const { t } = useTranslation();
+  const [pendingStatus, setPendingStatus] = useState({});
+  const [succeededStatus, setSucceededStatus] = useState({});
+  const lockedRef = useRef({});
+  const timersRef = useRef({});
+  const onOrderUpdatedRef = useRef(onOrderUpdated);
+
+  useEffect(() => {
+    onOrderUpdatedRef.current = onOrderUpdated;
+  }, [onOrderUpdated]);
+
+  useEffect(
+    () => () => {
+      Object.values(timersRef.current).forEach((timer) =>
+        window.clearTimeout(timer),
+      );
+    },
+    [],
+  );
+
+  const clearKey = useCallback((setter, orderId) => {
+    setter((prev) => {
+      if (!(orderId in prev)) return prev;
+      const next = { ...prev };
+      delete next[orderId];
+      return next;
+    });
+  }, []);
+
+  const updatePreparation = useCallback(
+    async (orderId, track, nextStatus) => {
+      if (lockedRef.current[orderId]) return;
+      lockedRef.current[orderId] = true;
+
+      setPendingStatus((prev) => ({ ...prev, [orderId]: nextStatus }));
+      clearKey(setSucceededStatus, orderId);
+
+      try {
+        const res = await updatePreparationStatusApi(orderId, {
+          track,
+          status: nextStatus,
+        });
+        if (!res?.success) {
+          throw new Error(res?.message || 'Status update was rejected');
+        }
+
+        onOrderUpdatedRef.current?.(res.data);
+        setSucceededStatus((prev) => ({ ...prev, [orderId]: nextStatus }));
+
+        const timer = window.setTimeout(() => {
+          timersRef.current[orderId] = null;
+          clearKey(setSucceededStatus, orderId);
+        }, SUCCESS_VISIBLE_MS);
+        timersRef.current[orderId] = timer;
+      } catch (err) {
+        // Previous state is restored because the card was never optimistically
+        // updated; only the toast reports the failure.
+        toast.error(resolveApiError(err, t, 'failed_update_order'));
+      } finally {
+        lockedRef.current[orderId] = false;
+        clearKey(setPendingStatus, orderId);
+      }
+    },
+    [clearKey, t],
+  );
+
+  return {
+    updatePreparation,
+    pendingPreparation: pendingStatus,
+    succeededPreparation: succeededStatus,
+    pendingPreparationTarget: useCallback((orderId) => pendingStatus[orderId], [pendingStatus]),
   };
 };
 

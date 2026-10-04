@@ -5,9 +5,9 @@ import { useSocket } from '../../hooks/useSocket';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 import ThemeToggle from '../common/ThemeToggle';
-import { Bell, CheckCheck, ClipboardList, Menu, Radio, Volume2, VolumeX, X } from 'lucide-react';
+import { Bell, CheckCheck, ClipboardList, Menu, Radio, X } from 'lucide-react';
 import { useSoundEnabled } from '../../hooks/useSoundEnabled';
-import { staffBasePath, isFloorStaffRole } from '../../utils/staffRoles';
+import { staffBasePath, isFloorStaffRole, isStationRole } from '../../utils/staffRoles';
 
 const MAX_NOTIFICATIONS = 30;
 
@@ -121,7 +121,7 @@ const getNotificationDetails = (order, type, t, extraData) => {
 
 const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   const { admin } = useAuth();
-  const { socket, connected, playWaiterNotificationSound } = useSocket();
+  const { socket, connected, joinStationRoom, playWaiterNotificationSound } = useSocket();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -131,12 +131,13 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   );
   const notificationsRef = useRef(null);
 
-  // The floor alerts only mean something to someone who can act on them, and
-  // the mute switch is shared with the order screen through localStorage.
+  // The floor alerts only mean something to someone who can act on them. The
+  // mute button itself lives on the order screen, so this only reads the shared
+  // preference — muting there silences these alerts too, without a reload.
   const role = admin?.role;
   const hearsFloorAlerts = isFloorStaffRole(role);
   const ordersPath = `${staffBasePath(role)}/orders`;
-  const [soundEnabled, setSoundEnabled] = useSoundEnabled();
+  const [soundEnabled] = useSoundEnabled();
 
   // The socket has no "transitioned to Ready" event — it just re-sends the whole
   // order — so the previous status is tracked here to fire the call once per
@@ -210,7 +211,14 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
     socket.on('order_updated', handleOrderUpdated);
     socket.on('order_cancelled', handleOrderCancelled);
     socket.on('waiter_called', handleWaiterCalled);
-    socket.emit('join_admin_room');
+    // A chef or a barista subscribes to the room for the half of the order they
+    // prepare, so the bell does not alert them about tickets they cannot act on.
+    // Everyone else keeps the full admin feed exactly as before.
+    if (isStationRole(role)) {
+      joinStationRoom();
+    } else {
+      socket.emit('join_admin_room');
+    }
 
     return () => {
       socket.off('new_order', handleNewOrder);
@@ -218,7 +226,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
       socket.off('order_cancelled', handleOrderCancelled);
       socket.off('waiter_called', handleWaiterCalled);
     };
-  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled]);
+  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled, role, joinStationRoom]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;
@@ -281,27 +289,6 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
             />
             <span>{connected ? "Live Sync" : "Offline"}</span>
           </div>
-
-          {/* Alert Sound Toggle — the waiter call sound is played by this
-              navbar, so the mute has to live here too, not only on the order
-              screen, or a waiter on the dashboard would have no way to stop it. */}
-          <button
-            type="button"
-            onClick={() => setSoundEnabled((prev) => !prev)}
-            aria-pressed={soundEnabled}
-            title={soundEnabled ? t('sound_alert_enabled') : t('sound_alert_muted')}
-            className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-              soundEnabled
-                ? 'text-cafe-700 hover:bg-cafe-100 dark:text-recipe-text dark:hover:bg-recipe-cardHover'
-                : 'text-cafe-300 hover:bg-cafe-100 dark:text-recipe-muted/60 dark:hover:bg-recipe-cardHover'
-            }`}
-          >
-            {soundEnabled ? (
-              <Volume2 className="h-5 w-5" />
-            ) : (
-              <VolumeX className="h-5 w-5" />
-            )}
-          </button>
 
           <div className="relative" ref={notificationsRef}>
             <button

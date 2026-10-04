@@ -1,9 +1,9 @@
 /**
  * Persisted on/off switch for the staff notification sounds.
  *
- * Both the order screen and the top navbar own a mute button, so the choice is
- * written to localStorage and announced on a window event: muting on the orders
- * screen silences the alerts on the dashboard too, without a reload.
+ * The order screen owns the mute button, so the choice is written to
+ * localStorage and announced on a window event: muting on the orders screen
+ * silences the alerts the navbar plays on the dashboard too, without a reload.
  */
 
 export const SOUND_ENABLED_KEY = 'cafe_order_sound_enabled';
