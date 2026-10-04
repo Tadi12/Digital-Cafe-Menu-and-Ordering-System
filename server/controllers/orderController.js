@@ -23,6 +23,7 @@ const {
 const {
   getAssignedTableIds,
   tableOwnershipFilter,
+  buildTableOrdersQuery,
   isTableOwnedByUser,
   forbiddenOwnership,
   ACTIVE_ORDER_STATUSES,
@@ -379,11 +380,16 @@ const getTableOrders = async (req, res, next) => {
       return res.status(status).json(body);
     }
 
+    // Filter on THIS table only.
+    //
+    // The waiter-level filter (which tables may I see at all?) and the table-level
+    // filter (which table is this request about?) are two different things, and
+    // they must not be merged into one. Doing so previously replaced the
+    // single-table filter with the waiter's full assigned list, so every table card
+    // rendered the waiter's whole order history. buildTableOrdersQuery intersects
+    // them so the table filter can only narrow, never widen.
     const assignedTableIds = await getAssignedTableIds(req.user);
-    const query = { table: table._id };
-    if (assignedTableIds !== null) {
-      Object.assign(query, tableOwnershipFilter(req.user, assignedTableIds));
-    }
+    const query = buildTableOrdersQuery(req.user, table._id, assignedTableIds);
 
     const orders = await Order.find(query)
       .populate('table', 'tableNumber tableName')

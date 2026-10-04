@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { LanguageContext } from '../../context/LanguageContext';
 import { getMyTablesApi, getTableOrdersApi } from '../../api/orderApi';
+import { useAuth } from '../../hooks/useAuth';
+import { useSocket } from '../../hooks/useSocket';
 import OrderStatusBadge from '../../components/customer/OrderStatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { UtensilsCrossed, Coffee, ChevronDown, Clock, Inbox } from 'lucide-react';
@@ -21,9 +23,46 @@ import { resolveApiError } from '../../utils/apiError';
  *     answers 403 for a table that is not this waiter's — so editing a URL or a
  *     request id gets a refusal, not somebody else's orders.
  */
+/**
+ * The table id an order points at, as a plain string.
+ *
+ * `order.table` arrives either as a bare ObjectId (unpopulated) or as a populated
+ * `{ _id, tableNumber, tableName }` document, and the two are never `===`.
+ * Normalising here is what keeps the comparison in `ordersForTable` honest.
+ *
+ * @param {object} order
+ * @returns {string} '' when the order has no table reference at all
+ */
+const orderTableId = (order) => {
+  const table = order?.table;
+  if (!table) return '';
+  return String(table._id ?? table);
+};
+
+/**
+ * The orders that belong to ONE table, and only that table.
+ *
+ * This is the display-level counterpart to the server's per-table query, and it
+ * matters for a second reason: each table computes its own list from the shared
+ * cache rather than being handed a pre-grouped object. A cached list can therefore
+ * never leak from one card into another — the failure mode where every card showed
+ * the same order history.
+ *
+ * @param {Record<string, Array>} tableOrders cache keyed by table id
+ * @param {object} table
+ * @returns {Array} only this table's orders
+ */
+const ordersForTable = (tableOrders, table) => {
+  const wanted = String(table?._id ?? '');
+  const cached = tableOrders[wanted] || [];
+  return cached.filter((order) => orderTableId(order) === wanted);
+};
+
 const WaiterTablesPanel = () => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
+  const { admin } = useAuth();
+  const role = admin?.role;
 
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +120,36 @@ const WaiterTablesPanel = () => {
     }
   };
 
+  // Live updates for THIS waiter's tables.
+  //
+  // An incoming order is filed under the table id IT carries, never under every
+  // table the waiter owns — so a chef marking Table 1's food ready updates only
+  // Table 1's card. Replacing by `order._id` also means a repeated push updates in
+  // place instead of appending a duplicate row.
+  const { socket, connected, joinWaiterRoom } = useSocket();
+
+  useEffect(() => {
+    if (role !== 'waiter') return undefined;
+
+    joinWaiterRoom();
+    if (!socket) return undefined;
+
+    const handleOrderUpdated = (incoming) => {
+      const tableId = orderTableId(incoming);
+      if (!tableId) return;
+
+      setTableOrders((prev) => {
+        const existing = prev[tableId] || [];
+        const without = existing.filter((order) => order._id !== incoming._id);
+        // Newest first, matching the server's own sort order.
+        return { ...prev, [tableId]: [incoming, ...without] };
+      });
+    };
+
+    socket.on('order_updated', handleOrderUpdated);
+    return () => socket.off('order_updated', handleOrderUpdated);
+  }, [socket, connected, role, joinWaiterRoom]);
+
   if (loading) return <LoadingSpinner message={t('loading_my_tables')} />;
 
   if (error) {
@@ -105,7 +174,9 @@ const WaiterTablesPanel = () => {
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
       {tables.map((table) => {
         const isOpen = expandedId === table._id;
-        const orders = tableOrders[table._id] || [];
+        // Each card derives its OWN list from the shared cache. Never read the
+        // cache entry raw: that is how one table's orders end up on another card.
+        const orders = ordersForTable(tableOrders, table);
         const hasActive = (table.activeOrderCount || 0) > 0;
 
         return (

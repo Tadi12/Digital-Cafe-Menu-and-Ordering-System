@@ -45,13 +45,10 @@ const isTableOwnedByUser = (user, table) => {
   if (!isWaiter(user)) return false;
   if (!table?.assignedWaiter) return false;
 
-  const ownerId =
-    typeof table.assignedWaiter === 'object'
-      ? table.assignedWaiter._id
-      : table.assignedWaiter;
+  const ownerId = idOf(table.assignedWaiter);
   if (!ownerId) return false;
 
-  return String(ownerId) === String(user._id);
+  return ownerId === idOf(user._id);
 };
 
 /**
@@ -87,6 +84,58 @@ const tableOwnershipFilter = (user, tableIds) => {
 };
 
 /**
+ * Reduce any of the shapes an id can arrive in to a comparable string.
+ *
+ * A table id may be a bare ObjectId, an ObjectId-like object, or a string, and a
+ * populated `assignedWaiter`/`table` arrives as a whole document. Comparing with
+ * `===` on those would silently fail, so every id comparison in this module goes
+ * through here.
+ *
+ * @param {*} value
+ * @returns {string|null}
+ */
+const idOf = (value) => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'object' && value._id) return String(value._id);
+  return String(value);
+};
+
+/**
+ * Build the query for "the orders on THIS table".
+ *
+ * This exists as a named, tested helper because of a real bug: the per-table
+ * endpoint used to start from `{ table: table._id }` and then `Object.assign` the
+ * waiter's assigned-table list on top of it, which overwrote the single-table
+ * filter with `{ table: { $in: [all my tables] } }`. Every table card then rendered
+ * the waiter's entire order history. Two levels of filtering are being combined
+ * here and they must never be conflated:
+ *
+ *   assignedTableIds  -> WHICH TABLES this waiter may access at all
+ *   tableId           -> WHICH of those tables this request is about
+ *
+ * The result always names exactly one table, so the second level can only ever
+ * narrow the first. If the table is somehow not in the caller's assigned list the
+ * intersection is empty and the query matches nothing: it fails closed rather than
+ * silently widening.
+ *
+ * @param {object} user             authenticated staff member
+ * @param {string} tableId          the single table this request is about
+ * @param {Array|null} assignedTableIds from getAssignedTableIds (null = unrestricted)
+ * @returns {object} a Mongo filter
+ */
+const buildTableOrdersQuery = (user, tableId, assignedTableIds) => {
+  // An oversight role may view any table, but this endpoint is still about ONE
+  // table, so the filter stays single-table for every role.
+  if (assignedTableIds === null) return { table: tableId };
+
+  const wanted = idOf(tableId);
+  // Both sides are normalised to plain id strings before intersecting, so the
+  // `$in` list only ever contains comparable values and never a stray document.
+  const mine = assignedTableIds.map(idOf).filter((id) => id === wanted);
+  return { table: { $in: mine } };
+};
+
+/**
  * The standard 403 payload for a waiter reaching outside their own tables.
  *
  * Deliberately does not confirm whether the table or order exists.
@@ -105,10 +154,12 @@ const forbiddenOwnership = () => ({
 module.exports = {
   OVERSIGHT_ROLES,
   ACTIVE_ORDER_STATUSES,
+  idOf,
   isWaiter,
   hasFullTableAccess,
   isTableOwnedByUser,
   getAssignedTableIds,
   tableOwnershipFilter,
+  buildTableOrdersQuery,
   forbiddenOwnership,
 };
