@@ -14,7 +14,7 @@ const {
 const { protectAdmin, attachAdminIfAuthenticated } = require('../middleware/authMiddleware');
 const { requirePinAccess } = require('../middleware/pinAccessMiddleware');
 const validate = require('../middleware/validateMiddleware');
-const { createOrderSchema, updateOrderStatusSchema } = require('../validations/order.schema');
+const { createOrderSchema, updateOrderStatusSchema, updatePreparationSchema } = require('../validations/order.schema');
 
 router
   .route('/')
@@ -30,11 +30,18 @@ router.get('/waiter/tables', protectAdmin, getWaiterTables);
 router.get('/waiter/tables/:tableId/orders', protectAdmin, getTableOrders);
 
 router.get('/:id', attachAdminIfAuthenticated, requirePinAccess, getOrderById);
+
+// The FINAL customer order status. Reserved for the waiter and the admin: the
+// controller answers 403 to a chef or a barista here, and refuses to complete an
+// order while either preparation track is unfinished.
 router.patch('/:id/status', protectAdmin, validate(updateOrderStatusSchema), updateOrderStatus);
-// Preparation track endpoint for the chef and the barista. The role check lives in
-// the controller (it has to distinguish food from drink), so this route only needs
-// the same protectAdmin every other staff route uses.
-router.patch('/:id/preparation', protectAdmin, updatePreparationStatus);
+
+// PREPARATION tracks. Each station has its own named endpoint, and the track is
+// taken from the URL, so the kitchen cannot widen its reach through the body.
+// The generic /preparation form keeps the original body-based contract working.
+router.patch('/:id/:trackSegment(food-status|drink-status)', protectAdmin, validate(updatePreparationSchema), updatePreparationStatus);
+router.patch('/:id/preparation', protectAdmin, validate(updatePreparationSchema), updatePreparationStatus);
+
 router.patch('/:id/cancel', requirePinAccess, cancelOrder);
 
 module.exports = router;

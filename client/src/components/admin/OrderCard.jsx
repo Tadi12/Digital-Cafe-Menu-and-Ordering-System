@@ -11,8 +11,11 @@ import {
   paymentMethodLabel,
   paymentStatusLabel,
   preparationStatusLabel,
+  canCompleteOrder,
+  pendingPreparationTrack,
 } from '../../utils/orderStatus';
 import { roleTrack, isStationRole } from '../../utils/staffRoles';
+import PreparationProgress from './PreparationProgress';
 
 const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUpdatePreparation, pendingPreparationTarget, succeededPreparation }) => {
   const { t } = useTranslation();
@@ -25,6 +28,9 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUp
   // is a display concern only — it never decides what they may change.
   const track = roleTrack(role);
   const stationOnly = isStationRole(role);
+  // A waiter delivers: they see both preparation tracks and own the final
+  // "Mark Order Completed" step, so they get the combined progress panel.
+  const isWaiterRole = role === 'waiter';
 
   const formattedTime = new Date(order.createdAt).toLocaleTimeString([], {
     hour: '2-digit',
@@ -135,13 +141,26 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUp
             succeededStatus={succeededPreparation}
           />
         ) : (
-          <OrderStatusActionButton
-            order={order}
-            role={role}
-            onUpdate={onUpdateStatus}
-            pendingTarget={pendingTarget}
-            succeededStatus={succeededStatus}
-          />
+          <>
+            {/* The waiter sees BOTH halves separately so it is obvious which
+                station still owes them something, plus a completion action that
+                only appears once every required track says ready. */}
+            {isWaiterRole && (
+              <PreparationProgress
+                order={order}
+                onUpdate={onUpdateStatus}
+                pendingTarget={pendingTarget}
+                succeededStatus={succeededStatus}
+              />
+            )}
+            <OrderStatusActionButton
+              order={order}
+              role={role}
+              onUpdate={onUpdateStatus}
+              pendingTarget={pendingTarget}
+              succeededStatus={succeededStatus}
+            />
+          </>
         )}
       </div>
     </div>

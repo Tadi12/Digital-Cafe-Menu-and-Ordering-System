@@ -51,13 +51,16 @@ export const paymentMethodLabel = (method, t) => {
 };
 
 /**
- * The admin/kitchen order-status flow, in one place.
+ * The FINAL customer order status flow, in one place.
  *
- * Each entry owns the *next* status a click will request, the copy shown while
- * that request is in flight, and which roles are allowed to make it. Keeping
- * this beside the label helpers means the buttons, the loading copy and the
- * role rules can never drift apart — the card used to hard-code all three in
- * three separate branches.
+ * This is the overall order, not a preparation track. Preparation moves on its own
+ * tracks (PREPARATION_FLOW, driven by the chef and the barista); this flow is the
+ * floor's: getting an order onto the table and closing it.
+ *
+ * The chef and the barista are absent from every `roles` list. They used to appear
+ * here for the Preparing/Ready steps, back when one field covered both jobs; now
+ * that preparation has its own endpoint the API answers 403 to them here, so
+ * offering the button would only produce a guaranteed failure.
  *
  * `waitingKey` is the passive message shown to a role that cannot act yet.
  */
@@ -68,7 +71,7 @@ const ORDER_STATUS_FLOW = {
     loadingKey: 'preparing_action_loading',
     successKey: 'status_preparing',
     waitingKey: 'waiting_for_kitchen',
-    roles: ['admin', 'super_admin', 'chef'],
+    roles: ['admin', 'super_admin'],
     classes: 'bg-gold-500 hover:bg-cafe-900',
   },
   Preparing: {
@@ -77,7 +80,7 @@ const ORDER_STATUS_FLOW = {
     loadingKey: 'marking_ready_loading',
     successKey: 'status_ready',
     waitingKey: 'cooking_in_progress',
-    roles: ['admin', 'super_admin', 'chef'],
+    roles: ['admin', 'super_admin'],
     classes: 'bg-emerald-600 hover:bg-emerald-700',
   },
   Ready: {
@@ -101,12 +104,15 @@ export const canAdvanceOrderStatus = (status, role) =>
 /**
  * The per-station preparation flow, in one place.
  *
+ * Preparation is pending -> preparing -> ready and STOPS there. There is
+ * deliberately no `ready` entry: the kitchen's job ends at ready, so a chef or a
+ * barista is never offered a "complete" action. Closing the customer order is a
+ * separate, floor-side action — see ORDER_STATUS_FLOW.
+ *
  * Mirrors TRACK_TRANSITIONS in server/utils/orderStatus.js, which is what the API
  * actually enforces. This copy exists so the button can label itself, but the
- * server is the authority — an out-of-order click is refused there, not here.
- *
- * `waitingKey` is the passive copy shown while the other station still holds the
- * order back, which is what a chef sees when the barista's drinks are not ready.
+ * server is the authority: an out-of-order or over-reaching click is refused
+ * there, not here.
  */
 const PREPARATION_FLOW = {
   pending: {
@@ -114,36 +120,76 @@ const PREPARATION_FLOW = {
     actionKey: 'start_preparing',
     loadingKey: 'preparing_action_loading',
     successKey: 'status_preparing',
-    waitingKey: 'waiting_for_kitchen',
     classes: 'bg-gold-500 hover:bg-cafe-900',
   },
   preparing: {
     next: 'ready',
-    actionKey: 'mark_ready',
     loadingKey: 'marking_ready_loading',
     successKey: 'status_ready',
-    waitingKey: 'cooking_in_progress',
     classes: 'bg-emerald-600 hover:bg-emerald-700',
   },
-  ready: {
-    next: 'completed',
-    actionKey: 'complete_order',
-    loadingKey: 'completing_order_loading',
-    successKey: 'status_completed',
-    waitingKey: 'waiting_for_waiter',
-    classes: 'bg-cafe-800 hover:bg-cafe-900',
+};
+
+/**
+ * Button copy per track, so the chef reads "Mark Food Ready" and the barista reads
+ * "Mark Drink Ready" rather than both seeing the same ambiguous wording.
+ */
+const PREPARATION_ACTION_KEYS = {
+  food: {
+    pending: 'start_preparing',
+    preparing: 'mark_food_ready',
+  },
+  drink: {
+    pending: 'start_preparing',
+    preparing: 'mark_drink_ready',
   },
 };
 
 /** @returns the flow step for a preparation status, or undefined when terminal. */
 export const preparationFlow = (preparationStatus) => PREPARATION_FLOW[preparationStatus];
 
-/** Human copy for a preparation status, reusing the existing status wording. */
+/**
+ * Human copy for a preparation status.
+ *
+ * 'ready' is the kitchen's finished state and reads as "Ready"; 'not_required'
+ * means the order contains none of these items.
+ */
 export const preparationStatusLabel = (preparationStatus, t) => {
   if (preparationStatus === 'not_required') return t('preparation_not_required');
   const key = ORDER_STATUS_KEYS[preparationStatus];
   return key ? t(key) : t('status_unknown');
 };
 
-export { ORDER_STATUS_KEYS, ORDER_STATUS_FLOW, PREPARATION_FLOW };
+/**
+ * Is this order ready to be served — i.e. does every required track say ready?
+ *
+ * Mirrors isReadyForCompletion on the server. Used only to decide whether to draw
+ * the "Mark Order Completed" button; the API re-checks before writing.
+ *
+ * @param {{foodStatus?: string, drinkStatus?: string}} tracks
+ * @returns {boolean}
+ */
+export const canCompleteOrder = (tracks = {}) => {
+  const done = (value) => value === 'not_required' || value === 'ready';
+  return done(tracks.foodStatus) && done(tracks.drinkStatus);
+};
+
+/**
+ * Which half an order is still waiting on, for the waiter's passive message.
+ *
+ * @param {{foodStatus?: string, drinkStatus?: string}} tracks
+ * @returns {'food'|'drink'|null} null when nothing is outstanding
+ */
+export const pendingPreparationTrack = (tracks = {}) => {
+  if (tracks.foodStatus !== 'not_required' && tracks.foodStatus !== 'ready') return 'food';
+  if (tracks.drinkStatus !== 'not_required' && tracks.drinkStatus !== 'ready') return 'drink';
+  return null;
+};
+
+export {
+  ORDER_STATUS_KEYS,
+  ORDER_STATUS_FLOW,
+  PREPARATION_FLOW,
+  PREPARATION_ACTION_KEYS,
+};
 export default orderStatusLabel;

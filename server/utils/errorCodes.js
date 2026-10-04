@@ -43,6 +43,8 @@ const ERROR_CODES = {
   ORDER_NOT_FOUND: 'ORDER_NOT_FOUND',
   INVALID_STATUS_TRANSITION: 'INVALID_STATUS_TRANSITION',
   ORDER_CANCEL_NOT_ALLOWED: 'ORDER_CANCEL_NOT_ALLOWED',
+  // Both preparation tracks must be ready before an order may be served.
+  ORDER_NOT_READY: 'ORDER_NOT_READY',
 
   // ---- Generic ----
   NOT_FOUND: 'NOT_FOUND',

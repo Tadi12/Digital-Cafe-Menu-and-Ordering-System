@@ -2,31 +2,35 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, ChefHat, Check, Ban } from 'lucide-react';
 import ActionButton from './ActionButton';
-import { preparationFlow } from '../../utils/orderStatus';
+import { preparationFlow, preparationStatusLabel, PREPARATION_ACTION_KEYS } from '../../utils/orderStatus';
 
 const FLOW_ICONS = {
   pending: ChefHat,
   preparing: CheckCircle2,
-  ready: Check,
 };
 
 /**
  * The status button for ONE preparation track, used by the chef (food) and the
  * barista (drink).
  *
- * Rendered from PREPARATION_FLOW rather than a chain of branches, which guarantees
- * the rules the flow has to obey:
+ * The rule this component exists to express: a station's job ends at "ready".
  *
- *   - Only the action valid for the *current* track status is offered. A completed
- *     or cancelled order has no flow entry, so it renders a terminal label and no
- *     button — "Mark Ready" can never appear on finished work.
- *   - While the request is open the button shows loading copy, is disabled, and
- *     the parent hook additionally locks the click handler, so a rapid double tap
- *     cannot queue two PATCH requests for the same order.
- *   - On success it shows a check and the new status, so the station sees the
- *     transition land rather than watching the button silently change. On failure
- *     nothing is applied locally, so the previous state stays on screen and only a
- *     toast reports the problem.
+ *   Pending   -> [Start Preparing]
+ *   Preparing -> [Mark Food Ready] / [Mark Drink Ready]
+ *   Ready     -> a passive "Ready" line, and NO button
+ *
+ * There is deliberately no "Mark Completed" action here. Completing the CUSTOMER
+ * order is the waiter's job and happens on a different endpoint; the API also
+ * refuses a 'completed' preparation value, so this button could not offer one even
+ * if it tried.
+ *
+ * Rendered from PREPARATION_FLOW rather than a chain of branches, which guarantees:
+ *   - only the action valid for the current track status is offered;
+ *   - while the request is open the button shows loading copy, is disabled, and the
+ *     parent hook additionally locks the click handler, so a rapid double tap
+ *     cannot queue two PATCH requests for the same order;
+ *   - on failure nothing is applied locally, so the previous state stays on screen
+ *     and only a toast reports the problem.
  *
  * @param {object}   props.order            the (station-scoped) order
  * @param {string}   props.track            'food' | 'drink'
@@ -50,19 +54,34 @@ const PreparationStatusButton = ({
   const currentStatus = order?.stationStatus;
   const flow = preparationFlow(currentStatus);
 
-  // Terminal states: nothing left to press, just the outcome.
+  // Cancelled: nothing to press at all.
+  if (order?.status === 'Cancelled') {
+    return (
+      <div
+        className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-red-600 bg-red-50 ${className}`}
+      >
+        <Ban className="w-4 h-4 shrink-0" aria-hidden="true" />
+        <span className="truncate">{t('order_cancelled_label')}</span>
+      </div>
+    );
+  }
+
+  // 'ready' is the END of this station's work, not a pause before more work. It
+  // gets a passive confirmation and no button — which is what keeps a chef from
+  // ever being offered the final customer-order completion.
   if (!flow) {
-    const cancelled = order?.status === 'Cancelled';
-    const Icon = cancelled ? Ban : Check;
+    const done = currentStatus === 'ready';
     return (
       <div
         className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 ${
-          cancelled ? 'text-red-600 bg-red-50' : 'text-emerald-700 bg-emerald-50'
-        }`}
+          done ? 'text-emerald-700 bg-emerald-50' : 'text-cafe-500 bg-cafe-100'
+        } ${className}`}
       >
-        <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+        <Check className="w-4 h-4 shrink-0" aria-hidden="true" />
         <span className="truncate">
-          {t(cancelled ? 'order_cancelled_label' : 'order_completed_label')}
+          {done
+            ? t('preparation_ready_label')
+            : preparationStatusLabel(currentStatus, t)}
         </span>
       </div>
     );
@@ -71,6 +90,8 @@ const PreparationStatusButton = ({
   // A success still inside its display window: hold the check rather than swapping
   // straight to the next action, so the station sees the result land.
   const justArrived = succeededStatus === currentStatus;
+  const actionKey =
+    PREPARATION_ACTION_KEYS[track]?.[currentStatus] || flow.actionKey;
 
   return (
     <ActionButton
@@ -82,9 +103,9 @@ const PreparationStatusButton = ({
       icon={FLOW_ICONS[currentStatus]}
       disabled={Boolean(pendingTarget)}
       className={`w-full text-white py-2 px-3 rounded-xl font-bold text-xs shadow transition-all duration-150 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 ${flow.classes} ${buttonClassName} ${className}`}
-      aria-label={`${t(flow.actionKey)} - ${order.orderNumber}`}
+      aria-label={`${t(actionKey)} - ${order.orderNumber}`}
     >
-      {t(flow.actionKey)}
+      {t(actionKey)}
     </ActionButton>
   );
 };

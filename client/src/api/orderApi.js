@@ -22,18 +22,30 @@ export const getCustomerOrdersApi = async ({ customerName, customerSessionId } =
   return response.data;
 };
 
+/**
+ * Close the FINAL customer order: `Ready -> Completed`.
+ *
+ * Reserved for the waiter and the admin. The server refuses a chef or a barista
+ * here, and refuses to complete an order while either preparation track is
+ * unfinished.
+ */
 export const updateOrderStatusApi = async (id, statusData) => {
   const response = await axiosClient.patch(`/orders/${id}/status`, statusData);
   return response.data;
 };
 
 /**
- * Move ONE preparation track of an order (food for the chef, drink for the
- * barista). Separate from updateOrderStatusApi, which still sets the single
- * overall status the admin and the waiter use.
+ * Move ONE preparation track of an order: `pending -> preparing -> ready`.
+ *
+ * The chef posts to /food-status and the barista to /drink-status. The track comes
+ * from the URL on purpose, so the endpoint a caller chose is the one that applies
+ * and a crafted body cannot reach the other station. 'completed' is not an
+ * accepted value here at all — closing a customer order is the waiter's job.
  */
 export const updatePreparationStatusApi = async (id, { track, status }) => {
-  const response = await axiosClient.patch(`/orders/${id}/preparation`, { track, status });
+  const response = await axiosClient.patch(`/orders/${id}/${track}-status`, {
+    status,
+  });
   return response.data;
 };
 

@@ -2,7 +2,7 @@ let ioInstance = null;
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 const AdminSession = require('../models/AdminSession');
-const { itemsForTrack, ROLE_TRACK, trackStatusField } = require('../utils/orderStatus');
+const { itemsForTrack, groupItemsByTrack, toStatusPayload, ROLE_TRACK, trackStatusField } = require('../utils/orderStatus');
 
 /**
  * Narrows a shared order to the items one preparation station owns.
@@ -17,6 +17,19 @@ const scopeForStation = (order, track) => ({
   items: itemsForTrack(order.items, track),
   station: track,
   stationStatus: order[trackStatusField(track)],
+});
+
+/**
+ * Shape an order for a socket push.
+ *
+ * Both preparation tracks and the derived overall status travel with EVERY event,
+ * so a waiter watching a combined order sees the chef's and the barista's progress
+ * update together and never has to guess whether it received a partial payload.
+ */
+const toSocketPayload = (order) => ({
+  ...order.toObject(),
+  ...toStatusPayload(order),
+  ...groupItemsByTrack(order.items || []),
 });
 
 /** Room name for one waiter's private order feed. */
@@ -49,7 +62,7 @@ const emitToOrderWaiter = async (order) => {
     const assignedWaiter = table?.assignedWaiter;
     if (!assignedWaiter) return;
 
-    io.to(waiterRoom(assignedWaiter)).emit('order_updated', order);
+    io.to(waiterRoom(assignedWaiter)).emit('order_updated', toSocketPayload(order));
   } catch (error) {
     // A realtime nicety must never break the request that triggered it.
     console.warn('[Socket Warning]: Could not notify order waiter:', error.message);
@@ -175,4 +188,4 @@ const getIO = () => {
   return ioInstance;
 };
 
-module.exports = { initSocket, getIO, scopeForStation, waiterRoom, emitToOrderWaiter };
+module.exports = { initSocket, getIO, scopeForStation, toSocketPayload, waiterRoom, emitToOrderWaiter };

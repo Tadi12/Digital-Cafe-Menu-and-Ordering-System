@@ -2,14 +2,20 @@ const { ERROR_CODES } = require('../utils/errorCodes');
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const Food = require('../models/Food');
-const { getIO, scopeForStation, emitToOrderWaiter } = require('../sockets/socketHandler');
+const { getIO, scopeForStation, toSocketPayload, emitToOrderWaiter } = require('../sockets/socketHandler');
 const {
+  TRACKS,
   initialTrackStatuses,
   deriveOverallStatus,
+  normalizeTrackStatus,
+  maySetFinalStatus,
+  isReadyForCompletion,
   syncTracksToOverall,
   mayUpdateTrack,
   isValidTrackTransition,
   itemsForTrack,
+  groupItemsByTrack,
+  toStatusPayload,
   ROLE_TRACK,
   trackStatusField,
   ACTIONABLE_TRACK_STATUSES,
@@ -23,6 +29,19 @@ const {
 } = require('../utils/tableAssignment');
 
 const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Maps the `:trackSegment` route parameter onto a preparation track.
+ *
+ * The named endpoints (/:id/food-status, /:id/drink-status) are what the chef and
+ * the barista call. Keeping the mapping here means the controller reads the track
+ * from the URL rather than from the request body, so a caller cannot reach the
+ * other station by sending an unexpected `track` value.
+ */
+const TRACK_ROUTE_SEGMENTS = {
+  'food-status': 'food',
+  'drink-status': 'drink',
+};
 
 // Helper to generate readable Order Number (e.g. ORD-7824)
 const generateOrderNumber = () => {
@@ -254,10 +273,19 @@ const getOrders = async (req, res, next) => {
         })
       : orders;
 
+    // Every staff response carries BOTH preparation tracks plus the derived
+    // overall status. A waiter therefore always receives the chef's AND the
+    // barista's progress on a shared order instead of a single flattened value.
+    const data = scoped.map((order) => ({
+      ...order,
+      ...toStatusPayload(order),
+      ...groupItemsByTrack(order.items || []),
+    }));
+
     return res.json({
       success: true,
-      count: scoped.length,
-      data: scoped,
+      count: data.length,
+      data,
     });
   } catch (error) {
     next(error);
@@ -361,11 +389,19 @@ const getTableOrders = async (req, res, next) => {
       .populate('table', 'tableNumber tableName')
       .sort({ createdAt: -1 });
 
+    // Both preparation tracks plus the derived overall, exactly as the main queue
+    // returns them, so the per-table view cannot drift from the order queue.
+    const data = orders.map((order) => ({
+      ...order.toObject(),
+      ...toStatusPayload(order),
+      ...groupItemsByTrack(order.items || []),
+    }));
+
     return res.json({
       success: true,
-      count: orders.length,
+      count: data.length,
       table: table.toStaffJSON(),
-      data: orders,
+      data,
     });
   } catch (error) {
     next(error);
@@ -455,6 +491,24 @@ const updateOrderStatus = async (req, res, next) => {
       return res.status(404).json({ success: false, code: ERROR_CODES.ORDER_NOT_FOUND, message: 'Order not found' });
     }
 
+    const role = req.user?.role;
+
+    // Strict separation of preparation from final completion. A chef or a
+    // barista owns a preparation track, not the customer order, so this endpoint
+    // is closed to them outright rather than partially allowed. That is the
+    // guarantee that a kitchen user can never mark a customer order completed,
+    // however the request was crafted.
+    if (role === 'chef' || role === 'barista') {
+      return res.status(403).json({
+        success: false,
+        code: ERROR_CODES.AUTH_FORBIDDEN,
+        message:
+          role === 'chef'
+            ? 'Access Denied: Chefs update food preparation only (PATCH /api/orders/:id/food-status) and cannot change the final order status.'
+            : 'Access Denied: Baristas update drink preparation only (PATCH /api/orders/:id/drink-status) and cannot change the final order status.',
+      });
+    }
+
     const allowedStatuses = ['Pending', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
     if (status && !allowedStatuses.includes(status)) {
       return res.status(400).json({
@@ -465,16 +519,33 @@ const updateOrderStatus = async (req, res, next) => {
 
     // Business Rule: Validate valid status transition flow (Pending -> Preparing -> Ready -> Completed)
     if (status && status !== order.status) {
-      
-      // Role-Based Status Enforcement
-      const role = req.user.role || 'super_admin';
-      
-      if (role === 'chef' && !['Preparing', 'Ready'].includes(status)) {
-        return res.status(403).json({ success: false, message: 'Access Denied: Chefs can only change status to Preparing or Ready.' });
-      }
-      
+      // A waiter closes a served order; only an oversight role may also drive
+      // the earlier states or cancel.
       if (role === 'waiter' && status !== 'Completed') {
-        return res.status(403).json({ success: false, message: 'Access Denied: Waiters can only change status to Completed.' });
+        return res.status(403).json({
+          success: false,
+          code: ERROR_CODES.AUTH_FORBIDDEN,
+          message: 'Access Denied: Waiters can only complete a served order.',
+        });
+      }
+
+      if (!maySetFinalStatus(role)) {
+        return res.status(403).json({
+          success: false,
+          code: ERROR_CODES.AUTH_FORBIDDEN,
+          message: 'Access Denied: Your role cannot change the order status.',
+        });
+      }
+
+      // An order can only be served once BOTH halves are actually ready. This
+      // is what stops "ready -> completed" from skipping an unfinished drink
+      // track and reporting a half-served order as finished.
+      if (status === 'Completed' && !isReadyForCompletion(order)) {
+        return res.status(400).json({
+          success: false,
+          code: ERROR_CODES.ORDER_NOT_READY,
+          message: `Order cannot be completed until all food and drinks are ready. Food: ${normalizeTrackStatus(order.foodStatus)}, Drinks: ${normalizeTrackStatus(order.drinkStatus)}.`,
+        });
       }
 
       const validTransitions = {
@@ -489,8 +560,7 @@ const updateOrderStatus = async (req, res, next) => {
         return res.status(400).json({
           success: false,
           code: ERROR_CODES.INVALID_STATUS_TRANSITION,
-        code: ERROR_CODES.INVALID_STATUS_TRANSITION,
-        message: `Invalid transition from ${order.status} to ${status}. Transition flow must be Pending → Preparing → Ready → Completed.`,
+          message: `Invalid transition from ${order.status} to ${status}. Transition flow must be Pending → Preparing → Ready → Completed.`,
         });
       }
 
@@ -574,12 +644,18 @@ const updateOrderStatus = async (req, res, next) => {
 
 /**
  * @desc    Update ONE preparation track (foodStatus / drinkStatus)
- * @route   PATCH /api/orders/:id/preparation
+ * @route   PATCH /api/orders/:id/food-status
+ * @route   PATCH /api/orders/:id/drink-status
+ * @route   PATCH /api/orders/:id/preparation   (track in the body)
  * @access  Protected (chef -> food, barista -> drink, admin -> both)
  *
  * This is the endpoint the chef and the barista use. It is deliberately separate
- * from PATCH /:id/status, which stays the single overall-status endpoint the admin
- * and the waiter already use, so no existing workflow changes.
+ * from PATCH /:id/status, which closes the FINAL customer order, so the kitchen can
+ * never complete an order by any route.
+ *
+ * The track comes from the ROUTE when one of the named endpoints is used, falling
+ * back to the body for the generic form. Because the route names the track, a chef
+ * cannot reach the drink track by calling the food endpoint with a crafted body.
  *
  * Authorization is enforced here on the server, not in the UI: `mayUpdateTrack`
  * reads the role off the verified token, so a barista posting { track: 'food' }
@@ -587,10 +663,15 @@ const updateOrderStatus = async (req, res, next) => {
  */
 const updatePreparationStatus = async (req, res, next) => {
   try {
-    const { track, status } = req.body || {};
     const role = req.user?.role;
+    const status = req.body?.status;
 
-    if (!['food', 'drink'].includes(track)) {
+    // The route wins over the body so the endpoint a caller chose cannot be
+    // silently widened by a second track in the payload.
+    const routeTrack = TRACK_ROUTE_SEGMENTS[req.params.trackSegment];
+    const track = routeTrack || req.body?.track;
+
+    if (!TRACKS.includes(track)) {
       return res.status(400).json({
         success: false,
         code: ERROR_CODES.BAD_REQUEST,
@@ -704,7 +785,7 @@ const updatePreparationStatus = async (req, res, next) => {
 
       if (ROLE_TRACK[role]) {
         io.to(`${ROLE_TRACK[role]}_room`).emit('order_updated', {
-          ...populatedUpdatedOrder.toObject(),
+          ...toSocketPayload(populatedUpdatedOrder),
           items: itemsForTrack(populatedUpdatedOrder.items, ROLE_TRACK[role]),
           station: ROLE_TRACK[role],
           stationStatus: populatedUpdatedOrder[trackStatusField(ROLE_TRACK[role])],
