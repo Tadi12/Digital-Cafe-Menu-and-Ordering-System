@@ -5,7 +5,9 @@ import { useSocket } from '../../hooks/useSocket';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 import ThemeToggle from '../common/ThemeToggle';
-import { Bell, CheckCheck, ClipboardList, Menu, Radio, X } from 'lucide-react';
+import { Bell, CheckCheck, ClipboardList, Menu, Radio, Volume2, VolumeX, X } from 'lucide-react';
+import { useSoundEnabled } from '../../hooks/useSoundEnabled';
+import { staffBasePath, isFloorStaffRole } from '../../utils/staffRoles';
 
 const MAX_NOTIFICATIONS = 30;
 
@@ -86,6 +88,15 @@ const getNotificationDetails = (order, type, t, extraData) => {
   const orderNumber = order?.orderNumber || order?._id?.slice(-6) || '';
   const tableNumber = order?.tableNumberSnapshot;
 
+  // A Ready order is the one update that needs the waiter to move, so it gets
+  // its own wording instead of the generic "status changed" line.
+  if (type === 'order_ready') {
+    return {
+      title: t('waiter_order_ready_title'),
+      message: t('waiter_order_ready_msg', { orderNumber, tableNumber }),
+    };
+  }
+
   if (type === 'new') {
     return {
       title: t('admin_notification_new_order'),
@@ -110,7 +121,7 @@ const getNotificationDetails = (order, type, t, extraData) => {
 
 const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   const { admin } = useAuth();
-  const { socket, connected, playNotificationSound } = useSocket();
+  const { socket, connected, playWaiterNotificationSound } = useSocket();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -119,6 +130,18 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
   );
   const notificationsRef = useRef(null);
+
+  // The floor alerts only mean something to someone who can act on them, and
+  // the mute switch is shared with the order screen through localStorage.
+  const role = admin?.role;
+  const hearsFloorAlerts = isFloorStaffRole(role);
+  const ordersPath = `${staffBasePath(role)}/orders`;
+  const [soundEnabled, setSoundEnabled] = useSoundEnabled();
+
+  // The socket has no "transitioned to Ready" event — it just re-sends the whole
+  // order — so the previous status is tracked here to fire the call once per
+  // order rather than on every echo of the same status.
+  const lastStatusRef = useRef({});
 
   // Mobile gets a centered modal dialog; desktop keeps the anchored dropdown.
   useEffect(() => {
@@ -156,12 +179,31 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
       ].slice(0, MAX_NOTIFICATIONS));
     };
     const handleNewOrder = (order) => addNotification(order, 'new');
-    const handleOrderUpdated = (order) => addNotification(order, 'updated');
-    const handleOrderCancelled = (order) => addNotification(order, 'cancelled');
+
+    const handleOrderUpdated = (order) => {
+      const previousStatus = lastStatusRef.current[order?._id];
+      lastStatusRef.current[order?._id] = order?.status;
+
+      // Only the Preparing -> Ready crossing calls the waiter; re-sends of a
+      // status this device already knows about must stay silent.
+      const justBecameReady = order?.status === 'Ready' && previousStatus !== 'Ready';
+      addNotification(order, justBecameReady ? 'order_ready' : 'updated');
+
+      if (justBecameReady && hearsFloorAlerts && soundEnabled) {
+        playWaiterNotificationSound();
+      }
+    };
+
+    const handleOrderCancelled = (order) => {
+      lastStatusRef.current[order?._id] = 'Cancelled';
+      addNotification(order, 'cancelled');
+    };
+
     const handleWaiterCalled = (data) => {
-      console.log("Received waiter_called event:", data);
       addNotification(null, 'waiter_called', data);
-      if (playNotificationSound) playNotificationSound();
+      if (hearsFloorAlerts && soundEnabled) {
+        playWaiterNotificationSound();
+      }
     };
 
     socket.on('new_order', handleNewOrder);
@@ -176,7 +218,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
       socket.off('order_cancelled', handleOrderCancelled);
       socket.off('waiter_called', handleWaiterCalled);
     };
-  }, [socket, connected, t, playNotificationSound]);
+  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;
@@ -240,6 +282,27 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
             <span>{connected ? "Live Sync" : "Offline"}</span>
           </div>
 
+          {/* Alert Sound Toggle — the waiter call sound is played by this
+              navbar, so the mute has to live here too, not only on the order
+              screen, or a waiter on the dashboard would have no way to stop it. */}
+          <button
+            type="button"
+            onClick={() => setSoundEnabled((prev) => !prev)}
+            aria-pressed={soundEnabled}
+            title={soundEnabled ? t('sound_alert_enabled') : t('sound_alert_muted')}
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+              soundEnabled
+                ? 'text-cafe-700 hover:bg-cafe-100 dark:text-recipe-text dark:hover:bg-recipe-cardHover'
+                : 'text-cafe-300 hover:bg-cafe-100 dark:text-recipe-muted/60 dark:hover:bg-recipe-cardHover'
+            }`}
+          >
+            {soundEnabled ? (
+              <Volume2 className="h-5 w-5" />
+            ) : (
+              <VolumeX className="h-5 w-5" />
+            )}
+          </button>
+
           <div className="relative" ref={notificationsRef}>
             <button
               type="button"
@@ -279,7 +342,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
                       onClose={() => setNotificationsOpen(false)}
                       onSelect={() => {
                         setNotificationsOpen(false);
-                        navigate('/admin/orders');
+                        navigate(ordersPath);
                       }}
                       t={t}
                     />
@@ -298,7 +361,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
                     onClose={() => setNotificationsOpen(false)}
                     onSelect={() => {
                       setNotificationsOpen(false);
-                      navigate('/admin/orders');
+                      navigate(ordersPath);
                     }}
                     t={t}
                   />

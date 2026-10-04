@@ -17,15 +17,14 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { staffBasePath } from "../../utils/staffRoles";
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const { logout, admin } = useAuth();
   const role = admin?.role || 'waiter'; // fallback to waiter if undefined
 
-  let basePath = "/admin";
-  if (role === "chef") basePath = "/chef";
-  if (role === "waiter") basePath = "/waiter";
+  const basePath = staffBasePath(role);
 
   const allNavItems = [
     { path: `${basePath}/dashboard`, label: t("dashboard"), icon: LayoutDashboard, roles: ['super_admin', 'admin', 'waiter'] },

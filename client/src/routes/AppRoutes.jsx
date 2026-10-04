@@ -31,12 +31,7 @@ const AdminDevicesPage = lazy(() => import("../pages/admin/AdminDevicesPage"));
 const StaffManagerPage = lazy(() => import("../pages/admin/StaffManagerPage"));
 const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
 
-// Chef Pages
-import ChefLayout from "../layouts/ChefLayout";
-const KitchenDisplayPage = lazy(() => import("../pages/chef/KitchenDisplayPage"));
-
 import StatusErrorPage from "../pages/errors/StatusErrorPage";
-// Profile route will be added inside admin routes below
 
 const AppRoutes = () => {
   return (

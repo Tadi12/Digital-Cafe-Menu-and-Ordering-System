@@ -1,24 +1,53 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSocket } from "../../hooks/useSocket";
+import { useAuth } from "../../hooks/useAuth";
+import { useSoundEnabled } from "../../hooks/useSoundEnabled";
 import { getOrdersApi } from "../../api/orderApi";
 import { useOrderStatusActions } from "../../hooks/useOrderStatusActions";
 import OrderCard from "../../components/admin/OrderCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { Search, Volume2, VolumeX, Bell } from "lucide-react";
+import { Search, Volume2, VolumeX, Bell, CheckCircle, Hand } from "lucide-react";
 import { orderStatusLabel } from '../../utils/orderStatus';
+import { isFloorStaffRole } from '../../utils/staffRoles';
+
+const ALERT_VISIBLE_MS = 6000;
+
+/**
+ * Banner styling per event.
+ *
+ * The sound for the waiter events is played by AdminNavbar, which is mounted on
+ * every staff page — the waiter lands on the dashboard, not here — so this
+ * screen only shows the visual banner. Playing here as well would double up.
+ */
+const ALERT_TONES = {
+  new: { bar: 'bg-amber-500 hover:bg-amber-600', Icon: Bell },
+  ready: { bar: 'bg-emerald-600 hover:bg-emerald-700', Icon: CheckCircle },
+  called: { bar: 'bg-rose-600 hover:bg-rose-700', Icon: Hand },
+};
+
+const orderLabel = (order) =>
+  order?.orderNumber || order?._id?.slice(-6) || '';
 
 const OrderManagerPage = () => {
   const { t } = useTranslation();
+  const { admin } = useAuth();
   const { socket, joinAdminRoom, playNotificationSound } = useSocket();
+  const [soundEnabled, setSoundEnabled] = useSoundEnabled();
 
   const [orders, setOrders] = useState([]);
   const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [newOrderAlert, setNewOrderAlert] = useState(null);
+  const [alert, setAlert] = useState(null);
+
+  const alertTimerRef = useRef(null);
+  // Last known status per order, so an alert fires on the transition into Ready
+  // rather than on every order_updated echo.
+  const statusRef = useRef({});
+
+  const isFloorStaff = isFloorStaffRole(admin?.role);
 
   const fetchOrders = async () => {
     try {
@@ -26,7 +55,14 @@ const OrderManagerPage = () => {
         status: selectedStatus === "All" ? undefined : selectedStatus,
         search: searchQuery,
       });
-      if (res.success) setOrders(res.data);
+      if (res.success) {
+        setOrders(res.data);
+        // Seed the cache with what the server just sent, so the first socket
+        // echo is compared against reality instead of looking like a change.
+        statusRef.current = Object.fromEntries(
+          res.data.map((order) => [order._id, order.status]),
+        );
+      }
     } catch (err) {
       console.error("[Order Queue Fetch Error]:", err);
     } finally {
@@ -38,38 +74,68 @@ const OrderManagerPage = () => {
     fetchOrders();
   }, [selectedStatus, searchQuery]);
 
+  // Single banner slot: a second event replaces the first rather than stacking.
+  const showAlert = useCallback((tone, message) => {
+    setAlert({ tone, message });
+    window.clearTimeout(alertTimerRef.current);
+    alertTimerRef.current = window.setTimeout(
+      () => setAlert(null),
+      ALERT_VISIBLE_MS,
+    );
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(alertTimerRef.current), []);
+
   // Socket.IO Room setup & event listeners
   useEffect(() => {
     joinAdminRoom();
 
     if (socket) {
       const handleNewOrder = (newOrder) => {
+        statusRef.current[newOrder._id] = newOrder.status;
         setOrders((prev) => [newOrder, ...prev]);
-        setNewOrderAlert(
+        showAlert(
+          'new',
           t('new_order_placed', {
-            orderNumber: newOrder.orderNumber,
+            orderNumber: orderLabel(newOrder),
             tableNumber: newOrder.tableNumberSnapshot,
           }),
         );
 
+        // The kitchen is who acts on a new order, so both the chef and the
+        // counter hear it here.
         if (soundEnabled) {
-          playNotificationSound(
-            import.meta.env.VITE_ADMIN_NOTIFICATION_SOUND_URL,
-          );
+          playNotificationSound('newOrder');
         }
-
-        setTimeout(() => setNewOrderAlert(null), 5000);
       };
 
       const handleOrderUpdated = (updatedOrder) => {
+        const previousStatus = statusRef.current[updatedOrder._id];
+        statusRef.current[updatedOrder._id] = updatedOrder.status;
+
         setOrders((prev) =>
           prev.map((ord) =>
             ord._id === updatedOrder._id ? updatedOrder : ord,
           ),
         );
+
+        // Only the Preparing -> Ready crossing is a waiter job. The chef's own
+        // screen is on Preparing, and a chef does not need the floor banner.
+        const justBecameReady =
+          updatedOrder.status === 'Ready' && previousStatus !== 'Ready';
+        if (justBecameReady && isFloorStaff) {
+          showAlert(
+            'ready',
+            t('waiter_order_ready_msg', {
+              orderNumber: orderLabel(updatedOrder),
+              tableNumber: updatedOrder.tableNumberSnapshot,
+            }),
+          );
+        }
       };
 
       const handleOrderCancelled = (cancelledOrder) => {
+        statusRef.current[cancelledOrder._id] = 'Cancelled';
         setOrders((prev) =>
           prev.map((ord) =>
             ord._id === cancelledOrder._id ? cancelledOrder : ord,
@@ -77,17 +143,27 @@ const OrderManagerPage = () => {
         );
       };
 
+      const handleWaiterCalled = (data) => {
+        if (!isFloorStaff) return;
+        showAlert(
+          'called',
+          t('waiter_called_msg', { tableNumber: data?.tableNumber || '?' }),
+        );
+      };
+
       socket.on("new_order", handleNewOrder);
       socket.on("order_updated", handleOrderUpdated);
       socket.on("order_cancelled", handleOrderCancelled);
+      socket.on("waiter_called", handleWaiterCalled);
 
       return () => {
         socket.off("new_order", handleNewOrder);
         socket.off("order_updated", handleOrderUpdated);
         socket.off("order_cancelled", handleOrderCancelled);
+        socket.off("waiter_called", handleWaiterCalled);
       };
     }
-  }, [socket, soundEnabled, joinAdminRoom, playNotificationSound]);
+  }, [socket, soundEnabled, isFloorStaff, joinAdminRoom, playNotificationSound, showAlert, t]);
 
   // Replace the order in place once the server has confirmed the new status.
   // Keyed by _id so several orders can be updated independently.
@@ -117,18 +193,23 @@ const OrderManagerPage = () => {
     "Cancelled",
   ];
 
+  const { bar, Icon } = ALERT_TONES[alert?.tone] || ALERT_TONES.new;
+
   return (
     <div className="space-y-6">
       {/* Real-time Order Alert Toast Banner */}
-      {newOrderAlert && (
-        <div className="bg-amber-500 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-bounce">
+      {alert && (
+        <div
+          role="status"
+          className={`${bar} text-white px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-bounce`}
+        >
           <div className="flex items-center gap-2 font-bold text-xs">
-            <Bell className="w-4 h-4 animate-spin" />
-            <span>{newOrderAlert}</span>
+            <Icon className="w-4 h-4" />
+            <span>{alert.message}</span>
           </div>
           <button
-            onClick={() => setNewOrderAlert(null)}
-            className="text-xs font-black px-2 py-0.5 rounded hover:bg-amber-600"
+            onClick={() => setAlert(null)}
+            className="text-xs font-black px-2 py-0.5 rounded hover:bg-black/20"
           >
             ✕
           </button>
@@ -186,7 +267,8 @@ const OrderManagerPage = () => {
 
           {/* Audio Chime Sound Toggle */}
           <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
+            onClick={() => setSoundEnabled((prev) => !prev)}
+            aria-pressed={soundEnabled}
             className={`p-2 rounded-xl border transition-colors flex items-center gap-1.5 text-xs font-bold ${
               soundEnabled
                 ? "bg-emerald-50 text-emerald-700 border-emerald-300"

@@ -346,10 +346,7 @@ const MenuPage = () => {
       markReadyOrderNotified(updatedOrder._id);
       setReadyToastOrder(updatedOrder);
       setReadyToastVisible(true);
-      playNotificationSound(
-        import.meta.env.VITE_CUSTOMER_NOTIFICATION_SOUND_URL ||
-          "/sounds/customer-notification.m4a",
-      );
+      playNotificationSound("customer");
 
       if ("Notification" in window) {
         if (Notification.permission === "granted") {

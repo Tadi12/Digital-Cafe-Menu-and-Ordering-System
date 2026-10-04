@@ -1,6 +1,9 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import { playNotificationSound } from '../utils/soundPlayer';
+import {
+  playNotificationSound,
+  playWaiterNotificationSound,
+} from '../utils/soundPlayer';
 
 export const SocketContext = createContext();
 
@@ -76,6 +79,7 @@ export const SocketProvider = ({ children }) => {
         joinAdminRoom,
         joinOrderRoom,
         playNotificationSound,
+        playWaiterNotificationSound,
       }}
     >
       {children}

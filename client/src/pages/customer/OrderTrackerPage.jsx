@@ -134,10 +134,7 @@ const OrderTrackerPage = () => {
         markReadyOrderNotified(order._id);
         setReadyToastVisible(true);
         previousReadyStatusRef.current = true;
-        playNotificationSound(
-          import.meta.env.VITE_CUSTOMER_NOTIFICATION_SOUND_URL ||
-            "/sounds/customer-notification.m4a",
-        );
+        playNotificationSound("customer");
 
         if ("Notification" in window) {
           try {
