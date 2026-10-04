@@ -21,6 +21,22 @@ const tableSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // The waiter responsible for this table, and therefore for delivering its
+    // orders. This is the single source of truth for waiter ownership: an order
+    // resolves its responsible waiter through Order -> Table -> assignedWaiter,
+    // so a table can never disagree with the orders sitting on it. Null means the
+    // table is unassigned and only an admin can see and act on its orders.
+    //
+    // Reassigning a table moves responsibility for its ACTIVE orders immediately,
+    // because ownership is always read through this field rather than snapshotted
+    // onto the order. Historical orders are untouched: they still point at the
+    // same table, and their data is never rewritten.
+    assignedWaiter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+      default: null,
+      index: true,
+    },
     // One-person-at-a-time occupancy lock. A customer session "claims" the
     // table when it scans the QR code. The claim is renewed by heartbeats
     // while the menu is open and expires automatically (TTL) once the
@@ -68,6 +84,22 @@ tableSchema.methods.toPublicJSON = function toPublicJSON() {
     occupancyExpiresAt: occupied ? this.occupancyExpiresAt : null,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
+  };
+};
+
+// Shape returned to staff (admin / the assigned waiter). Adds the waiter
+// assignment and the aggregated order counts, which the public shape must never
+// expose.
+tableSchema.methods.toStaffJSON = function toStaffJSON(extras = {}) {
+  return {
+    ...this.toPublicJSON(),
+    assignedWaiter: this.assignedWaiter || null,
+    // Populated on demand by the controller; a bare ObjectId otherwise.
+    assignedWaiterName:
+      this.assignedWaiter && typeof this.assignedWaiter === 'object'
+        ? this.assignedWaiter.name
+        : null,
+    ...extras,
   };
 };
 

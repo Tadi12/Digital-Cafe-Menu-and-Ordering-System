@@ -121,7 +121,7 @@ const getNotificationDetails = (order, type, t, extraData) => {
 
 const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   const { admin } = useAuth();
-  const { socket, connected, joinStationRoom, playWaiterNotificationSound } = useSocket();
+  const { socket, connected, joinStationRoom, joinWaiterRoom, playWaiterNotificationSound } = useSocket();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -213,9 +213,12 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
     socket.on('waiter_called', handleWaiterCalled);
     // A chef or a barista subscribes to the room for the half of the order they
     // prepare, so the bell does not alert them about tickets they cannot act on.
+    // A waiter subscribes to the private feed for their own tables only.
     // Everyone else keeps the full admin feed exactly as before.
     if (isStationRole(role)) {
       joinStationRoom();
+    } else if (role === 'waiter') {
+      joinWaiterRoom();
     } else {
       socket.emit('join_admin_room');
     }
@@ -226,7 +229,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
       socket.off('order_cancelled', handleOrderCancelled);
       socket.off('waiter_called', handleWaiterCalled);
     };
-  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled, role, joinStationRoom]);
+  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled, role, joinStationRoom, joinWaiterRoom]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;

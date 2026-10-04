@@ -2,7 +2,7 @@ const { ERROR_CODES } = require('../utils/errorCodes');
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const Food = require('../models/Food');
-const { getIO, scopeForStation } = require('../sockets/socketHandler');
+const { getIO, scopeForStation, emitToOrderWaiter } = require('../sockets/socketHandler');
 const {
   initialTrackStatuses,
   deriveOverallStatus,
@@ -14,6 +14,13 @@ const {
   trackStatusField,
   ACTIONABLE_TRACK_STATUSES,
 } = require('../utils/orderStatus');
+const {
+  getAssignedTableIds,
+  tableOwnershipFilter,
+  isTableOwnedByUser,
+  forbiddenOwnership,
+  ACTIVE_ORDER_STATUSES,
+} = require('../utils/tableAssignment');
 
 const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -169,6 +176,10 @@ const createOrder = async (req, res, next) => {
         if (itemsForTrack(populatedOrder.items, track).length === 0) continue;
         io.to(`${track}_room`).emit('new_order', scopeForStation(populatedOrder, track));
       }
+
+      // The waiter responsible for this table is told about the order too, so the
+      // delivery queue fills without a refresh. Resolved through the table.
+      emitToOrderWaiter(populatedOrder);
     } catch (socketErr) {
       console.warn('[Socket Warning]: Could not emit new_order event:', socketErr.message);
     }
@@ -214,8 +225,18 @@ const getOrders = async (req, res, next) => {
       query[trackStatusField(stationTrack)] = { $ne: 'not_required' };
     }
 
+    // Table ownership. A waiter only ever receives orders sitting on tables
+    // assigned to them; the chef, the barista and the admin are unaffected because
+    // they own no tables. This runs in the query, so another waiter's orders are
+    // never sent to the client in the first place — hiding them in the UI instead
+    // would still leak them over the network.
+    const assignedTableIds = await getAssignedTableIds(req.user);
+    if (assignedTableIds !== null) {
+      Object.assign(query, tableOwnershipFilter(req.user, assignedTableIds));
+    }
+
     const orders = await Order.find(query)
-      .populate('table', 'tableNumber tableName')
+      .populate('table', 'tableNumber tableName assignedWaiter')
       .sort({ createdAt: -1 });
 
     // Same order document for everyone — only the item list is narrowed to the
@@ -237,6 +258,114 @@ const getOrders = async (req, res, next) => {
       success: true,
       count: scoped.length,
       data: scoped,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get the tables assigned to the logged-in waiter, with live order counts
+ * @route   GET /api/orders/waiter/tables
+ * @access  Protected (waiter / admin)
+ *
+ * The "My Tables" panel. Admins and super admins are passed through to the full
+ * table list so the same screen can back the admin overview.
+ */
+const getWaiterTables = async (req, res, next) => {
+  try {
+    const Table = require('../models/Table');
+
+    // Oversight roles are not restricted; `null` from getAssignedTableIds is the
+    // documented "unrestricted" signal, and it must not be read as "no tables".
+    const assignedTableIds = await getAssignedTableIds(req.user);
+    const query =
+      assignedTableIds === null ? {} : { _id: { $in: assignedTableIds } };
+
+    const tables = await Table.find(query).populate('assignedWaiter', 'name role');
+
+    // One aggregation for every table's counts instead of a query per card.
+    const counts = await Order.aggregate([
+      { $match: { table: { $in: tables.map((table) => table._id) } } },
+      {
+        $group: {
+          _id: '$table',
+          // An order still needs the waiter: placed, cooking, or plated and waiting.
+          activeCount: {
+            $sum: { $cond: [{ $in: ['$status', ACTIVE_ORDER_STATUSES] }, 1, 0] },
+          },
+          totalCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const countByTable = new Map(
+      counts.map((entry) => [String(entry._id), entry]),
+    );
+
+    const data = tables
+      .map((table) => {
+        const entry = countByTable.get(String(table._id));
+        return table.toStaffJSON({
+          activeOrderCount: entry?.activeCount || 0,
+          totalOrderCount: entry?.totalCount || 0,
+        });
+      })
+      .sort((a, b) => a.tableNumber - b.tableNumber);
+
+    return res.json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get the orders on ONE table, only if the caller owns that table
+ * @route   GET /api/orders/waiter/tables/:tableId/orders
+ * @access  Protected (waiter / admin)
+ *
+ * Ownership is re-verified here from the table document on every request, so
+ * editing the URL, swapping the tableId or calling the API directly with another
+ * waiter's table all end in the same 403.
+ */
+const getTableOrders = async (req, res, next) => {
+  try {
+    const Table = require('../models/Table');
+    const table = await Table.findById(req.params.tableId);
+
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        code: ERROR_CODES.TABLE_NOT_FOUND,
+        message: 'Table not found',
+      });
+    }
+
+    // The authorization boundary for this whole endpoint.
+    if (!isTableOwnedByUser(req.user, table)) {
+      const { status, body } = forbiddenOwnership();
+      return res.status(status).json(body);
+    }
+
+    const assignedTableIds = await getAssignedTableIds(req.user);
+    const query = { table: table._id };
+    if (assignedTableIds !== null) {
+      Object.assign(query, tableOwnershipFilter(req.user, assignedTableIds));
+    }
+
+    const orders = await Order.find(query)
+      .populate('table', 'tableNumber tableName')
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      count: orders.length,
+      table: table.toStaffJSON(),
+      data: orders,
     });
   } catch (error) {
     next(error);
@@ -426,6 +555,9 @@ const updateOrderStatus = async (req, res, next) => {
       const io = getIO();
       io.to(`order_${updatedOrder._id}`).emit('order_status_updated', populatedUpdatedOrder);
       io.to('admin_room').emit('order_updated', populatedUpdatedOrder);
+      // The waiter responsible for this table follows the order's progress, so a
+      // chef/barista status change reaches exactly the waiter who must deliver it.
+      emitToOrderWaiter(populatedUpdatedOrder);
     } catch (socketErr) {
       console.warn('[Socket Warning]: Could not emit status update:', socketErr.message);
     }
@@ -578,6 +710,10 @@ const updatePreparationStatus = async (req, res, next) => {
           stationStatus: populatedUpdatedOrder[trackStatusField(ROLE_TRACK[role])],
         });
       }
+
+      // The chef/barista moving a track is exactly the moment the assigned waiter
+      // needs to hear about it, so it reaches them too — scoped to their table.
+      emitToOrderWaiter(populatedUpdatedOrder);
     } catch (socketErr) {
       console.warn('[Socket Warning]: Could not emit preparation update:', socketErr.message);
     }
@@ -624,6 +760,8 @@ const cancelOrder = async (req, res, next) => {
       const io = getIO();
       io.to(`order_${cancelledOrder._id}`).emit('order_status_updated', populatedCancelledOrder);
       io.to('admin_room').emit('order_cancelled', populatedCancelledOrder);
+      // Tell the responsible waiter their delivery task just disappeared.
+      emitToOrderWaiter(populatedCancelledOrder);
     } catch (socketErr) {
       console.warn('[Socket Warning]: Could not emit cancellation:', socketErr.message);
     }
@@ -641,6 +779,8 @@ const cancelOrder = async (req, res, next) => {
 module.exports = {
   createOrder,
   getOrders,
+  getWaiterTables,
+  getTableOrders,
   getCustomerOrders,
   getOrderById,
   updateOrderStatus,

@@ -6,6 +6,7 @@ import { getDashboardMetricsApi, getRevenueAnalyticsApi } from '../../api/analyt
 import MetricCard from '../../components/admin/MetricCard';
 import OrderStatusBadge from '../../components/customer/OrderStatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import WaiterTablesPanel from '../../components/admin/WaiterTablesPanel';
 import { formatCurrency } from '../../utils/currencyFormatter';
 import { orderStatusLabel } from '../../utils/orderStatus';
 
@@ -45,34 +46,15 @@ const DashboardPage = () => {
 
   const isChef = admin?.role === 'chef';
   const isWaiter = admin?.role === 'waiter';
-  const isStaff = isChef || isWaiter;
-
-  if (isStaff) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
-        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-cafe-200 overflow-hidden">
-          <img
-            src={isChef
-              ? "/kitchen-dashboard.jpg"
-              : "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=800"}
-            alt={isChef ? t('chef_dashboard_image_alt') : t('waiter_dashboard_image_alt')}
-            className="w-full h-72 object-cover bg-cafe-100"
-            fetchPriority="high"
-          />
-          <div className="p-8 text-center">
-            <h1 className="text-3xl font-display font-bold text-cafe-900 mb-2">
-              {isChef ? t('chef_dashboard_title') : t('waiter_dashboard_title')}
-            </h1>
-            <p className="text-cafe-600 mb-6">
-              {isChef ? t('chef_dashboard_desc') : t('waiter_dashboard_desc')}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   useEffect(() => {
+    // The analytics endpoints are admin-only, so the kitchen and floor roles skip
+    // the fetch entirely and render their own panels.
+    if (isChef || isWaiter) {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const [metricRes, revRes] = await Promise.all([
@@ -89,9 +71,46 @@ const DashboardPage = () => {
       }
     };
 
-    if (isStaff) { setLoading(false); return; }
     fetchData();
-  }, [isStaff]);
+  }, [isChef, isWaiter]);
+
+  // Every hook above runs on every render. The role-specific early returns come
+  // only after them — returning first would change the hook order between the
+  // admin view and the staff views and break the rules of hooks.
+  if (isWaiter) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-display text-xl font-bold text-cafe-900">
+            {t('my_tables_title')}
+          </h2>
+          <p className="text-xs text-cafe-500">{t('my_tables_desc')}</p>
+        </div>
+        <WaiterTablesPanel />
+      </div>
+    );
+  }
+
+  if (isChef) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
+        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-cafe-200 overflow-hidden">
+          <img
+            src="/kitchen-dashboard.jpg"
+            alt={t('chef_dashboard_image_alt')}
+            className="w-full h-72 object-cover bg-cafe-100"
+            fetchPriority="high"
+          />
+          <div className="p-8 text-center">
+            <h1 className="text-3xl font-display font-bold text-cafe-900 mb-2">
+              {t('chef_dashboard_title')}
+            </h1>
+            <p className="text-cafe-600 mb-6">{t('chef_dashboard_desc')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return <LoadingSpinner message={t("loading_dashboard")} />;

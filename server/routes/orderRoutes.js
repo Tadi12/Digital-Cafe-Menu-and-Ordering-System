@@ -3,6 +3,8 @@ const router = express.Router();
 const {
   createOrder,
   getOrders,
+  getWaiterTables,
+  getTableOrders,
   getCustomerOrders,
   getOrderById,
   updateOrderStatus,
@@ -21,6 +23,12 @@ router
 
 router.get('/customer', requirePinAccess, getCustomerOrders);
 router.get('/customer/:customerName', requirePinAccess, getCustomerOrders);
+
+// Waiter station endpoints. Declared before '/:id' so the literal 'waiter' segment
+// is not swallowed by the order-id parameter.
+router.get('/waiter/tables', protectAdmin, getWaiterTables);
+router.get('/waiter/tables/:tableId/orders', protectAdmin, getTableOrders);
+
 router.get('/:id', attachAdminIfAuthenticated, requirePinAccess, getOrderById);
 router.patch('/:id/status', protectAdmin, validate(updateOrderStatusSchema), updateOrderStatus);
 // Preparation track endpoint for the chef and the barista. The role check lives in

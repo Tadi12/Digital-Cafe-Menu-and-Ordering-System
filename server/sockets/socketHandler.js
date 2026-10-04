@@ -19,6 +19,43 @@ const scopeForStation = (order, track) => ({
   stationStatus: order[trackStatusField(track)],
 });
 
+/** Room name for one waiter's private order feed. */
+const waiterRoom = (waiterId) => `waiter_${waiterId}`;
+
+/**
+ * Push an order to the waiter currently responsible for its table.
+ *
+ * Ownership is resolved HERE, at emit time, by walking Order -> Table ->
+ * assignedWaiter. That is what makes reassignment behave correctly with no extra
+ * work: a table that moves from Abebe to Hana instantly stops feeding Abebe's
+ * room and starts feeding Hana's, and the orders themselves are never rewritten.
+ *
+ * Silently does nothing for an unassigned table — there is nobody to notify.
+ *
+ * @param {object} order a populated (or plain) order carrying `table`
+ */
+const emitToOrderWaiter = async (order) => {
+  try {
+    const io = getIO();
+
+    // Only the ref is usable here: `tableNumberSnapshot` is a number, not an id.
+    // Accepts both a populated table document and a bare ObjectId.
+    const tableRef = order?.table;
+    if (!tableRef) return;
+
+    const Table = require('../models/Table');
+    const tableId = tableRef._id || tableRef;
+    const table = await Table.findById(tableId).select('assignedWaiter');
+    const assignedWaiter = table?.assignedWaiter;
+    if (!assignedWaiter) return;
+
+    io.to(waiterRoom(assignedWaiter)).emit('order_updated', order);
+  } catch (error) {
+    // A realtime nicety must never break the request that triggered it.
+    console.warn('[Socket Warning]: Could not notify order waiter:', error.message);
+  }
+};
+
 const initSocket = (io) => {
   ioInstance = io;
 
@@ -82,6 +119,34 @@ const initSocket = (io) => {
       }
     });
 
+    // A waiter subscribes to a room named after THEM, not after their tables. When
+    // an admin reassigns a table, membership is irrelevant because the server
+    // resolves the order's current owner at emit time — so the old waiter stops
+    // receiving updates and the new one starts, with no socket bookkeeping.
+    socket.on('join_waiter_room', async (token) => {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (!decoded.sessionId) return;
+
+        const waiter = await Admin.findById(decoded.id).select('role');
+        const session = waiter && await AdminSession.exists({
+          _id: decoded.sessionId,
+          admin: waiter._id,
+          isActive: true,
+          expiresAt: { $gt: new Date() },
+        });
+        if (!session) return;
+
+        // Only a real waiter gets a waiter room; an admin uses admin_room.
+        if (waiter.role !== 'waiter') return;
+
+        socket.join(waiterRoom(decoded.id));
+        console.log(`[Socket]: ${socket.id} joined ${waiterRoom(decoded.id)} as waiter`);
+      } catch (error) {
+        // An invalid or expired token must never join a waiter room.
+      }
+    });
+
     // Customer joins a room specific to their order ID for live tracking
     socket.on('join_order_room', (orderId) => {
       if (orderId) {
@@ -110,4 +175,4 @@ const getIO = () => {
   return ioInstance;
 };
 
-module.exports = { initSocket, getIO, scopeForStation };
+module.exports = { initSocket, getIO, scopeForStation, waiterRoom, emitToOrderWaiter };

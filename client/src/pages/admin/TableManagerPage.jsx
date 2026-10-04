@@ -7,6 +7,8 @@ import {
   updateTableApi,
   deleteTableApi,
   clearTableOccupancyApi,
+  getAssignableWaitersApi,
+  assignTableWaiterApi,
 } from '../../api/tableApi';
 import TableQRModal from '../../components/admin/TableQRModal';
 import Modal from '../../components/common/Modal';
@@ -34,6 +36,55 @@ const TableManagerPage = () => {
 
   // Staff force-free (unlock) confirmation for an occupied table
   const [freeModal, setFreeModal] = useState({ isOpen: false, id: null, num: '' });
+
+  // Waiter assignment. `waiters` only ever contains role='waiter' accounts — the
+  // API filters them, so a chef, barista or admin can never be offered here.
+  const [waiters, setWaiters] = useState([]);
+  // tableId -> the waiter currently chosen in that table's dropdown.
+  const [assignmentDraft, setAssignmentDraft] = useState({});
+  // tableId -> true while its assignment request is in flight.
+  const [assigningId, setAssigningId] = useState(null);
+
+  const fetchWaiters = async () => {
+    try {
+      const res = await getAssignableWaitersApi();
+      if (res.success) setWaiters(res.data || []);
+    } catch (err) {
+      console.error('[Waiter List Fetch Error]:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchWaiters();
+  }, []);
+
+  // Seed each dropdown from the assignment the server already holds.
+  useEffect(() => {
+    const drafts = {};
+    tables.forEach((tbl) => {
+      drafts[tbl._id] = tbl.assignedWaiter || '';
+    });
+    setAssignmentDraft(drafts);
+  }, [tables]);
+
+  const handleAssign = async (table) => {
+    const waiterId = assignmentDraft[table._id] ?? '';
+
+    setAssigningId(table._id);
+    try {
+      const res = await assignTableWaiterApi(table._id, waiterId);
+      if (res.success) {
+        toast.success(res.message || t('table_assigned_success'));
+        // Re-read from the server so the card reflects the stored assignment
+        // rather than what the dropdown happened to show.
+        await fetchTables();
+      }
+    } catch (err) {
+      toast.error(resolveApiError(err, t, 'table_assign_failed'));
+    } finally {
+      setAssigningId(null);
+    }
+  };
 
   const fetchTables = async () => {
     try {
@@ -237,6 +288,50 @@ const TableManagerPage = () => {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+                </div>
+
+                {/* Waiter assignment. The dropdown only lists role='waiter'
+                    accounts, and the server re-checks the role on save. */}
+                <div className="p-3 rounded-xl bg-cafe-50 border border-cafe-200 space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-cafe-600">
+                    {t('assigned_waiter_label')}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={assignmentDraft[tbl._id] ?? ''}
+                      onChange={(e) =>
+                        setAssignmentDraft((prev) => ({
+                          ...prev,
+                          [tbl._id]: e.target.value,
+                        }))
+                      }
+                      aria-label={t('assigned_waiter_label')}
+                      className="flex-1 min-w-0 px-2.5 py-2 rounded-lg border border-cafe-200 bg-white text-xs font-semibold text-cafe-800 focus:border-cafe-600 focus:outline-none"
+                    >
+                      <option value="">{t('unassigned_waiter')}</option>
+                      {waiters.map((w) => (
+                        <option key={w._id} value={w._id}>
+                          {w.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => handleAssign(tbl)}
+                      disabled={assigningId === tbl._id}
+                      className="px-3 py-2 rounded-lg bg-cafe-800 hover:bg-cafe-900 text-white text-[11px] font-bold transition-colors disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {assigningId === tbl._id ? t('saving') : t('assign_waiter_action')}
+                    </button>
+                  </div>
+
+                  {/* Shows the saved owner, distinct from the pending selection. */}
+                  <p className="text-[11px] font-semibold text-cafe-500 flex items-center gap-1">
+                    <Users className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    {tbl.assignedWaiterName
+                      ? t('currently_assigned_to', { name: tbl.assignedWaiterName })
+                      : t('no_waiter_assigned_yet')}
+                  </p>
                 </div>
 
                 {/* QR Code Action Button */}

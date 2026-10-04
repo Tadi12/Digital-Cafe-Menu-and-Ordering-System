@@ -49,6 +49,12 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     },
     { path: "/admin/tables", label: t("table_management"), icon: QrCode, roles: ['super_admin', 'admin'] },
     { path: "/admin/analytics", label: t("analytics"), icon: BarChart3, roles: ['super_admin', 'admin'] },
+    {
+      path: `${basePath}/tables`,
+      label: t("my_tables"),
+      icon: UtensilsCrossed,
+      roles: ['waiter'],
+    },
     { path: `${basePath}/profile`, label: t("profile"), icon: User, roles: ['super_admin', 'admin', 'chef', 'waiter', 'barista'] },
     { path: "/admin/staff", label: t("staff_management"), icon: Users, roles: ['super_admin', 'admin'] },
     { path: "/admin/settings", label: t("settings_title"), icon: Settings, roles: ['super_admin', 'admin'] },

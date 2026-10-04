@@ -1,19 +1,127 @@
 const { ERROR_CODES } = require('../utils/errorCodes');
 const Table = require('../models/Table');
+const Admin = require('../models/Admin');
 const { generateTableQRCode } = require('../services/qrService');
+
+/**
+ * List the waiters a table can be assigned to.
+ *
+ * Only role='waiter' accounts are returned, which is what keeps the assignment
+ * dropdown from offering a chef, a barista or another admin as a table owner.
+ * Passwords are never selected.
+ */
+const getAssignableWaiters = async (req, res, next) => {
+  try {
+    const waiters = await Admin.find({ role: 'waiter' })
+      .select('name email role')
+      .sort({ name: 1 });
+
+    return res.json({
+      success: true,
+      count: waiters.length,
+      data: waiters,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Assign, change or clear the waiter responsible for a table.
+ *
+ * Ownership lives on the table, so this single write is what moves an active
+ * order's responsibility: the order itself is never rewritten, and historical
+ * orders are never touched. Passing an empty/null waiterId unassigns the table.
+ */
+const assignTableWaiter = async (req, res, next) => {
+  try {
+    const { waiterId } = req.body || {};
+
+    const table = await Table.findById(req.params.id);
+    if (!table) {
+      return res.status(404).json({
+        success: false,
+        code: ERROR_CODES.TABLE_NOT_FOUND,
+        message: 'Table not found',
+      });
+    }
+
+    // Unassign: an explicit, supported action rather than a client-side guess.
+    const requestedId = typeof waiterId === 'string' ? waiterId.trim() : '';
+    if (!requestedId) {
+      table.assignedWaiter = null;
+      const updated = await table.save();
+      return res.json({
+        success: true,
+        message: `Table #${table.tableNumber} is now unassigned.`,
+        data: updated.toStaffJSON(),
+      });
+    }
+
+    const waiter = await Admin.findById(requestedId).select('name role');
+    if (!waiter) {
+      return res.status(404).json({
+        success: false,
+        code: ERROR_CODES.NOT_FOUND,
+        message: 'The selected staff member was not found.',
+      });
+    }
+
+    // The dropdown only offers waiters, but the API enforces it too: a chef or an
+    // admin can never be made responsible for a table by calling the endpoint
+    // directly.
+    if (waiter.role !== 'waiter') {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.BAD_REQUEST,
+        message: 'Only accounts with the waiter role can be assigned to a table.',
+      });
+    }
+
+    table.assignedWaiter = waiter._id;
+    const updated = await table.save();
+
+    return res.json({
+      success: true,
+      message: `Table #${table.tableNumber} assigned to ${waiter.name}.`,
+      data: updated.toStaffJSON({ assignedWaiterName: waiter.name }),
+    });
+  } catch (error) {
+    if (error.name === 'CastError' || error.kind === 'ObjectId') {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.BAD_REQUEST,
+        message: 'Invalid table or staff ID format.',
+      });
+    }
+    next(error);
+  }
+};
 
 /**
  * @desc    Get all café tables
  * @route   GET /api/tables
  * @access  Public / Protected
+ *
+ * The public/customer shape deliberately omits who is responsible for the table.
+ * An authenticated staff member additionally gets the assignment, so the same
+ * route can back the admin's "Table 1 -> Abebe" view without a second request.
  */
 const getTables = async (req, res, next) => {
   try {
-    const tables = await Table.find({}).sort({ tableNumber: 1 });
+    const tables = await Table.find({})
+      .sort({ tableNumber: 1 })
+      .populate('assignedWaiter', 'name role');
+
+    const isStaff = Boolean(req.user);
+
     return res.json({
       success: true,
       count: tables.length,
-      data: tables.map((table) => table.toPublicJSON()),
+      data: tables.map((table) =>
+        // Never leak staff identities (or their emails) to a customer scanning a QR.
+        isStaff ? table.toStaffJSON() : table.toPublicJSON(),
+      ),
     });
   } catch (error) {
     next(error);
@@ -490,6 +598,8 @@ const clearTableOccupancy = async (req, res, next) => {
 
 module.exports = {
   getTables,
+  getAssignableWaiters,
+  assignTableWaiter,
   getTableById,
   createTable,
   updateTable,

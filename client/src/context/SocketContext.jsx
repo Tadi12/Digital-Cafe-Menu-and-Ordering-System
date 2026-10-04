@@ -77,6 +77,18 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Join the private feed for the signed-in waiter's own tables. The server
+   * verifies the token, checks the role is 'waiter', and derives the room from the
+   * user id — so no unrelated table updates are ever delivered.
+   */
+  const joinWaiterRoom = () => {
+    const token = localStorage.getItem('cafe_admin_token');
+    if (socket && connected && token) {
+      socket.emit('join_waiter_room', token);
+    }
+  };
+
   const joinOrderRoom = (orderId) => {
     if (socket && connected && orderId) {
       socket.emit('join_order_room', orderId);
@@ -90,6 +102,7 @@ export const SocketProvider = ({ children }) => {
         connected,
         joinAdminRoom,
         joinStationRoom,
+        joinWaiterRoom,
         joinOrderRoom,
         playNotificationSound,
         playWaiterNotificationSound,

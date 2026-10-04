@@ -30,6 +30,20 @@ export const getTableQRApi = async (id) => {
   return response.data;
 };
 
+// --- Waiter assignment (Admin only) ----------------------------------------
+
+/** Only role='waiter' accounts, for the assignment dropdown. */
+export const getAssignableWaitersApi = async () => {
+  const response = await axiosClient.get('/tables/waiters');
+  return response.data;
+};
+
+/** Assign / change / clear (pass '') the waiter responsible for a table. */
+export const assignTableWaiterApi = async (id, waiterId) => {
+  const response = await axiosClient.put(`/tables/${id}/waiter`, { waiterId });
+  return response.data;
+};
+
 // --- One-person-per-table occupancy ---------------------------------------
 
 export const claimTableApi = async (id, customerSessionId) => {

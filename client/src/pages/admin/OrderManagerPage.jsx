@@ -32,7 +32,7 @@ const orderLabel = (order) =>
 const OrderManagerPage = () => {
   const { t } = useTranslation();
   const { admin } = useAuth();
-  const { socket, joinAdminRoom, joinStationRoom, playNotificationSound } = useSocket();
+  const { socket, joinAdminRoom, joinStationRoom, joinWaiterRoom, playNotificationSound } = useSocket();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
 
   const [orders, setOrders] = useState([]);
@@ -52,6 +52,10 @@ const OrderManagerPage = () => {
   // the page must therefore use the per-track status button instead of the single
   // overall-status one.
   const stationOnly = isStationRole(admin?.role);
+  // A waiter only ever receives orders for the tables assigned to them; the API
+  // filters them server-side, so this flag exists purely to pick the right socket
+  // room and to mark the screen as table-scoped.
+  const isWaiterRole = admin?.role === 'waiter';
 
   const fetchOrders = async () => {
     try {
@@ -93,10 +97,12 @@ const OrderManagerPage = () => {
   // Socket.IO Room setup & event listeners
   useEffect(() => {
     // A chef or a barista joins the room for the half of the order they prepare, so
-    // the socket delivers only their items. Everyone else keeps the full admin
-    // feed exactly as before.
+    // the socket delivers only their items. A waiter joins the private feed scoped
+    // to their own tables. Everyone else keeps the full admin feed as before.
     if (stationOnly) {
       joinStationRoom();
+    } else if (isWaiterRole) {
+      joinWaiterRoom();
     } else {
       joinAdminRoom();
     }
@@ -186,7 +192,7 @@ const OrderManagerPage = () => {
         socket.off("waiter_called", handleWaiterCalled);
       };
     }
-  }, [socket, soundEnabled, isFloorStaff, stationOnly, joinAdminRoom, joinStationRoom, playNotificationSound, showAlert, t]);
+  }, [socket, soundEnabled, isFloorStaff, stationOnly, isWaiterRole, joinAdminRoom, joinStationRoom, joinWaiterRoom, playNotificationSound, showAlert, t]);
 
   // Replace the order in place once the server has confirmed the new status.
   // Keyed by _id so several orders can be updated independently.

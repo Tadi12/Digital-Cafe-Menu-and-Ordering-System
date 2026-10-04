@@ -87,6 +87,7 @@ const AppRoutes = () => {
           <Route path="/waiter" element={<Navigate to="/waiter/dashboard" replace />} />
           <Route path="/waiter/dashboard" element={<DashboardPage />} />
           <Route path="/waiter/orders" element={<OrderManagerPage />} />
+          <Route path="/waiter/tables" element={<DashboardPage />} />
           <Route path="/waiter/profile" element={<AdminProfilePage />} />
         </Route>
       </Route>

@@ -29,8 +29,25 @@ const occupancyActionSchema = z.object({
   }),
 });
 
+// Assigning a table to a waiter. An empty string unassigns it, which is how the
+// admin UI expresses "no waiter".
+const assignWaiterSchema = z.object({
+  body: z.object({
+    waiterId: z
+      .string()
+      .trim()
+      .max(64)
+      .refine(
+        (value) => value === '' || /^[a-fA-F0-9]{24}$/.test(value),
+        'waiterId must be empty or a valid id',
+      )
+      .optional(),
+  }),
+});
+
 module.exports = {
   createTableSchema,
   updateTableSchema,
   occupancyActionSchema,
+  assignWaiterSchema,
 };
