@@ -103,7 +103,18 @@ const FoodManagerPage = () => {
 
       if (res.success) {
         setIsModalOpen(false);
+        // Paint the server's own version of the row on the frame the PUT settles,
+        // instead of leaving the card showing pre-edit values until the refetch
+        // lands. The refetch below still reconciles the active filters and sort.
+        if (editingFood && res.data) {
+          const saved = res.data;
+          setFoods((prev) =>
+            prev.map((f) => (f._id === saved._id ? { ...f, ...saved } : f)),
+          );
+        }
         fetchFoodsAndCategories();
+      } else {
+        toast.error(res?.message || t("failed_save_food"));
       }
     } catch (err) {
       toast.error(resolveApiError(err, t, "failed_save_food"));

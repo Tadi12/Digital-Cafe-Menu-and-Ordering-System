@@ -66,7 +66,18 @@ const CategoryManagerPage = () => {
 
       if (res.success) {
         setIsModalOpen(false);
+        // See FoodManagerPage: paint the saved row now, reconcile by refetching.
+        // `type` is normalised the same way getCategories does it, otherwise a
+        // legacy category with no type set would lose its badge for a frame.
+        if (editingCategory && res.data) {
+          const saved = { ...res.data, type: res.data.type || "food" };
+          setCategories((prev) =>
+            prev.map((cat) => (cat._id === saved._id ? { ...cat, ...saved } : cat)),
+          );
+        }
         fetchCategories();
+      } else {
+        toast.error(res?.message || t("failed_save_category"));
       }
     } catch (err) {
       toast.error(resolveApiError(err, t, "failed_save_category"));

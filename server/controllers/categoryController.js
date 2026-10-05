@@ -1,4 +1,4 @@
-const { clearCache } = require('../middleware/cacheMiddleware');
+const { clearCache, MENU_CACHE_PATTERN } = require('../middleware/cacheMiddleware');
 const { ERROR_CODES } = require('../utils/errorCodes');
 const Category = require('../models/Category');
 const Food = require('../models/Food');
@@ -84,7 +84,7 @@ const createCategory = async (req, res, next) => {
       },
     });
 
-    await clearCache('__express__/api/*');
+    await clearCache(MENU_CACHE_PATTERN);
     return res.status(201).json({
       success: true,
       data: category,
@@ -127,6 +127,9 @@ const updateCategory = async (req, res, next) => {
 
     const updatedCategory = await category.save();
 
+    // A category rename/type change is also baked into every cached /api/foods
+    // payload (they populate the owning category), hence the whole namespace.
+    await clearCache(MENU_CACHE_PATTERN);
     return res.json({
       success: true,
       data: updatedCategory,
@@ -164,6 +167,7 @@ const deleteCategory = async (req, res, next) => {
 
     await category.deleteOne();
 
+    await clearCache(MENU_CACHE_PATTERN);
     return res.json({
       success: true,
       message: 'Category removed successfully',

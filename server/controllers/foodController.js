@@ -1,4 +1,4 @@
-const { clearCache } = require('../middleware/cacheMiddleware');
+const { clearCache, MENU_CACHE_PATTERN } = require('../middleware/cacheMiddleware');
 const { ERROR_CODES } = require('../utils/errorCodes');
 const Food = require('../models/Food');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
@@ -134,7 +134,7 @@ const createFood = async (req, res, next) => {
 
     const populatedFood = await Food.findById(food._id).populate('category', 'name image type');
 
-    await clearCache('__express__/api/*');
+    await clearCache(MENU_CACHE_PATTERN);
     return res.status(201).json({
       success: true,
       data: populatedFood,
@@ -197,6 +197,7 @@ const updateFood = async (req, res, next) => {
     const updatedFood = await food.save();
     const populatedFood = await Food.findById(updatedFood._id).populate('category', 'name image type');
 
+    await clearCache(MENU_CACHE_PATTERN);
     return res.json({
       success: true,
       data: populatedFood,
@@ -221,6 +222,7 @@ const toggleFoodAvailability = async (req, res, next) => {
     food.available = !food.available;
     await food.save();
 
+    await clearCache(MENU_CACHE_PATTERN);
     return res.json({
       success: true,
       message: `Food availability changed to ${food.available ? 'Available' : 'Unavailable'}`,
@@ -249,6 +251,7 @@ const deleteFood = async (req, res, next) => {
 
     await food.deleteOne();
 
+    await clearCache(MENU_CACHE_PATTERN);
     return res.json({
       success: true,
       message: 'Food item deleted successfully',

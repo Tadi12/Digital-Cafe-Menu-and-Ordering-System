@@ -116,7 +116,18 @@ const DrinkManagerPage = () => {
 
       if (res.success) {
         setIsModalOpen(false);
+        // See FoodManagerPage: paint the saved row now, reconcile by refetching.
+        if (editingFood && res.data) {
+          const saved = res.data;
+          setFoods((prev) =>
+            prev.map((item) =>
+              item._id === saved._id ? { ...item, ...saved } : item,
+            ),
+          );
+        }
         fetchDrinksAndCategories();
+      } else {
+        toast.error(res?.message || t("failed_save_drink"));
       }
     } catch (err) {
       toast.error(resolveApiError(err, t, "failed_save_drink"));
