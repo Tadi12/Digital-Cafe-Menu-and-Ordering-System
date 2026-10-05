@@ -2,7 +2,6 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 import { io } from 'socket.io-client';
 import {
   playNotificationSound,
-  playWaiterNotificationSound,
   playEventSound,
 } from '../utils/soundPlayer';
 
@@ -138,7 +137,6 @@ export const SocketProvider = ({ children }) => {
       joinWaiterRoom,
       joinOrderRoom,
       playNotificationSound,
-      playWaiterNotificationSound,
       playEventSound,
     }),
     [

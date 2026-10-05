@@ -62,6 +62,13 @@ const LEGACY_SOUND_ENV_KEY = 'VITE_NOTIFICATION_SOUND_URL';
 const WAITER_SOUND_TIMES = 3;
 const WAITER_SOUND_GAP_MS = 1800;
 
+/**
+ * Upper bound on how long one clip is assumed to run before the repeat chain stops
+ * waiting for it. Generous — the longest bundled clip is under 6s — because this
+ * only ever fires when `ended` never arrives, and it must not cut a real clip short.
+ */
+const MAX_CLIP_MS = 30000;
+
 // ---------------------------------------------------------------------------
 // Autoplay unlocking
 // ---------------------------------------------------------------------------
@@ -157,32 +164,84 @@ const resolveSoundUrl = (target) => {
 };
 
 /**
- * Plays `soundUrl`, optionally repeating it. Chimes once (not per repeat) when
- * the browser refuses playback, so a blocked alert still makes some noise.
+ * Plays `soundUrl`, optionally repeating it.
+ *
+ * Repeats are SEQUENCED ON THE `ended` EVENT, never on a fixed timer. This used to
+ * be `setTimeout(pass * gapMs)`, which assumed every clip was shorter than the gap.
+ * None of them are: the shortest bundled clip is 2.97s against a 1.8s gap, and the
+ * spoken customer-call clip is 4.65s — so the second copy started while the first was
+ * still speaking and the two played on top of each other. That is the "echoing" a
+ * caller hears: not two events, but one event's own repeats colliding. Waiting for
+ * `ended` makes the mechanism correct for any clip length, present or future.
+ *
+ * Chimes once (not per repeat) when the browser refuses playback, so a blocked alert
+ * still makes some noise.
  */
 const playAudioFile = (soundUrl, { volume = 0.8, times = 1, gapMs = 0 } = {}) => {
   let failures = 0;
 
-  for (let pass = 0; pass < times; pass += 1) {
-    window.setTimeout(() => {
-      const chimeOnce = (error) => {
-        failures += 1;
-        console.warn('[Sound Notification Warning]:', error.message);
-        if (failures === 1) playDefaultChime({ times, gapMs });
-      };
+  const chimeOnce = (error) => {
+    failures += 1;
+    console.warn('[Sound Notification Warning]:', error.message);
+    // Once, not `times` times: the fallback exists to prove the device can make a
+    // sound at all, and the whole point of this function is to stop stacking copies.
+    if (failures === 1) playDefaultChime();
+  };
 
-      try {
-        const audio = new Audio(soundUrl);
-        audio.volume = volume;
-        const played = audio.play();
-        if (played && typeof played.catch === 'function') {
-          played.catch(chimeOnce);
-        }
-      } catch (error) {
-        chimeOnce(error);
+  /** Play the clip once, then call `done`. `done` always runs exactly once. */
+  const playOnce = (done) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      done();
+    };
+
+    // Safety net for the case `ended` never arrives — an undecodable file, a codec
+    // the browser will not measure, or playback that never starts. Without it a
+    // single silent failure would swallow every remaining repeat.
+    const guard = window.setTimeout(finish, MAX_CLIP_MS);
+
+    try {
+      const audio = new Audio(soundUrl);
+      audio.volume = volume;
+
+      audio.addEventListener('ended', () => {
+        window.clearTimeout(guard);
+        finish();
+      });
+      audio.addEventListener('error', () => {
+        window.clearTimeout(guard);
+        chimeOnce(new Error(`could not play ${soundUrl}`));
+        finish();
+      });
+
+      const played = audio.play();
+      if (played && typeof played.catch === 'function') {
+        played.catch((error) => {
+          window.clearTimeout(guard);
+          chimeOnce(error);
+          finish();
+        });
       }
-    }, pass * gapMs);
-  }
+    } catch (error) {
+      window.clearTimeout(guard);
+      chimeOnce(error);
+      finish();
+    }
+  };
+
+  const runPass = (pass) => {
+    if (pass >= times) return;
+    playOnce(() => {
+      if (pass + 1 >= times) return;
+      // Measured from the END of the clip, so the gap is silence between repeats
+      // rather than a deadline that a long clip sails straight past.
+      window.setTimeout(() => runPass(pass + 1), gapMs);
+    });
+  };
+
+  runPass(0);
 };
 
 /**
@@ -205,21 +264,6 @@ export const playNotificationSound = (target, options) => {
   playAudioFile(soundUrl, options);
 };
 
-/**
- * The floor alert: an order is ready to be served, or a table called the waiter.
- * Repeats at full volume so it is heard away from the till.
- *
- * @param {{volume?: number, times?: number, gapMs?: number}} [options]
- */
-export const playWaiterNotificationSound = (options) => {
-  playNotificationSound('waiter', {
-    volume: 1,
-    times: WAITER_SOUND_TIMES,
-    gapMs: WAITER_SOUND_GAP_MS,
-    ...options,
-  });
-};
-
 // ---------------------------------------------------------------------------
 // Who hears what
 // ---------------------------------------------------------------------------
@@ -239,14 +283,18 @@ const KITCHEN_ROLES = ['chef', 'barista'];
  * the kitchen announcing a plate was ready. Two different jobs, one sound, and a
  * waiter cannot tell them apart by ear.
  *
- *   event             clip         who hears it
- *   ----------------  -----------  ------------------------------------------------
- *   order_ready       waiter       the floor: the chef/barista finished a track
- *   customer_called   callWaiter   the floor: a guest pressed the bell
- *   new_order         newOrder     the kitchen: a new ticket to prepare
+ *   event             clip           repeat  who hears it
+ *   ----------------  -------------  ------  ------------------------------------------------
+ *   order_ready       waiter         3       the floor: the chef/barista finished a track
+ *   customer_called   callWaiter     1       the floor: a guest pressed the bell
+ *   new_order         newOrder       1       the kitchen: a new ticket to prepare
  *
- * Both floor events repeat at full volume: the person who has to react is usually
- * across the room, past the grinder, with no screen in sight.
+ * Only the short attention chime repeats. `customer_called` is a 4.65s SPOKEN
+ * announcement, and repeating it is not "being heard more often" — it is three
+ * overlapping sentences or nine near-identical ones, which is unintelligible and
+ * sounds like a fault. Speech is self-evidently an announcement, so it plays once and
+ * is heard once. The repeats exist for a chime that can be missed across a room, not
+ * for someone talking.
  *
  * `new_order` also lists management, which is not in the stated rule. They already
  * received it before this table existed — they join `admin_room`, which the order
@@ -255,7 +303,7 @@ const KITCHEN_ROLES = ['chef', 'barista'];
  */
 const SOUND_MATRIX = {
   order_ready: { clip: 'waiter', repeat: WAITER_SOUND_TIMES, recipients: FLOOR_ROLES },
-  customer_called: { clip: 'callWaiter', repeat: WAITER_SOUND_TIMES, recipients: FLOOR_ROLES },
+  customer_called: { clip: 'callWaiter', repeat: 1, recipients: FLOOR_ROLES },
   new_order: { clip: 'newOrder', repeat: 1, recipients: [...KITCHEN_ROLES, 'admin', 'super_admin'] },
 };
 
