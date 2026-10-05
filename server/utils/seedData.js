@@ -15,6 +15,7 @@ const Food = require('../models/Food');
 const Table = require('../models/Table');
 const Order = require('../models/Order');
 const { generateTableQRCode } = require('../services/qrService');
+const { clearCache, MENU_CACHE_PATTERN } = require('../middleware/cacheMiddleware');
 
 const seedData = async () => {
   try {
@@ -70,6 +71,16 @@ const seedData = async () => {
           publicId: 'seed_cat_breakfast',
         },
       },
+      {
+        // A third MENU grouping, prepared by the chef like 'food'. Seeded so the
+        // type is visible on a fresh install without creating it by hand.
+        type: 'extras',
+        name: { en: 'Sides & Extras', am: 'ጎራና ተጨማሪ' },
+        image: {
+          url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=600&auto=format&fit=crop&q=80',
+          publicId: 'seed_cat_extras',
+        },
+      },
     ];
 
     const categories = await Category.insertMany(categoriesData);
@@ -78,6 +89,7 @@ const seedData = async () => {
     const drinksCat = categories.find((c) => c.name.en === 'Traditional Drinks')._id;
     const burgersCat = categories.find((c) => c.name.en === 'Burgers & Sandwiches')._id;
     const breakfastCat = categories.find((c) => c.name.en === 'Breakfast & Pastry')._id;
+    const extrasCat = categories.find((c) => c.name.en === 'Sides & Extras')._id;
 
     console.log('[Seeding]: Creating initial Food items...');
     const foodsData = [
@@ -193,9 +205,32 @@ const seedData = async () => {
         category: breakfastCat,
         available: true,
       },
+      {
+        // Lives in an 'extras' category, so it is stored with itemType 'food' and
+        // lands on the chef's ticket. Nothing about it is special at the kitchen.
+        name: { en: 'Crispy Fries', am: 'ጥር የተጠበሰ ፍጹም' },
+        price: 90,
+        ingredients: {
+          en: ['Potatoes', 'Sunflower Oil', 'Sea Salt'],
+          am: ['ድንቅ', 'የፀየር ዘይት', 'የባህል ጨዋታ'],
+        },
+        image: {
+          url: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=600&auto=format&fit=crop&q=80',
+          publicId: 'seed_food_fries',
+        },
+        category: extrasCat,
+        available: true,
+      },
     ];
 
     await Food.insertMany(foodsData);
+
+    // The seed just replaced every category and item behind the cache's back, so a
+    // warm /api/categories or /api/foods entry would serve the pre-seed menu for up
+    // to an hour — including the new extras category, which would look like the
+    // feature not working.
+    await clearCache(MENU_CACHE_PATTERN);
+    console.log('[Seeding]: Menu cache invalidated.');
 
     console.log('[Seeding]: Creating Tables with unique QR Codes...');
     const tablesInfo = [

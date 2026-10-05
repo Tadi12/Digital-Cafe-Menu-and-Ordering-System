@@ -20,11 +20,16 @@ const orderItemSnapshotSchema = new mongoose.Schema({
     required: true,
     min: 1,
   },
-  // Snapshot of the owning Category.type at the moment the order was placed.
-  // Food and drinks share one `Food` collection, so this is what tells the chef
-  // and the barista which half of the order they own. It is copied rather than
-  // looked up through the category on every read, so retyping a category later
+  // Snapshot of the owning category's PREPARATION TRACK at the moment the order
+  // was placed. Food and drinks share one `Food` collection, so this is what tells
+  // the chef and the barista which half of the order they own. It is copied rather
+  // than looked up through the category on every read, so retyping a category later
   // cannot silently re-route the history of an order that is already placed.
+  //
+  // Deliberately only two values, even though a category may be typed 'extras':
+  // there are two kitchens, and 'extras' is prepared by the chef, so it is stored
+  // as 'food'. This field is a station, not a menu grouping — see
+  // utils/categoryTypes.js for the category -> track mapping.
   itemType: {
     type: String,
     enum: ['food', 'drink'],

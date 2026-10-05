@@ -122,9 +122,17 @@ const CategoryFormModal = ({
             onChange={(e) => setCategoryType(e.target.value)}
             className="form-field"
           >
+            {/* 'extras' is a menu grouping, not a third kitchen: it is prepared by
+                the chef and listed alongside food. See utils/categoryTypes.js. */}
             <option value="food">{t("food")}</option>
+            <option value="extras">{t("extras")}</option>
             <option value="drink">{t("drink")}</option>
           </select>
+          <p className="mt-1.5 text-[10px] text-cafe-500">
+            {categoryType === "drink"
+              ? t("category_type_hint_drink")
+              : t("category_type_hint_chef")}
+          </p>
         </div>
 
         {/* English Name */}

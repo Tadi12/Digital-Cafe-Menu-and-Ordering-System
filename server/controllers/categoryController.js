@@ -1,5 +1,6 @@
 const { clearCache, MENU_CACHE_PATTERN } = require('../middleware/cacheMiddleware');
 const { ERROR_CODES } = require('../utils/errorCodes');
+const { CATEGORY_TYPES, typesForQuery } = require('../utils/categoryTypes');
 const Category = require('../models/Category');
 const Food = require('../models/Food');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
@@ -13,12 +14,23 @@ const getCategories = async (req, res, next) => {
   try {
     const { type } = req.query;
 
-    const filter = type
+    // `type` names a menu SECTION or a single category type, so it expands to
+    // every type it covers. Without the expansion, `?type=food` matched only
+    // `type === 'food'` and an extras category was invisible to the food manager —
+    // the category existed, the chef could prepare its items, and no screen showed
+    // it. See utils/categoryTypes.js.
+    const wanted = typesForQuery(type);
+    const filter = wanted.length
       ? {
           $or: [
-            { type },
-            { type: { $exists: false } },
-            { type: null },
+            { type: { $in: wanted } },
+            // A category with no type predates the field and is normalised to
+            // 'food' on the way out, so it belongs to the food section only. It
+            // used to be ORed in for EVERY type, which listed legacy food
+            // categories under "Drink" as well.
+            ...(wanted.includes('food')
+              ? [{ type: { $exists: false } }, { type: null }]
+              : []),
           ],
         }
       : {};
@@ -56,10 +68,10 @@ const createCategory = async (req, res, next) => {
       });
     }
 
-    if (!['food', 'drink'].includes(type)) {
+    if (!CATEGORY_TYPES.includes(type)) {
       return res.status(400).json({
         success: false,
-        message: 'Category type must be either food or drink',
+        message: `Category type must be one of: ${CATEGORY_TYPES.join(', ')}`,
       });
     }
 
@@ -110,7 +122,7 @@ const updateCategory = async (req, res, next) => {
 
     if (nameEn) category.name.en = nameEn;
     if (nameAm) category.name.am = nameAm;
-    if (type && ['food', 'drink'].includes(type)) {
+    if (type && CATEGORY_TYPES.includes(type)) {
       category.type = type;
     }
 

@@ -1,4 +1,5 @@
 const { ERROR_CODES } = require('../utils/errorCodes');
+const { trackForCategoryType } = require('../utils/categoryTypes');
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const Food = require('../models/Food');
@@ -134,9 +135,12 @@ const createOrder = async (req, res, next) => {
       totalAmount += itemTotal;
 
       // Food and drinks share one collection, so the owning category is what
-      // decides the station. Categories created before `type` existed report no
-      // type at all, and the schema default treats those as food.
-      const itemType = food.category?.type === 'drink' ? 'drink' : 'food';
+      // decides the station. An 'extras' category routes to the chef exactly like
+      // 'food' does — it is a third way to group the menu, not a third kitchen.
+      // The mapping is centralised in utils/categoryTypes.js rather than open-coded
+      // here, so a new category type cannot be routed by accident. Categories
+      // created before `type` existed report no type and are treated as food.
+      const itemType = trackForCategoryType(food.category?.type);
 
       orderItemsSnapshot.push({
         food: food._id,

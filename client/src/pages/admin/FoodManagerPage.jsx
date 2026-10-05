@@ -11,6 +11,7 @@ import {
   deleteFoodApi,
 } from "../../api/foodApi";
 import { getCategoriesApi } from "../../api/categoryApi";
+import { isTypeInSection } from "../../utils/categoryTypes";
 import FoodFormModal from "../../components/admin/FoodFormModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import ActionButton from "../../components/common/ActionButton";
@@ -58,13 +59,19 @@ const FoodManagerPage = () => {
         getCategoriesApi({ type: "food" }),
       ]);
 
+      // Section membership, not `type === "food"`. An extras item is prepared by
+      // the chef and managed on THIS page, so a strict equality test would hide
+      // every extras item from the only screen that can edit it — it would exist,
+      // be orderable, and be unmanageable.
       const foodItems = foodRes.success
-        ? (foodRes.data || []).filter((food) => food.category?.type === "food")
+        ? (foodRes.data || []).filter((food) =>
+            isTypeInSection(food.category?.type, "food"),
+          )
         : [];
 
       const categoryList = catRes.success
-        ? (catRes.data || []).filter(
-            (category) => category.type === "food" || !category.type,
+        ? (catRes.data || []).filter((category) =>
+            isTypeInSection(category.type, "food"),
           )
         : [];
 

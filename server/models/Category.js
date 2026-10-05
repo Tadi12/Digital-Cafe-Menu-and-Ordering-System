@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
+const { CATEGORY_TYPES } = require('../utils/categoryTypes');
 
 const categorySchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ['food', 'drink'],
+      // 'extras' is a third MENU grouping, not a third kitchen — it routes to the
+      // chef like 'food' does. See utils/categoryTypes.js, which owns this list and
+      // the type -> track mapping, so the enum and the routing can never disagree.
+      enum: CATEGORY_TYPES,
       default: 'food',
       required: [true, 'Category type is required'],
     },

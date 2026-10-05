@@ -19,6 +19,7 @@ const connectDB = require('../config/db');
 const Order = require('../models/Order');
 const Food = require('../models/Food');
 const { initialTrackStatuses, deriveOverallStatus } = require('./orderStatus');
+const { trackForCategoryType } = require('./categoryTypes');
 
 const resolveItemTypes = async (orders) => {
   // One lookup for every distinct menu item in the batch rather than one per line.
@@ -29,9 +30,10 @@ const resolveItemTypes = async (orders) => {
   return new Map(
     foods.map((food) => [
       food._id.toString(),
-      // An item whose category was deleted, or a category with no type, is treated
-      // as food: that is the schema default and matches how it behaved before.
-      food.category?.type === 'drink' ? 'drink' : 'food',
+      // Same resolver the live order path uses, so a backfill can never disagree
+      // with what placing the order would have produced. An item whose category was
+      // deleted, or a category with no type, is treated as food.
+      trackForCategoryType(food.category?.type),
     ]),
   );
 };

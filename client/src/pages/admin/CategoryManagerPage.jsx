@@ -12,6 +12,7 @@ import ConfirmModal from "../../components/common/ConfirmModal";
 import ActionButton from "../../components/common/ActionButton";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { Plus, Edit2, Trash2, Layers } from "lucide-react";
+import { categoryTypeLabelKey } from "../../utils/categoryTypes";
 import { resolveApiError } from '../../utils/apiError';
 
 const CategoryManagerPage = () => {
@@ -127,6 +128,7 @@ const CategoryManagerPage = () => {
           >
             <option value="all">{t("all_categories_filter")}</option>
             <option value="food">{t("food_categories")}</option>
+            <option value="extras">{t("extras_categories")}</option>
             <option value="drink">{t("drink_categories")}</option>
           </select>
         </div>
@@ -166,7 +168,10 @@ const CategoryManagerPage = () => {
                         {cat.name.en}
                       </h3>
                       <span className="rounded-full bg-cafe-100 text-cafe-700 px-2 py-0.5 text-[10px] font-bold uppercase shrink-0">
-                        {cat.type}
+                        {/* Translated rather than the raw enum, so the badge is
+                            Amharic on an Amharic screen and 'extras' reads as a
+                            word rather than a database value. */}
+                        {t(categoryTypeLabelKey(cat.type), { defaultValue: cat.type })}
                       </span>
                     </div>
                     <p className="text-xs text-cafe-500 font-medium break-words leading-snug mt-0.5">

@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { resolveApiError } from "../../utils/apiError";
 import { getTableByIdApi, claimTableApi } from "../../api/tableApi";
 import { startTableSession } from "../../utils/tableSession";
+import { isTypeInSection } from "../../utils/categoryTypes";
 import { getCategoriesApi } from "../../api/categoryApi";
 import { getFoodsApi } from "../../api/foodApi";
 import { createOrderApi, getCustomerOrdersApi } from "../../api/orderApi";
@@ -103,11 +104,15 @@ const MenuPage = () => {
 
     setSelectedFood(item);
   };
-  const foodCategories = categories.filter(
-    (category) => getCategoryType(category) === "food",
+  // Grouped by MENU SECTION, not by exact type. An extras category belongs in the
+  // food section because the chef prepares it, so a customer browsing food sees
+  // everything the kitchen makes. Filtering on `type === "food"` instead left
+  // extras categories in neither list, which is to say invisible on the menu.
+  const foodCategories = categories.filter((category) =>
+    isTypeInSection(getCategoryType(category), "food"),
   );
-  const drinkCategories = categories.filter(
-    (category) => getCategoryType(category) === "drink",
+  const drinkCategories = categories.filter((category) =>
+    isTypeInSection(getCategoryType(category), "drink"),
   );
 
   const buildCategoryList = (items) =>
