@@ -38,6 +38,8 @@
   "back_to_menu": "ወደ ማውጫ ተመለስ",
   "language": "ቋንቋ",
   "admin_login_title": "የሀብል ካፌ ገጽ",
+  "staff_login_title": "የሀብል ካፌ የሰራተኞች ግቢ",
+  "staff_login_subtitle": "በየሰራተኛዎ መለያ ይግቡ እና ወደ እርስዎ ክፍል ይሂዱ",
   "email": "ኢሜይል አድራሻ",
   "password": "የይለፍ ቃል",
   "login": "ይግቡ",

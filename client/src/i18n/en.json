@@ -38,6 +38,8 @@
   "back_to_menu": "Back to Menu",
   "language": "Language",
   "admin_login_title": "Hable Café Portal",
+  "staff_login_title": "Hable Café Staff Login",
+  "staff_login_subtitle": "Sign in with your staff account to take your station",
   "email": "Email Address",
   "password": "Password",
   "login": "Login",

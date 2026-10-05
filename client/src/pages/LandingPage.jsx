@@ -65,7 +65,7 @@ const LandingPage = () => {
 
           {/* Right: login */}
           <Link
-            to="/admin/login"
+            to="/login"
             className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-white px-6 py-2.5 text-sm font-bold text-cafe-900 shadow-lg transition hover:bg-gold-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:px-7 sm:text-base"
           >
             {t('login')}

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, CheckCircle2, Lock, ShieldCheck } from "lucide-react";
 import { resetPasswordApi } from "../../api/authApi";
 import { resolveApiError } from '../../utils/apiError';
+import { staffLoginPath } from '../../utils/staffRoles';
 
 const ResetPasswordPage = () => {
   const { t } = useTranslation();
@@ -19,7 +20,8 @@ const ResetPasswordPage = () => {
 
   useEffect(() => {
     if (!message) return undefined;
-    const timer = setTimeout(() => navigate("/admin/login"), 2500);
+    // Back to the one shared login, not an area-specific one.
+    const timer = setTimeout(() => navigate(staffLoginPath), 2500);
     return () => clearTimeout(timer);
   }, [message, navigate]);
 
@@ -148,7 +150,7 @@ const ResetPasswordPage = () => {
         )}
 
         <Link
-          to="/admin/login"
+          to={staffLoginPath}
           className="block text-center text-xs font-bold text-cafe-600 hover:text-cafe-900"
         >
           {t("back_to_login")}

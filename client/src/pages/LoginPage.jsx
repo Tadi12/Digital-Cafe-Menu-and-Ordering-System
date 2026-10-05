@@ -1,21 +1,42 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
-import LabelInput from '../../components/common/LabelInput';
-import { staffHomePath } from '../../utils/staffRoles';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
+import LabelInput from '../components/common/LabelInput';
+import { staffHomePath } from '../utils/staffRoles';
 import { ArrowRight } from 'lucide-react';
 
-const AdminLoginPage = () => {
+/**
+ * THE staff sign-in page. One page, every role.
+ *
+ * There is deliberately no role selector here. A role is a property of the account
+ * the server returns once it has verified the credentials — taking one from the form
+ * would mean the browser was asserting an identity the backend never checked, and
+ * the route guards would then be defending against a value the user chose for
+ * themselves. The password decides the role, not the other way round.
+ *
+ * Where each role lands afterwards is decided by staffHomePath(), the one place that
+ * maps a role to its dashboard, so the destination cannot drift out of step with the
+ * guards protecting it. It used to be /admin/login, which made this page look like
+ * part of the admin area and invited a second login per station.
+ */
+const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, admin, loading: authLoading } = useAuth();
   const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Somebody already signed in has no business on the sign-in form. Send them
+  // where they belong instead of letting them authenticate a second time on top of
+  // the session they already hold. Guarded on authLoading so a refresh does not
+  // flash the form before the stored session has been checked.
+  if (authLoading) return null;
+  if (admin) return <Navigate to={staffHomePath(admin.role)} replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,10 +47,11 @@ const AdminLoginPage = () => {
     setLoading(false);
 
     if (res.success) {
-      // Send each role to the screen it actually owns. Without this a chef or a
-      // barista would land on /admin/dashboard, be bounced by ProtectedRoute, and
-      // only reach their own screen after a visible redirect.
-      navigate(staffHomePath(res.data?.role));
+      // The role comes from the authenticated account in the login response, never
+      // from the form. Send each role to the screen it actually owns: without this
+      // a chef or a barista would land on /admin/dashboard, be bounced by
+      // ProtectedRoute, and only reach their own screen after a visible redirect.
+      navigate(staffHomePath(res.data?.role), { replace: true });
     } else {
       setErrorMsg(res.message || t('invalid_credentials'));
     }
@@ -51,10 +73,10 @@ const AdminLoginPage = () => {
             className="mx-auto h-14 w-14 rounded-full object-cover shadow-md"
           />
           <h1 className="font-display text-xl font-black text-cafe-900 dark:text-white tracking-tight">
-            {t('admin_login_title')}
+            {t('staff_login_title')}
           </h1>
           <p className="text-xs text-cafe-500 dark:text-cafe-400 font-medium">
-            {t('admin_work')}
+            {t('staff_login_subtitle')}
           </p>
         </div>
 
@@ -89,7 +111,7 @@ const AdminLoginPage = () => {
             required
           />
           <div className="text-right -mt-1">
-            <Link to="/admin/forgot-password" className="text-xs font-bold text-cafe-600 dark:text-cafe-400 hover:text-cafe-900 dark:hover:text-white transition-colors">
+            <Link to="/forgot-password" className="text-xs font-bold text-cafe-600 dark:text-cafe-400 hover:text-cafe-900 dark:hover:text-white transition-colors">
               {t('forgot_password')}
             </Link>
           </div>
@@ -114,4 +136,4 @@ const AdminLoginPage = () => {
   );
 };
 
-export default AdminLoginPage;
+export default LoginPage;

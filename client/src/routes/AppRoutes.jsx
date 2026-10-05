@@ -1,10 +1,11 @@
 import React, { Suspense, lazy } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 
 // Layouts
 import CustomerLayout from "../layouts/CustomerLayout";
 import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
+import { staffLoginPath } from "../utils/staffRoles";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
 // Customer Pages (eager — primary QR-menu entry, keep first paint fast)
@@ -16,7 +17,7 @@ import MyOrdersPage from "../pages/customer/MyOrdersPage";
 import FavoritesPage from "../pages/customer/FavoritesPage";
 
 // Admin Pages (lazy — customers never download these; recharts splits out too)
-const AdminLoginPage = lazy(() => import("../pages/admin/AdminLoginPage"));
+const LoginPage = lazy(() => import("../pages/LoginPage"));
 const ForgotPasswordPage = lazy(() => import("../pages/admin/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("../pages/admin/ResetPasswordPage"));
 const DashboardPage = lazy(() => import("../pages/admin/DashboardPage"));
@@ -33,6 +34,19 @@ const StaffManagerPage = lazy(() => import("../pages/admin/StaffManagerPage"));
 const SettingsPage = lazy(() => import("../pages/admin/SettingsPage"));
 
 import StatusErrorPage from "../pages/errors/StatusErrorPage";
+
+/**
+ * Forwards an old emailed reset link to its new home.
+ *
+ * Password reset URLs are pasted into inboxes and chat logs and live for 30
+ * minutes, so the ones already sent out must keep working after the move. The token
+ * is carried across rather than dropped, which a literal `<Navigate to="...">` would
+ * not do — it treats the string as a path, colon and all.
+ */
+const LegacyResetPasswordRedirect = () => {
+  const { token } = useParams();
+  return <Navigate to={`/reset-password/${token}`} replace />;
+};
 
 const AppRoutes = () => {
   return (
@@ -59,10 +73,35 @@ const AppRoutes = () => {
         <Route path="/favorites" element={<FavoritesPage />} />
       </Route>
 
-      {/* Auth Routes */}
-      <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/admin/reset-password/:token" element={<ResetPasswordPage />} />
+      {/* ------------------------------------------------------------------
+          Auth routes — ONE login, for every role.
+
+          These are deliberately at the top level rather than under /admin. /admin
+          is a protected application area, so an auth route beneath it is both a
+          naming lie and a trap for the route guards: a guard that protects /admin
+          would have to special-case its own login page.
+
+          The form has no role field. The role comes back from the server after the
+          credentials are verified, and staffHomePath() turns it into a destination.
+      ------------------------------------------------------------------ */}
+      <Route path={staffLoginPath} element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+      {/* Legacy auth paths. These were the real URLs for years and the reset link
+          is emailed to staff, so they cannot simply be deleted: an old link in an
+          old inbox would 404. Each one forwards to its new home and keeps working. */}
+      <Route path="/admin/login" element={<Navigate to={staffLoginPath} replace />} />
+      <Route
+        path="/admin/forgot-password"
+        element={<Navigate to="/forgot-password" replace />}
+      />
+      {/* Needs the token forwarded intact, and `<Navigate to="/x/:id">` treats the
+          string literally — it does not substitute params. Hence a component. */}
+      <Route
+        path="/admin/reset-password/:token"
+        element={<LegacyResetPasswordRedirect />}
+      />
 
       {/* Protected Chef Routes */}
       <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'chef']} />}>

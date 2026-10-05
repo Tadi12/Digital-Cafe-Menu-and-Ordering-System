@@ -54,6 +54,22 @@ export const staffProfileTitle = (role, t) =>
   t('profile_title', { role: staffRoleLabel(role, t) });
 
 /**
+ * The ONE sign-in route, shared by every staff role.
+ *
+ * Authentication used to live at /admin/login, which made the login page look like
+ * it belonged to the admin area and invited a second, role-specific login for each
+ * station. There is a single account store and a single session, so there is one
+ * page: it takes an email and a password and nothing else, and the role comes back
+ * from the server. Named here so the login route, the guard that bounces anonymous
+ * visitors, and every link to it cannot drift apart.
+ *
+ * NOT prefixed by a role, and deliberately not nested under /admin — /admin is a
+ * protected application area, so an auth route underneath it is both a naming lie
+ * and a trap for the route guards.
+ */
+const staffLoginPath = '/login';
+
+/**
  * Route prefix for a role's staff area. Mirrors the route tree in
  * routes/AppRoutes.jsx so the navbar can send a notification click to the right
  * orders screen instead of always dropping a waiter at /admin/orders.
@@ -89,11 +105,16 @@ const isFloorStaffRole = (role) => role === 'waiter' || role === 'admin' || role
 const roleTrack = (role) => ROLE_TRACK[role] || null;
 
 /**
- * Where a role should land straight after logging in.
+ * Where a role lands straight after logging in.
  *
  * The kitchen roles (chef, barista) work a ticket queue and have no dashboard, so
  * they go straight to their orders screen; the floor and management roles keep the
  * dashboard they have always opened on.
+ *
+ * This is the ONLY place that maps a role to a landing page, and it is what makes
+ * "one login page, many destinations" work: the shared /login form reads the role
+ * off the authenticated account and calls this, so nobody picks their own
+ * destination and no component grows a parallel role switch.
  *
  * @param {string} role stored role value
  * @returns {string} an absolute route
@@ -218,6 +239,7 @@ export {
   AREA_TITLE_KEYS,
   ROLE_AREA_TITLE_KEYS,
   ROLE_TRACK,
+  staffLoginPath,
   staffBasePath,
   staffHomePath,
   staffBrandKeys,

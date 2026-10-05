@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, CheckCircle2, KeyRound, Mail } from "lucide-react";
 import { forgotPasswordApi } from "../../api/authApi";
 import { resolveApiError } from "../../utils/apiError";
+import { staffLoginPath } from "../../utils/staffRoles";
 
 const ForgotPasswordPage = () => {
   const { t } = useTranslation();
@@ -68,7 +69,7 @@ const ForgotPasswordPage = () => {
                 autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@cafe.com"
+                placeholder="enter your email"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cafe-200 text-sm focus:border-cafe-600 focus:outline-none font-medium bg-white text-cafe-900"
                 required
               />
@@ -92,7 +93,7 @@ const ForgotPasswordPage = () => {
         </form>
 
         <Link
-          to="/admin/login"
+          to={staffLoginPath}
           className="block text-center text-xs font-bold text-cafe-600 hover:text-cafe-900"
         >
           {t("back_to_login")}

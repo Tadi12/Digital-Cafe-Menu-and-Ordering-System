@@ -203,7 +203,11 @@ const forgotPassword = async (req, res, next) => {
     admin.resetTokenExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 mins
     await admin.save({ validateBeforeSave: false });
 
-    const resetUrl = `${getClientBaseUrl()}/admin/reset-password/${resetToken}`;
+    // Top-level, not /admin/...: password reset is an authentication route, and
+    // /admin is a protected application area. Links already sitting in inboxes point
+    // at the old /admin/reset-password/:token path, which the client keeps alive with
+    // a redirect, so nobody is locked out by the move.
+    const resetUrl = `${getClientBaseUrl()}/reset-password/${resetToken}`;
 
     try {
       await sendEmail({
