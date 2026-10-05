@@ -13,9 +13,18 @@ import {
   preparationStatusLabel,
   canCompleteOrder,
   pendingPreparationTrack,
+  activePreparationTracks,
 } from '../../utils/orderStatus';
 import { roleTrack, isStationRole } from '../../utils/staffRoles';
 import PreparationProgress from './PreparationProgress';
+
+// Label and icon per preparation track. Only which tracks an order HAS is a rule
+// (activePreparationTracks in utils/orderStatus); how a track looks is presentation,
+// so it stays here.
+const TRACK_DISPLAY = {
+  food: { labelKey: 'food_section_label', Icon: UtensilsCrossed },
+  drink: { labelKey: 'drink_section_label', Icon: Coffee },
+};
 
 const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUpdatePreparation, pendingPreparationTarget, succeededPreparation }) => {
   const { t } = useTranslation();
@@ -31,6 +40,11 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUp
   // A waiter delivers: they see both preparation tracks and own the final
   // "Mark Order Completed" step, so they get the combined progress panel.
   const isWaiterRole = role === 'waiter';
+
+  // Only the halves this order actually contains. A food-only order must not be
+  // captioned "Drinks: Not required" — that reads as a status OF the drinks rather
+  // than the absence of them, and it appeared on every single food-only card.
+  const activeTracks = activePreparationTracks(order);
 
   const formattedTime = new Date(order.createdAt).toLocaleTimeString([], {
     hour: '2-digit',
@@ -113,22 +127,40 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUp
       {/* Action Footer: a station drives its own track; everyone else keeps the
           single overall-status button they always had. */}
       <div className="p-3 bg-cafe-50 border-t border-cafe-100 space-y-2">
-        {!stationOnly && (
-          <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
-            <div className="flex items-center justify-between gap-1 rounded-lg px-2 py-1 bg-white border border-cafe-100">
-              <span className="flex items-center gap-1 text-cafe-600">
-                <UtensilsCrossed className="w-3 h-3" aria-hidden="true" />
-                {t('food_section_label')}
-              </span>
-              <span className="text-cafe-900">{preparationStatusLabel(order.foodStatus, t)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-1 rounded-lg px-2 py-1 bg-white border border-cafe-100">
-              <span className="flex items-center gap-1 text-cafe-600">
-                <Coffee className="w-3 h-3" aria-hidden="true" />
-                {t('drink_section_label')}
-              </span>
-              <span className="text-cafe-900">{preparationStatusLabel(order.drinkStatus, t)}</span>
-            </div>
+        {/* The compact per-track strip is for the admin, who is scanning a grid of
+            cards and just needs to see which stations still owe something.
+
+            It is deliberately NOT rendered for a waiter: PreparationProgress below
+            already shows the same tracks — filtered the same way — plus the line
+            naming the station they are still waiting on, which is the part that
+            actually matters when you are the one carrying the tray. Drawing both
+            printed every status twice.
+
+            Nothing renders at all when the order has no preparation tracks (a
+            cancelled order, or a legacy one missing both fields). */}
+        {!stationOnly && !isWaiterRole && activeTracks.length > 0 && (
+          <div
+            className={`grid gap-2 text-[11px] font-bold ${
+              activeTracks.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+            }`}
+          >
+            {activeTracks.map((key) => {
+              const { labelKey, Icon } = TRACK_DISPLAY[key];
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between gap-1 rounded-lg px-2 py-1 bg-white border border-cafe-100"
+                >
+                  <span className="flex items-center gap-1 text-cafe-600">
+                    <Icon className="w-3 h-3" aria-hidden="true" />
+                    {t(labelKey)}
+                  </span>
+                  <span className="text-cafe-900">
+                    {preparationStatusLabel(order[`${key}Status`], t)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 

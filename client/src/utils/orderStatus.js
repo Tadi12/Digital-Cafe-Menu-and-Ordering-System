@@ -203,6 +203,41 @@ export const preparationStatusLabel = (preparationStatus, t) => {
 };
 
 /**
+ * The two preparation tracks, in display order.
+ *
+ * `itemType` on an order line and the `foodStatus` / `drinkStatus` pair on the
+ * order are two views of the same split; this is the order they are listed in.
+ */
+const PREPARATION_TRACKS = ['food', 'drink'];
+
+/**
+ * Which preparation tracks does this order actually contain?
+ *
+ * An order with no drinks gets `drinkStatus: 'not_required'`, and one with no food
+ * gets `foodStatus: 'not_required'`. That value is meaningful to the API — it is how
+ * `canCompleteOrder` knows a track owes nothing — but it must never reach the
+ * screen. Rendering it puts a caption on a half the order does not have: a
+ * food-only order captioned "Drinks: Not required" reads as a status OF the drinks
+ * rather than the absence of them, which is noise on every single card.
+ *
+ * Normalised rather than compared literally, so a legacy order that stored
+ * 'completed' (now 'ready') is still recognised as containing that track, and an
+ * order missing both track fields yields no tracks at all instead of two phantom
+ * ones.
+ *
+ * This is the single rule for the question, shared by the admin strip in
+ * `OrderCard` and the waiter's `PreparationProgress` — the two used to filter
+ * differently, which is exactly how a phantom half got onto the admin's screen.
+ *
+ * @param {{foodStatus?: string, drinkStatus?: string}} order
+ * @returns {('food'|'drink')[]} the tracks present, in display order
+ */
+export const activePreparationTracks = (order) =>
+  PREPARATION_TRACKS.filter(
+    (track) => normalizePreparationTrack(order?.[`${track}Status`]) !== 'not_required',
+  );
+
+/**
  * Is this order ready to be served — i.e. does every required track say ready?
  *
  * Mirrors isReadyForCompletion on the server. Used only to decide whether to draw
@@ -230,6 +265,7 @@ export {
   ORDER_STATUS_KEYS,
   ORDER_STATUS_FLOW,
   PREPARATION_FLOW,
+  PREPARATION_TRACKS,
   PREPARATION_ACTION_KEYS,
   PREPARATION_STATUS_KEYS,
   normalizePreparationTrack,

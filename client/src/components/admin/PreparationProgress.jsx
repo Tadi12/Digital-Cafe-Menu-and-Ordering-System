@@ -1,12 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UtensilsCrossed, Coffee, Check, Clock } from 'lucide-react';
-import { preparationStatusLabel, canCompleteOrder, pendingPreparationTrack } from '../../utils/orderStatus';
+import {
+  preparationStatusLabel,
+  canCompleteOrder,
+  pendingPreparationTrack,
+  activePreparationTracks,
+} from '../../utils/orderStatus';
 
-const TRACK_ROWS = [
-  { key: 'food', labelKey: 'food_section_label', Icon: UtensilsCrossed },
-  { key: 'drink', labelKey: 'drink_section_label', Icon: Coffee },
-];
+const TRACK_ROWS = {
+  food: { labelKey: 'food_section_label', Icon: UtensilsCrossed },
+  drink: { labelKey: 'drink_section_label', Icon: Coffee },
+};
 
 /**
  * The waiter's combined view of an order's two preparation tracks.
@@ -25,18 +30,19 @@ const PreparationProgress = ({ order }) => {
   const { t } = useTranslation();
 
   // A half the order does not contain is skipped entirely: no phantom row for a
-  // food-only order, and no misleading "Drinks: not required" noise.
-  const rows = TRACK_ROWS.filter(
-    ({ key }) => order?.[`${key}Status`] !== 'not_required',
-  );
-  if (rows.length === 0) return null;
+  // food-only order, and no misleading "Drinks: not required" noise. The rule comes
+  // from utils/orderStatus so this panel and the admin's strip in OrderCard can
+  // never disagree about which tracks the order has.
+  const active = activePreparationTracks(order);
+  if (active.length === 0) return null;
 
   const ready = canCompleteOrder(order);
   const waitingOn = pendingPreparationTrack(order);
 
   return (
     <div className="space-y-1.5">
-      {rows.map(({ key, labelKey, Icon }) => {
+      {active.map((key) => {
+        const { labelKey, Icon } = TRACK_ROWS[key];
         const status = order[`${key}Status`];
         const isReady = status === 'ready';
 

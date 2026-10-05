@@ -5,10 +5,15 @@ import { getOrdersApi, getMyTablesApi } from '../../api/orderApi';
 import OrderStatusBadge from '../customer/OrderStatusBadge';
 import LoadingSpinner from '../common/LoadingSpinner';
 import StaffDashboardShell from './StaffDashboardShell';
-import { preparationStatusLabel, canCompleteOrder } from '../../utils/orderStatus';
+import { preparationStatusLabel, canCompleteOrder, activePreparationTracks } from '../../utils/orderStatus';
 import { staffBasePath } from '../../utils/staffRoles';
 
 const ACTIVE_STATUSES = ['Pending', 'Preparing', 'Ready'];
+
+const TRACK_LABEL_KEYS = {
+  food: 'food_section_label',
+  drink: 'drink_section_label',
+};
 
 /**
  * The waiter's dashboard.
@@ -95,14 +100,15 @@ const WaiterDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] font-bold text-cafe-500">
-              {t('food_section_label')}:{' '}
-              {preparationStatusLabel(order.foodStatus, t)}
-            </span>
-            <span className="text-[11px] font-bold text-cafe-500">
-              {t('drink_section_label')}:{' '}
-              {preparationStatusLabel(order.drinkStatus, t)}
-            </span>
+            {/* Only the halves this order contains. A food-only order used to read
+                "Food: Preparing   Drinks: Not required" on every row, which is
+                noise at best and reads as a drink status that does not exist. */}
+            {activePreparationTracks(order).map((track) => (
+              <span key={track} className="text-[11px] font-bold text-cafe-500">
+                {t(TRACK_LABEL_KEYS[track])}:{' '}
+                {preparationStatusLabel(order[`${track}Status`], t)}
+              </span>
+            ))}
             <OrderStatusBadge status={order.overallStatus || order.status} />
           </div>
         </li>
