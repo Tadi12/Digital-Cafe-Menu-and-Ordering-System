@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import SpacetimeGrid from '../components/common/SpacetimeGrid';
 
 // A warm restaurant interior, served from Unsplash's CDN at build-stable params.
 // Kept as an <img> (not a CSS background) so it can be preloaded and so the
@@ -32,6 +33,16 @@ const LandingPage = () => {
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-r from-cafe-900/75 via-transparent to-cafe-900/55"
       />
+
+      {/* The spacetime grid. Sits above the photograph and the legibility overlays
+          so the field is actually visible, and below the content (z-10) so the
+          navbar and headline stay crisp on top of it.
+
+          It is pointer-events-none and reads the pointer from the window, so the
+          hero's logo and login links keep working normally. */}
+      <div className="absolute inset-0 z-0">
+        <SpacetimeGrid />
+      </div>
 
       {/* Navbar */}
       <header className="relative z-10">
