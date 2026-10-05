@@ -1,7 +1,8 @@
-const jwt = require('jsonwebtoken');
+﻿const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 const AdminSession = require('../models/AdminSession');
 const { ERROR_CODES } = require('../utils/errorCodes');
+const { isStaffEnabled } = require('../utils/staffAccess');
 
 /**
  * Roles that manage the cafe itself: the catalogue, the floor plan, the staff
@@ -41,6 +42,20 @@ const protectAdmin = async (req, res, next) => {
         return res.status(401).json({ success: false, message: 'Admin account not found' });
       }
 
+      // Checked on every request, not only at login. Disabling an account is
+      // meant to take effect now, so an already-signed-in browser with a live
+      // session must lose access on its next call rather than at token expiry.
+      // 401 (not 403) so the client's global interceptor drops the stored token
+      // and the account is fully signed out, while the code still tells the UI
+      // the real reason.
+      if (!isStaffEnabled(req.user)) {
+        return res.status(401).json({
+          success: false,
+          code: ERROR_CODES.STAFF_ACCOUNT_DISABLED,
+          message: 'This account has been disabled',
+        });
+      }
+
       const session = await AdminSession.findOne({
         _id: decoded.sessionId,
         admin: req.user._id,
@@ -78,6 +93,10 @@ const attachAdminIfAuthenticated = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded.sessionId) return next();
     const admin = await Admin.findById(decoded.id).select('-password');
+    // A disabled account is treated exactly like no token at all. It simply
+    // never becomes req.user, so the shared public routes fall through to the
+    // customer path instead of quietly granting staff access.
+    if (!isStaffEnabled(admin)) return next();
     const session = admin && await AdminSession.findOne({
       _id: decoded.sessionId,
       admin: admin._id,

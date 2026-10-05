@@ -27,6 +27,10 @@ const CODE_KEYS = {
   EMAIL_IN_USE: 'api_code_email_in_use',
   EMAIL_SEND_FAILED: 'api_code_email_send_failed',
 
+  // staff roster
+  STAFF_NOT_FOUND: 'error_not_found_message',
+  STAFF_ACCOUNT_DISABLED: 'staff_account_disabled',
+
   // validation
   VALIDATION_FAILED: 'error_bad_request_message',
   BAD_REQUEST: 'error_bad_request_message',

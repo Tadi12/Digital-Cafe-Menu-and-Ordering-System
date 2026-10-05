@@ -1,10 +1,11 @@
-let ioInstance = null;
+﻿let ioInstance = null;
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Admin = require('../models/Admin');
 const AdminSession = require('../models/AdminSession');
 const Order = require('../models/Order');
 const { itemsForTrack, groupItemsByTrack, toStatusPayload, ROLE_TRACK, trackStatusField } = require('../utils/orderStatus');
+const { isStaffEnabled } = require('../utils/staffAccess');
 
 /** How many times one connection may ring the floor before the rest are dropped. */
 const MAX_CALLS_PER_SOCKET = 5;
@@ -71,6 +72,11 @@ const resolveStaffFromToken = async (token) => {
 
     const admin = await Admin.findById(decoded.id).select('-password');
     if (!admin) return null;
+
+    // A disabled account gets no rooms. Without this a signed-out staff member
+    // would keep receiving the live order feed on an already-open socket until
+    // it happened to reconnect — the socket outlives the HTTP session.
+    if (!isStaffEnabled(admin)) return null;
 
     const session = await AdminSession.exists({
       _id: decoded.sessionId,

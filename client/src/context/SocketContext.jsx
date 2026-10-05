@@ -41,6 +41,16 @@ export const SocketProvider = ({ children }) => {
       socketInstance.disconnect();
     });
 
+    // Fired when a manager switches this account off from the staff roster. The
+    // server has already revoked the sessions, so this only tells the browser to
+    // stop pretending to be signed in. Reusing 'admin-session-changed' hands the
+    // teardown to the existing listener rather than duplicating it.
+    socketInstance.on('staff_account_disabled', () => {
+      localStorage.removeItem('cafe_admin_token');
+      window.dispatchEvent(new Event('staff-account-disabled'));
+      window.dispatchEvent(new Event('admin-session-changed'));
+    });
+
     const syncAdminSession = () => {
       if (localStorage.getItem('cafe_admin_token')) {
         if (socketInstance.connected) registerAdminSession();

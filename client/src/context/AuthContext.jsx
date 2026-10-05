@@ -39,8 +39,20 @@ export const AuthProvider = ({ children }) => {
       setAdmin(null);
       setError(t('session_terminated'));
     };
+    // A disabled account has to leave the app, not just lose its token: otherwise
+    // the cached profile keeps rendering a dashboard that can no longer make a
+    // single request succeed. Raised by the socket and by the axios interceptor.
+    const handleAccountDisabled = () => {
+      localStorage.removeItem('cafe_admin_token');
+      setAdmin(null);
+      setError(t('staff_account_disabled'));
+    };
     window.addEventListener('admin-session-terminated', handleSessionTermination);
-    return () => window.removeEventListener('admin-session-terminated', handleSessionTermination);
+    window.addEventListener('staff-account-disabled', handleAccountDisabled);
+    return () => {
+      window.removeEventListener('admin-session-terminated', handleSessionTermination);
+      window.removeEventListener('staff-account-disabled', handleAccountDisabled);
+    };
   }, []);
 
   const login = async (credentials) => {

@@ -1,9 +1,11 @@
-const { ERROR_CODES } = require('../utils/errorCodes');
+﻿const { ERROR_CODES } = require('../utils/errorCodes');
 
 const Admin = require('../models/Admin');
 const AdminSession = require('../models/AdminSession');
+const Table = require('../models/Table');
 const mongoose = require('mongoose');
 const generateToken = require('../utils/generateToken');
+const { ROLE_RANK, isStaffEnabled, staffActionRefusal } = require('../utils/staffAccess');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const { getIO } = require('../sockets/socketHandler');
@@ -36,6 +38,20 @@ const loginAdmin = async (req, res, next) => {
     const admin = await Admin.findOne({ email: email.toLowerCase() });
 
     if (admin && (await admin.matchPassword(password))) {
+      // Checked AFTER the password matched, never before. Answering "disabled"
+      // to an unauthenticated caller would turn this endpoint into an account
+      // oracle: anybody could learn which emails belong to real staff and which
+      // of those are switched off. At this point the caller has already proven
+      // they are that person, so naming the real reason is what lets them know
+      // to ask a manager for access back.
+      if (!isStaffEnabled(admin)) {
+        return res.status(403).json({
+          success: false,
+          code: ERROR_CODES.STAFF_ACCOUNT_DISABLED,
+          message: 'This account has been disabled. Please contact an administrator.',
+        });
+      }
+
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       const userAgent = String(req.get('user-agent') || '');
       const session = await AdminSession.create({
@@ -270,16 +286,85 @@ const resetPassword = async (req, res, next) => {
 
 const getStaff = async (req, res, next) => {
   try {
-    const staff = await Admin.find().select('-password');
-    res.json({ success: true, data: staff });
+    const staff = await Admin.find().select('-password').sort({ createdAt: -1 }).lean();
+    res.json({ success: true, data: staff.map(toStaffJSON) });
   } catch (error) {
     next(error);
   }
 };
 
-// Ranked so a creator can only grant roles at or below their own. Without this an
-// 'admin' could mint a 'super_admin' and then revoke the original admin's session.
-const ROLE_RANK = { waiter: 1, chef: 1, barista: 1, admin: 2, super_admin: 3 };
+/**
+ * The roster's view of a staff account.
+ *
+ * `isActive` is normalised to a real boolean here rather than passed through, so
+ * the client never has to know that accounts predating the field read back as
+ * `undefined` and would otherwise render every existing member as disabled.
+ */
+const toStaffJSON = (admin) => ({
+  _id: admin._id,
+  name: admin.name,
+  email: admin.email,
+  role: admin.role,
+  isActive: isStaffEnabled(admin),
+  createdAt: admin.createdAt,
+});
+
+/**
+ * Turn a `staffActionRefusal` reason into the 403 the caller should receive.
+ *
+ * The rule itself — who may manage whom — lives in utils/staffAccess.js so it can
+ * be tested without a database. Only the wording lives here.
+ *
+ * @returns {{status: number, body: object}|null} the response to send, or null if allowed
+ */
+const refuseUnauthorisedStaffAction = (target, actor) => {
+  const reason = staffActionRefusal(target, actor);
+  if (!reason) return null;
+
+  const message =
+    reason === 'self'
+      ? 'You cannot enable, disable or delete your own account'
+      : 'You cannot manage a staff account with a higher role than your own';
+
+  return { status: 403, body: { success: false, code: ERROR_CODES.AUTH_FORBIDDEN, message } };
+};
+
+/**
+ * Revoke every live device session for a staff account and tell those browsers to
+ * sign themselves out.
+ *
+ * Disabling an account has to take effect now, not in 30 days when its token would
+ * have expired. Deleting the sessions is what actually revokes the token —
+ * `protectAdmin` requires a live session, so there is no surviving credential. The
+ * socket emit only saves the browser from having to discover this on its next
+ * request; the session rows are the real control.
+ */
+const revokeStaffSessions = async (adminId) => {
+  const sessions = await AdminSession.find({ admin: adminId, isActive: true })
+    .select('_id')
+    .lean();
+
+  if (!sessions.length) return;
+
+  await AdminSession.updateMany(
+    { admin: adminId, isActive: true },
+    { isActive: false, revokedAt: new Date() }
+  );
+
+  try {
+    const io = getIO();
+    for (const session of sessions) {
+      io.to(`admin_session_${session._id.toString()}`).emit('staff_account_disabled', {
+        reason: 'account_disabled',
+      });
+    }
+  } catch (error) {
+    // getIO() throws when the socket layer is not running (a script, a test). The
+    // sessions are already revoked, so the request has done its job; that browser
+    // simply finds out on its next request.
+    console.warn('[Staff] Could not notify disabled sessions:', error.message);
+  }
+};
 
 const createStaff = async (req, res, next) => {
   try {
@@ -309,8 +394,90 @@ const createStaff = async (req, res, next) => {
     const staff = await Admin.create({ name, email, password, role });
     res.status(201).json({
       success: true,
-      data: { _id: staff._id, name: staff.name, email: staff.email, role: staff.role },
+      data: toStaffJSON(staff),
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Toggle a staff account between enabled and disabled
+ * @route   PATCH /api/auth/staff/:id/status
+ * @access  Protected (Admin)
+ */
+const updateStaffStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ success: false, code: ERROR_CODES.BAD_REQUEST, message: 'Invalid staff id' });
+    }
+
+    const staff = await Admin.findById(id);
+    if (!staff) {
+      return res.status(404).json({ success: false, code: ERROR_CODES.STAFF_NOT_FOUND, message: 'Staff account not found' });
+    }
+
+    const refusal = refuseUnauthorisedStaffAction(staff, req.user);
+    if (refusal) return res.status(refusal.status).json(refusal.body);
+
+    staff.isActive = !isStaffEnabled(staff);
+    await staff.save();
+
+    // Only revoking on the way down: re-enabling must not be a way to reuse the
+    // old sessions, so the previous disable already threw them away.
+    if (!staff.isActive) {
+      await revokeStaffSessions(staff._id);
+    }
+
+    return res.json({
+      success: true,
+      message: staff.isActive ? 'Staff account enabled' : 'Staff account disabled',
+      data: toStaffJSON(staff),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Delete a staff account
+ * @route   DELETE /api/auth/staff/:id
+ * @access  Protected (Admin)
+ */
+const deleteStaff = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ success: false, code: ERROR_CODES.BAD_REQUEST, message: 'Invalid staff id' });
+    }
+
+    const staff = await Admin.findById(id);
+    if (!staff) {
+      return res.status(404).json({ success: false, code: ERROR_CODES.STAFF_NOT_FOUND, message: 'Staff account not found' });
+    }
+
+    const refusal = refuseUnauthorisedStaffAction(staff, req.user);
+    if (refusal) return res.status(refusal.status).json(refusal.body);
+
+    // Sessions first. They are what authorises the account, so revoking them
+    // before the document disappears means there is no window in which a live
+    // token still resolves to somebody who is no longer on the roster.
+    await revokeStaffSessions(staff._id);
+
+    // Hand back any tables this waiter owned. A table pointing at a deleted
+    // account populates as nobody, which is exactly what an unassigned table
+    // looks like, so this keeps the floor consistent instead of leaving a
+    // reference to a person who no longer exists. Historical orders are
+    // deliberately untouched: the cafe keeps its sales record either way.
+    await Table.updateMany(
+      { assignedWaiter: staff._id },
+      { $set: { assignedWaiter: null } }
+    );
+
+    await staff.deleteOne();
+
+    return res.json({ success: true, message: 'Staff account deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -319,6 +486,8 @@ const createStaff = async (req, res, next) => {
 module.exports = {
   getStaff,
   createStaff,
+  updateStaffStatus,
+  deleteStaff,
   loginAdmin,
   getAdminProfile,
   updateAdminProfile,

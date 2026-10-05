@@ -21,6 +21,13 @@ const ERROR_CODES = {
   EMAIL_IN_USE: 'EMAIL_IN_USE',
   EMAIL_SEND_FAILED: 'EMAIL_SEND_FAILED',
 
+  // ---- Staff roster ----
+  STAFF_NOT_FOUND: 'STAFF_NOT_FOUND',
+  // The account exists and the password was right, but the account is switched
+  // off. Distinct from AUTH_INVALID_CREDENTIALS so the sign-in screen can say
+  // "ask an admin to re-enable you" instead of "wrong password".
+  STAFF_ACCOUNT_DISABLED: 'STAFF_ACCOUNT_DISABLED',
+
   // ---- Request validation ----
   VALIDATION_FAILED: 'VALIDATION_FAILED',
   BAD_REQUEST: 'BAD_REQUEST',

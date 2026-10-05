@@ -32,6 +32,18 @@ const adminSchema = new mongoose.Schema(
       // (see validations/auth.schema.js); this is only the safety net.
       default: 'waiter',
     },
+    // A disabled account keeps its history, its role and its password but is
+    // refused at login and on every authenticated request, and has all of its
+    // device sessions revoked. Disabling is the reversible counterpart to
+    // deleting: use it for somebody who is off today but still on the roster.
+    //
+    // NOTE: accounts created before this field have no `isActive` at all, and must
+    // keep working. Read it through isStaffEnabled() in utils/staffAccess.js, which
+    // treats a missing value as enabled — never test this field directly.
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

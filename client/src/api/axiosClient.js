@@ -65,6 +65,12 @@ axiosClient.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('cafe_admin_token');
+      // A disabled account is the one 401 that needs the UI torn down as well:
+      // dropping the token alone leaves AuthContext holding a profile whose every
+      // request will now fail. Other 401s keep the existing token-only behaviour.
+      if (error.response.data?.code === 'STAFF_ACCOUNT_DISABLED') {
+        window.dispatchEvent(new Event('staff-account-disabled'));
+      }
     }
     return Promise.reject(error);
   }
