@@ -54,20 +54,47 @@ const isTableOwnedByUser = (user, table) => {
 /**
  * Table ids a waiter is responsible for.
  *
- * An oversight role gets `null`, meaning "no restriction" — callers must treat
- * null as unrestricted rather than as an empty list.
+ * The return value has three distinct meanings, and confusing them is what once
+ * hid every order from the kitchen:
+ *
+ *   null  -> NOT restricted by table ownership. Returned for the oversight roles
+ *            (admin / super_admin) AND for the kitchen roles (chef, barista),
+ *            which do not own tables and must never be narrowed by them.
+ *   []    -> a waiter who genuinely owns no tables. This matches nothing, which
+ *            is correct: an unassigned waiter has an empty queue, not every order.
+ *   [..]  -> the waiter's own table ids.
+ *
+ * Callers must therefore branch on `=== null`, never on truthiness — an empty
+ * array is a meaningful, restrictive answer, not an absent one.
  *
  * @param {object} user authenticated staff member
- * @returns {Promise<string[]|null>} ids, or null when unrestricted
+ * @returns {Promise<string[]|null>}
  */
 const getAssignedTableIds = async (user) => {
+  // Admin and super_admin see every table.
   if (hasFullTableAccess(user)) return null;
-  if (!isWaiter(user)) return [];
+
+  // The chef and the barista prepare food and drinks; table ownership is a
+  // floor concept and must not apply to them. Returning [] here would filter
+  // their entire queue down to nothing.
+  if (!isWaiter(user)) return null;
 
   const Table = require('../models/Table');
   const tables = await Table.find({ assignedWaiter: user._id }).select('_id');
   return tables.map((table) => String(table._id));
 };
+
+/**
+ * May this role only see orders on tables assigned to them?
+ *
+ * True for waiters alone. Everything else — admin, chef, barista — is unrestricted
+ * by table ownership, which keeps the restriction from being applied to the
+ * kitchen by accident.
+ *
+ * @param {object} user authenticated staff member
+ * @returns {boolean}
+ */
+const isRestrictedByTableOwnership = (user) => isWaiter(user);
 
 /**
  * A Mongo filter restricting an order query to the user's own tables.
@@ -159,6 +186,7 @@ module.exports = {
   hasFullTableAccess,
   isTableOwnedByUser,
   getAssignedTableIds,
+  isRestrictedByTableOwnership,
   tableOwnershipFilter,
   buildTableOrdersQuery,
   forbiddenOwnership,

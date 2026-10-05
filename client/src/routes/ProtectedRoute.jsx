@@ -24,8 +24,8 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
   // Check role-based access if allowedRoles is provided
   if (allowedRoles.length > 0 && !allowedRoles.includes(admin.role)) {
     // If they don't have access, redirect them to a safe default page based on their role
-    if (admin.role === 'chef') return <Navigate to="/chef/orders" replace />;
-    if (admin.role === 'barista') return <Navigate to="/barista/orders" replace />;
+    if (admin.role === 'chef') return <Navigate to="/chef/dashboard" replace />;
+    if (admin.role === 'barista') return <Navigate to="/barista/dashboard" replace />;
     if (admin.role === 'waiter') return <Navigate to="/waiter/dashboard" replace />;
     return <Navigate to="/admin/dashboard" replace />;
   }

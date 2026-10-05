@@ -99,8 +99,8 @@ const roleTrack = (role) => ROLE_TRACK[role] || null;
  * @returns {string} an absolute route
  */
 const staffHomePath = (role) => {
-  if (role === 'chef') return '/chef/orders';
-  if (role === 'barista') return '/barista/orders';
+  if (role === 'chef') return '/chef/dashboard';
+  if (role === 'barista') return '/barista/dashboard';
   if (role === 'waiter') return '/waiter/dashboard';
   return '/admin/dashboard';
 };

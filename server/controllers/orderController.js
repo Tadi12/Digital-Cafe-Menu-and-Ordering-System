@@ -22,6 +22,8 @@ const {
 } = require('../utils/orderStatus');
 const {
   getAssignedTableIds,
+  isRestrictedByTableOwnership,
+  hasFullTableAccess,
   tableOwnershipFilter,
   buildTableOrdersQuery,
   isTableOwnedByUser,
@@ -246,12 +248,11 @@ const getOrders = async (req, res, next) => {
     }
 
     // Table ownership. A waiter only ever receives orders sitting on tables
-    // assigned to them; the chef, the barista and the admin are unaffected because
-    // they own no tables. This runs in the query, so another waiter's orders are
-    // never sent to the client in the first place — hiding them in the UI instead
-    // would still leak them over the network.
-    const assignedTableIds = await getAssignedTableIds(req.user);
-    if (assignedTableIds !== null) {
+    // assigned to them. It is applied to WAITERS ONLY: the chef, the barista and
+    // the admin own no tables, and filtering them by one previously reduced the
+    // whole kitchen queue to `$in: []`, i.e. no orders at all.
+    if (isRestrictedByTableOwnership(req.user)) {
+      const assignedTableIds = await getAssignedTableIds(req.user);
       Object.assign(query, tableOwnershipFilter(req.user, assignedTableIds));
     }
 
@@ -259,20 +260,25 @@ const getOrders = async (req, res, next) => {
       .populate('table', 'tableNumber tableName assignedWaiter')
       .sort({ createdAt: -1 });
 
+    // Convert to plain objects FIRST, for every role.
+    //
+    // Spreading a Mongoose document (`{...order}`) copies its internal bookkeeping
+    // ($__, _doc, $isNew) rather than the schema fields, which silently produced
+    // objects with no orderNumber, items or totalAmount. Station roles only escaped
+    // it because their branch called toObject() first.
+    const plainOrders = orders.map((order) => order.toObject());
+
     // Same order document for everyone — only the item list is narrowed to the
     // caller's station. totalAmount, the order number and the payment fields are
     // untouched, so this can never double-count revenue or duplicate an order.
     const scoped = stationTrack
-      ? orders.map((order) => {
-          const trackItems = itemsForTrack(order.items, stationTrack);
-          return {
-            ...order.toObject(),
-            items: trackItems,
-            station: stationTrack,
-            stationStatus: order[trackStatusField(stationTrack)],
-          };
-        })
-      : orders;
+      ? plainOrders.map((order) => ({
+          ...order,
+          items: itemsForTrack(order.items, stationTrack),
+          station: stationTrack,
+          stationStatus: order[trackStatusField(stationTrack)],
+        }))
+      : plainOrders;
 
     // Every staff response carries BOTH preparation tracks plus the derived
     // overall status. A waiter therefore always receives the chef's AND the
@@ -305,9 +311,20 @@ const getWaiterTables = async (req, res, next) => {
   try {
     const Table = require('../models/Table');
 
-    // Oversight roles are not restricted; `null` from getAssignedTableIds is the
-    // documented "unrestricted" signal, and it must not be read as "no tables".
+    // Only a waiter (or an oversight role) has a station to show. The kitchen
+    // roles are not table owners, and getAssignedTableIds returns null for them,
+    // which here would otherwise mean "every table in the cafe".
+    if (!isRestrictedByTableOwnership(req.user) && !hasFullTableAccess(req.user)) {
+      return res.status(403).json({
+        success: false,
+        code: ERROR_CODES.AUTH_FORBIDDEN,
+        message: 'Access Denied: only a waiter can view a table station.',
+      });
+    }
+
     const assignedTableIds = await getAssignedTableIds(req.user);
+    // `null` is the documented "unrestricted" signal and must not be read as an
+    // empty list; an empty array means a waiter who genuinely owns no tables.
     const query =
       assignedTableIds === null ? {} : { _id: { $in: assignedTableIds } };
 

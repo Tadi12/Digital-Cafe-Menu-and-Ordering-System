@@ -27,10 +27,17 @@ const AdminSidebar = ({ isOpen, onClose }) => {
   const basePath = staffBasePath(role);
 
   const allNavItems = [
-    { path: `${basePath}/dashboard`, label: t("dashboard"), icon: LayoutDashboard, roles: ['super_admin', 'admin', 'waiter'] },
+    // Every staff role gets a dashboard and the order queue. `basePath` makes the
+    // links resolve per role (/admin, /waiter, /chef, /barista).
+    {
+      path: `${basePath}/dashboard`,
+      label: t("dashboard"),
+      icon: LayoutDashboard,
+      roles: ['super_admin', 'admin', 'waiter', 'chef', 'barista'],
+    },
     {
       path: `${basePath}/orders`,
-      label: t("order_management"),
+      label: t("order_queue"),
       icon: ClipboardList,
       roles: ['super_admin', 'admin', 'chef', 'waiter', 'barista'],
     },

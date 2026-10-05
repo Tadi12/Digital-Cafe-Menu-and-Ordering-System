@@ -6,7 +6,8 @@ import { getDashboardMetricsApi, getRevenueAnalyticsApi } from '../../api/analyt
 import MetricCard from '../../components/admin/MetricCard';
 import OrderStatusBadge from '../../components/customer/OrderStatusBadge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import WaiterTablesPanel from '../../components/admin/WaiterTablesPanel';
+import WaiterDashboard from '../../components/admin/WaiterDashboard';
+import StationDashboard from '../../components/admin/StationDashboard';
 import { formatCurrency } from '../../utils/currencyFormatter';
 import { orderStatusLabel } from '../../utils/orderStatus';
 
@@ -45,12 +46,15 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
 
   const isChef = admin?.role === 'chef';
+  const isBarista = admin?.role === 'barista';
   const isWaiter = admin?.role === 'waiter';
+  // The two kitchen stations share one dashboard; only which half they see differs.
+  const isStation = isChef || isBarista;
 
   useEffect(() => {
     // The analytics endpoints are admin-only, so the kitchen and floor roles skip
     // the fetch entirely and render their own panels.
-    if (isChef || isWaiter) {
+    if (isStation || isWaiter) {
       setLoading(false);
       return;
     }
@@ -72,44 +76,17 @@ const DashboardPage = () => {
     };
 
     fetchData();
-  }, [isChef, isWaiter]);
+  }, [isStation, isWaiter]);
 
   // Every hook above runs on every render. The role-specific early returns come
   // only after them — returning first would change the hook order between the
   // admin view and the staff views and break the rules of hooks.
-  if (isWaiter) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="font-display text-xl font-bold text-cafe-900">
-            {t('my_tables_title')}
-          </h2>
-          <p className="text-xs text-cafe-500">{t('my_tables_desc')}</p>
-        </div>
-        <WaiterTablesPanel />
-      </div>
-    );
+  if (isStation) {
+    return <StationDashboard role={isBarista ? 'barista' : 'chef'} />;
   }
 
-  if (isChef) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
-        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-cafe-200 overflow-hidden">
-          <img
-            src="/kitchen-dashboard.jpg"
-            alt={t('chef_dashboard_image_alt')}
-            className="w-full h-72 object-cover bg-cafe-100"
-            fetchPriority="high"
-          />
-          <div className="p-8 text-center">
-            <h1 className="text-3xl font-display font-bold text-cafe-900 mb-2">
-              {t('chef_dashboard_title')}
-            </h1>
-            <p className="text-cafe-600 mb-6">{t('chef_dashboard_desc')}</p>
-          </div>
-        </div>
-      </div>
-    );
+  if (isWaiter) {
+    return <WaiterDashboard />;
   }
 
   if (loading) {

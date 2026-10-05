@@ -20,6 +20,7 @@ const AdminLoginPage = lazy(() => import("../pages/admin/AdminLoginPage"));
 const ForgotPasswordPage = lazy(() => import("../pages/admin/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("../pages/admin/ResetPasswordPage"));
 const DashboardPage = lazy(() => import("../pages/admin/DashboardPage"));
+const WaiterTablesPage = lazy(() => import("../pages/admin/WaiterTablesPage"));
 const FoodManagerPage = lazy(() => import("../pages/admin/FoodManagerPage"));
 const DrinkManagerPage = lazy(() => import("../pages/admin/DrinkManagerPage"));
 const CategoryManagerPage = lazy(() => import("../pages/admin/CategoryManagerPage"));
@@ -66,7 +67,8 @@ const AppRoutes = () => {
       {/* Protected Chef Routes */}
       <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'chef']} />}>
         <Route element={<AdminLayout />}>
-          <Route path="/chef" element={<Navigate to="/chef/orders" replace />} />
+          <Route path="/chef" element={<Navigate to="/chef/dashboard" replace />} />
+          <Route path="/chef/dashboard" element={<DashboardPage />} />
           <Route path="/chef/orders" element={<OrderManagerPage />} />
           <Route path="/chef/profile" element={<AdminProfilePage />} />
         </Route>
@@ -75,7 +77,8 @@ const AppRoutes = () => {
       {/* Protected Barista Routes */}
       <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'barista']} />}>
         <Route element={<AdminLayout />}>
-          <Route path="/barista" element={<Navigate to="/barista/orders" replace />} />
+          <Route path="/barista" element={<Navigate to="/barista/dashboard" replace />} />
+          <Route path="/barista/dashboard" element={<DashboardPage />} />
           <Route path="/barista/orders" element={<OrderManagerPage />} />
           <Route path="/barista/profile" element={<AdminProfilePage />} />
         </Route>
@@ -87,7 +90,7 @@ const AppRoutes = () => {
           <Route path="/waiter" element={<Navigate to="/waiter/dashboard" replace />} />
           <Route path="/waiter/dashboard" element={<DashboardPage />} />
           <Route path="/waiter/orders" element={<OrderManagerPage />} />
-          <Route path="/waiter/tables" element={<DashboardPage />} />
+          <Route path="/waiter/tables" element={<WaiterTablesPage />} />
           <Route path="/waiter/profile" element={<AdminProfilePage />} />
         </Route>
       </Route>

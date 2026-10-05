@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../hooks/useAuth";
+import { staffBasePath } from "../utils/staffRoles";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminNavbar from "../components/admin/AdminNavbar";
 
@@ -8,10 +10,16 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const { t } = useTranslation();
+  const { admin } = useAuth();
 
   const getPageTitle = () => {
     const path = location.pathname;
     
+    // Staff dashboards (waiter / chef / barista) share the generic title; the
+    // management dashboard keeps its own.
+    if (path.includes("/dashboard") && staffBasePath(admin?.role) !== "/admin") {
+      return t("admin_portal");
+    }
     if (path.includes("/dashboard")) return t("admin_page_dashboard");
     if (path.includes("/orders")) return t("admin_page_orders");
     if (path.includes("/foods")) return t("admin_page_foods");
