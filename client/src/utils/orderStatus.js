@@ -238,10 +238,61 @@ export const activePreparationTracks = (order) =>
   );
 
 /**
+ * Is this order closed — served or cancelled?
+ *
+ * A lifecycle question, and deliberately separate from `canCompleteOrder`, which
+ * asks about the preparation tracks. Keeping them apart is the fix for a real bug:
+ * `canCompleteOrder` was being used to decide whether to tell the waiter "food and
+ * drinks are ready, take this to the table", but it only looks at the two tracks.
+ * Those tracks stay 'ready' forever after the order is completed, so a SERVED order
+ * kept being announced as ready to carry — the instruction outlived the task.
+ *
+ * The two answers genuinely differ. A pending order can have both tracks ready and
+ * still be open; a completed one has both tracks ready and is closed.
+ *
+ * @param {string} status the overall order status, as stored
+ * @returns {boolean}
+ */
+export const isOrderClosed = (status) =>
+  status === 'Completed' || status === 'Cancelled';
+
+/**
+ * The status a kitchen station should DISPLAY for an order.
+ *
+ * A station's own track stops at 'ready' by design — the kitchen prepares, the
+ * floor serves — so `stationStatus` reads 'ready' for the rest of the day. When the
+ * waiter or an admin then completes the order, that is the outcome the chef and the
+ * barista need to see; otherwise their card insists an order is still waiting to be
+ * collected after it has reached the table.
+ *
+ * Deliberately a read-time projection rather than a write. Folding completion into
+ * the track would be wrong three times over: the track records when the FOOD was
+ * finished while `status` records when the ORDER was served, and collapsing them
+ * loses that distinction; the track flow is specified to terminate at 'ready' and
+ * the API refuses anything past it; and a stored 'completed' track is normalised
+ * straight back to 'ready' on read, so it would not even display as written.
+ *
+ * @param {object} order a station-scoped order carrying `status` and `stationStatus`
+ * @param {Function} t   i18next `t`
+ * @returns {string} translated label
+ */
+export const stationStatusLabel = (order, t) =>
+  isOrderClosed(order?.status)
+    ? orderStatusLabel(order.status, t)
+    // The `|| 'pending'` matters: a missing stationStatus normalises to
+    // 'not_required', which has no label, so without this the helper would report
+    // "Unknown" for a fresh ticket — and would disagree with the equivalent
+    // fallback in StationDashboard's own statusOf().
+    : preparationStatusLabel(order?.stationStatus || 'pending', t);
+
+/**
  * Is this order ready to be served — i.e. does every required track say ready?
  *
  * Mirrors isReadyForCompletion on the server. Used only to decide whether to draw
  * the "Mark Order Completed" button; the API re-checks before writing.
+ *
+ * Note this says nothing about whether the order is still open — pair it with
+ * isOrderClosed() before using it to instruct anybody.
  *
  * @param {{foodStatus?: string, drinkStatus?: string}} tracks
  * @returns {boolean}

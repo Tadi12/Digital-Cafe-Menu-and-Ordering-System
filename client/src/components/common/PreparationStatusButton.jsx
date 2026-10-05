@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, ChefHat, Check, Ban } from 'lucide-react';
 import ActionButton from './ActionButton';
-import { preparationFlow, preparationStatusLabel, PREPARATION_ACTION_KEYS } from '../../utils/orderStatus';
+import { preparationFlow, preparationStatusLabel, PREPARATION_ACTION_KEYS, isOrderClosed } from '../../utils/orderStatus';
 
 const FLOW_ICONS = {
   pending: ChefHat,
@@ -54,14 +54,29 @@ const PreparationStatusButton = ({
   const currentStatus = order?.stationStatus;
   const flow = preparationFlow(currentStatus);
 
-  // Cancelled: nothing to press at all.
-  if (order?.status === 'Cancelled') {
+  // A closed order has nothing left to press, whichever way it closed.
+  //
+  // Cancelled and Completed are the same situation for a station: the floor has
+  // taken the order past this screen. Previously only Cancelled was handled, so a
+  // served order left a chef looking at a passive "Ready" line — indistinguishable
+  // from one that is still sitting on the pass waiting to be collected. The label
+  // is the overall outcome, not the track, because the track is permanently 'ready'.
+  if (isOrderClosed(order?.status)) {
+    const cancelled = order.status === 'Cancelled';
     return (
       <div
-        className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-red-600 bg-red-50 ${className}`}
+        className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 ${
+          cancelled ? 'text-red-600 bg-red-50' : 'text-cafe-700 bg-cafe-100'
+        } ${className}`}
       >
-        <Ban className="w-4 h-4 shrink-0" aria-hidden="true" />
-        <span className="truncate">{t('order_cancelled_label')}</span>
+        {cancelled ? (
+          <Ban className="w-4 h-4 shrink-0" aria-hidden="true" />
+        ) : (
+          <Check className="w-4 h-4 shrink-0" aria-hidden="true" />
+        )}
+        <span className="truncate">
+          {cancelled ? t('order_cancelled_label') : t('order_completed_label')}
+        </span>
       </div>
     );
   }

@@ -6,6 +6,7 @@ import {
   canCompleteOrder,
   pendingPreparationTrack,
   activePreparationTracks,
+  isOrderClosed,
 } from '../../utils/orderStatus';
 
 const TRACK_ROWS = {
@@ -25,9 +26,27 @@ const TRACK_ROWS = {
  * OrderStatusActionButton, which only offers "Mark Order Completed" once every
  * required track says ready — so this component stays a read-only progress
  * indicator and the two cannot disagree about what is allowed.
+ *
+ * The whole panel disappears once the order is closed, because its closing line is
+ * an instruction ("take this to the table") and an order that is already served has
+ * nothing left to instruct. See the isOrderClosed() guard below.
  */
 const PreparationProgress = ({ order }) => {
   const { t } = useTranslation();
+
+  // A closed order gets no panel at all.
+  //
+  // This is the fix for the note outliving its task: canCompleteOrder() only reads
+  // the two preparation tracks, and those stay 'ready' after the order is served,
+  // so the panel used to keep announcing "food and drinks are ready, take this to
+  // the table" on an order that was already on the table. Once an order is
+  // completed it also cannot have anything outstanding, so the two track rows are
+  // pure noise — and OrderStatusActionButton directly below already renders the
+  // "Order Completed" outcome, which is the only thing worth saying.
+  //
+  // This also covers a cancelled order whose tracks still read 'ready', which
+  // orders placed before the food/drink split was introduced can do.
+  if (isOrderClosed(order?.status)) return null;
 
   // A half the order does not contain is skipped entirely: no phantom row for a
   // food-only order, and no misleading "Drinks: not required" noise. The rule comes

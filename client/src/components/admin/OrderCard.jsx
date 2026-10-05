@@ -14,6 +14,7 @@ import {
   canCompleteOrder,
   pendingPreparationTrack,
   activePreparationTracks,
+  isOrderClosed,
 } from '../../utils/orderStatus';
 import { roleTrack, isStationRole } from '../../utils/staffRoles';
 import PreparationProgress from './PreparationProgress';
@@ -63,9 +64,15 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUp
           <span className="font-extrabold text-sm text-cafe-900">{order.orderNumber}</span>
           <span className="text-xs text-cafe-400 font-mono">({formattedTime})</span>
         </div>
-        {stationOnly ? (
+        {stationOnly && !isOrderClosed(order.status) ? (
           // A station shows the status of the half it actually owns, not the
           // overall order status, which may still be held back by the other half.
+          //
+          // Once the order is closed that distinction stops being useful: the
+          // track is pinned at 'ready' and would claim an order the floor has
+          // already served is still waiting to be collected. A closed order falls
+          // through to the overall badge, which is the outcome the kitchen is
+          // actually waiting to hear.
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-cafe-100 text-cafe-800">
             <StationIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             <span>{preparationStatusLabel(order.stationStatus, t)}</span>

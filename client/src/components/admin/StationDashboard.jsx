@@ -6,6 +6,7 @@ import OrderStatusBadge from '../customer/OrderStatusBadge';
 import LoadingSpinner from '../common/LoadingSpinner';
 import StaffDashboardShell from './StaffDashboardShell';
 import { staffBasePath } from '../../utils/staffRoles';
+import { isOrderClosed, stationStatusLabel } from '../../utils/orderStatus';
 
 /**
  * The chef's and the barista's dashboard.
@@ -56,8 +57,15 @@ const StationDashboard = ({ role }) => {
 
   // `stationStatus` is set by the API when it narrows the order to this station.
   const statusOf = (order) => order.stationStatus || 'pending';
-  const count = (status) => orders.filter((o) => statusOf(o) === status).length;
-  const active = orders.filter((o) =>
+
+  // A track is pinned at 'ready' for the rest of the day, so an order the floor has
+  // already completed still reports 'ready' here. Counting and listing those would
+  // make the "Ready" tile a permanent high-water mark that only ever grows, and
+  // keep served orders in the work list — so a closed order is excluded from both.
+  // The counts therefore describe work the station can still act on.
+  const open = orders.filter((order) => !isOrderClosed(order.status));
+  const count = (status) => open.filter((o) => statusOf(o) === status).length;
+  const active = open.filter((o) =>
     ['pending', 'preparing', 'ready'].includes(statusOf(o)),
   );
 
@@ -89,10 +97,13 @@ const StationDashboard = ({ role }) => {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* Follows the overall outcome once the order is closed — see
+                stationStatusLabel, and why the track is never written to
+                'completed'. */}
             <span className="text-[11px] font-bold uppercase text-cafe-500">
-              {order.stationStatus}
+              {stationStatusLabel(order, t)}
             </span>
-            <OrderStatusBadge status={order.overallStatus || order.status} />
+            <OrderStatusBadge status={order.status} />
           </div>
         </li>
       )}
