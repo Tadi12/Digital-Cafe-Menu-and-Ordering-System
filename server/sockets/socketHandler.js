@@ -127,6 +127,40 @@ const emitToOrderWaiter = async (order) => {
   }
 };
 
+/**
+ * Ring the waiter who is responsible for a table.
+ *
+ * `call_waiter` used to reach `admin_room` only, which is a real hole: a waiter
+ * joins their own private room via `join_waiter_room` and never joins the admin
+ * feed (see ADMIN_ROOM_ROLES), so pressing the bell notified management and NOT
+ * the person being called. The whole point of the bell is the opposite of that.
+ *
+ * Ownership is resolved here, at emit time, from the table itself rather than
+ * snapshotted by the caller — the same Table -> assignedWaiter walk
+ * `emitToOrderWaiter` uses, so one source of truth decides who owns a floor.
+ *
+ * Silently does nothing for an unassigned table: there is nobody to notify, and
+ * management still sees the call through the `admin_room` broadcast.
+ *
+ * @param {number} tableNumber
+ * @param {object} payload the event body, forwarded unchanged
+ */
+const notifyTableWaiter = async (tableNumber, payload) => {
+  try {
+    const Table = require('../models/Table');
+    const table = await Table.findOne({ tableNumber }).select('assignedWaiter');
+    const assignedWaiter = table?.assignedWaiter;
+    if (!assignedWaiter) return;
+
+    getIO()
+      .to(waiterRoom(assignedWaiter))
+      .emit('waiter_called', payload);
+  } catch (error) {
+    // A realtime nicety must never break the request that triggered it.
+    console.warn('[Socket Warning]: Could not notify the table waiter:', error.message);
+  }
+};
+
 const initSocket = (io) => {
   ioInstance = io;
 
@@ -226,7 +260,7 @@ const initSocket = (io) => {
       }
     });
 
-    // A customer pings the floor from their order screen.
+    // A customer pings the floor from their menu or order screen.
     //
     // The payload used to be forwarded verbatim into every admin dashboard, so a
     // customer could type arbitrary text into the staff notification bar and ring
@@ -239,16 +273,23 @@ const initSocket = (io) => {
       const tableNumber = Number(data?.tableNumber);
       if (!Number.isFinite(tableNumber) || tableNumber <= 0) return;
 
+      // The message is generated here rather than accepted from the client, so
+      // nothing a customer types can reach a staff screen.
+      const payload = {
+        tableNumber,
+        message: `Table ${tableNumber} is requesting assistance`,
+      };
+
       try {
-        // The message is generated here rather than accepted from the client, so
-        // nothing a customer types can reach a staff screen.
-        io.to('admin_room').emit('waiter_called', {
-          tableNumber,
-          message: `Table ${tableNumber} is requesting assistance`,
-        });
+        // Management sees every call, so an unassigned table is still covered.
+        io.to('admin_room').emit('waiter_called', payload);
       } catch (error) {
         // A realtime nicety must never break the socket.
       }
+
+      // And the waiter who actually owns the table hears it directly — see
+      // notifyTableWaiter for why the admin room alone is not enough.
+      await notifyTableWaiter(tableNumber, payload);
     });
 
     socket.on('disconnect', () => {
@@ -265,4 +306,4 @@ const getIO = () => {
   return ioInstance;
 };
 
-module.exports = { initSocket, getIO, scopeForStation, toSocketPayload, waiterRoom, emitToOrderWaiter };
+module.exports = { initSocket, getIO, scopeForStation, toSocketPayload, waiterRoom, emitToOrderWaiter, notifyTableWaiter, MAX_CALLS_PER_SOCKET };

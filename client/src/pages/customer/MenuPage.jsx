@@ -534,8 +534,10 @@ const MenuPage = () => {
             </div>
           )}
 
-          {/* Top Header */}
-          <Header />
+          {/* Top Header. The table number rides along so the call-waiter bell can
+              live in the shared header; the loading skeleton above it has no table
+              yet, so it correctly renders no bell. */}
+          <Header tableNumber={table?.tableNumber} />
 
           {/* Table Badge */}
           <TableHeader table={table} />

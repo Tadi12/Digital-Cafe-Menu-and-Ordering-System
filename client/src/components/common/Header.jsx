@@ -1,9 +1,18 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import React from "react";
+import { useTranslation } from "react-i18next";
 import LanguageSwitcher from './LanguageSwitcher';
 import ThemeToggle from './ThemeToggle';
+import CallWaiterButton from '../customer/CallWaiterButton';
 
-const Header = () => {
+/**
+ * The shared customer header.
+ *
+ * `tableNumber` is optional rather than read from a store: only a page that has
+ * actually resolved the guest's table knows it, and a bell is worse than no bell if
+ * it rings for a table the guest has left. Passing it in keeps that guarantee
+ * explicit — a page without a table simply renders no bell.
+ */
+const Header = ({ tableNumber }) => {
   const { t } = useTranslation();
 
   return (
@@ -30,6 +39,11 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Ringing the floor is a global guest action, so it lives in the chrome
+              rather than on one page, and stays reachable from the menu, the
+              orders list and the tracker alike. It renders nothing without a
+              table, so a page that cannot resolve one is unaffected. */}
+          <CallWaiterButton tableNumber={tableNumber} />
           <ThemeToggle />
           <LanguageSwitcher />
         </div>

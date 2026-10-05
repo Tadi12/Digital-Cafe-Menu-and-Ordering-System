@@ -1,16 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { toast } from "react-toastify";
 import { useCart } from "../../hooks/useCart";
-import { useSocket } from "../../hooks/useSocket";
 import { getCustomerOrdersApi } from "../../api/orderApi";
 import { LanguageContext } from "../../context/LanguageContext";
 import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import OrderStatusBadge from "../../components/customer/OrderStatusBadge";
 import { formatCurrency } from "../../utils/currencyFormatter";
-import { ArrowLeft, Fingerprint, User, Calendar, Receipt } from "lucide-react";
+import { ArrowLeft, Fingerprint, User, Calendar } from "lucide-react";
 import {
   mergeCustomerOrderHistory,
   readCustomerOrderHistory,
@@ -19,39 +17,18 @@ import {
 const MyOrdersPage = () => {
   const navigate = useNavigate();
   const { customerName, customerSessionId } = useCart();
-  const { socket, connected } = useSocket();
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  const [callingWaiter, setCallingWaiter] = useState(false);
-  const [callSuccess, setCallSuccess] = useState(false);
 
-  const handleAskForBill = () => {
-    console.log("Ask for bill clicked. Socket:", socket?.id, "Connected:", connected);
-    if (!socket || !connected) {
-      toast.error(t("realtime_offline_message"));
-      return;
-    }
-    if (orders.length === 0) return;
+  // The "ask for bill" button that used to live here is gone. Ringing the floor is
+  // now a single bell in the customer header, which every page shares and which
+  // works whether or not an order has been placed yet — the old button only
+  // appeared once `orders.length > 0`, so a guest who had not ordered could not
+  // call anyone at all, and it spent the same per-socket call budget as the bell
+  // without sharing a counter with it.
 
-    setCallingWaiter(true);
-    
-    // Attempt to extract the most recent table number from the orders
-    const lastOrder = orders[0];
-    const tableNumber = lastOrder?.tableNumberSnapshot || lastOrder?.table?.tableNumber;
-
-    // Only the table number is sent: the server validates it and generates the
-    // message the staff sees, so customer text cannot reach an admin screen.
-    socket.emit('call_waiter', { tableNumber });
-
-    setTimeout(() => {
-      setCallingWaiter(false);
-      setCallSuccess(true);
-      setTimeout(() => setCallSuccess(false), 4000);
-    }, 800);
-  };
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -179,29 +156,6 @@ const MyOrdersPage = () => {
               </div>
             </button>
           ))
-        )}
-
-        {orders.length > 0 && (
-          <div className="pt-6 pb-4">
-            <button
-              type="button"
-              onClick={handleAskForBill}
-              disabled={callingWaiter}
-              className="w-full bg-cafe-900 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 hover:bg-cafe-800 transition-colors disabled:opacity-50"
-            >
-              {callingWaiter ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <Receipt className="w-5 h-5 text-gold-400" />
-              )}
-              {callingWaiter ? t('calling_waiter') : t('ask_for_bill')}
-            </button>
-            {callSuccess && (
-              <div className="text-center text-sm font-bold text-emerald-600 mt-3 animate-fade-in">
-                {t('waiter_notified')}
-              </div>
-            )}
-          </div>
         )}
       </div>
     </div>
