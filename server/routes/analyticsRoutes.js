@@ -5,9 +5,11 @@ const {
   getRevenueAnalytics,
   getPopularFoodsAnalytics,
 } = require('../controllers/analyticsController');
-const { protectAdmin } = require('../middleware/authMiddleware');
+const { protectAdmin, requireRole, MANAGEMENT_ROLES } = require('../middleware/authMiddleware');
 
-router.use(protectAdmin);
+// Revenue and sales figures are management information. A chef or barista works
+// the ticket queue and has no need for takings, so these stay out of their reach.
+router.use(protectAdmin, requireRole(MANAGEMENT_ROLES));
 
 router.get('/dashboard', getDashboardMetrics);
 router.get('/revenue', getRevenueAnalytics);

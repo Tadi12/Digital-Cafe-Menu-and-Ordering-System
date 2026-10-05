@@ -268,30 +268,51 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-const getStaff = async (req, res) => {
+const getStaff = async (req, res, next) => {
   try {
-    if (req.user.role !== 'super_admin' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Unauthorized' });
-    }
     const staff = await Admin.find().select('-password');
     res.json({ success: true, data: staff });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    next(error);
   }
 };
 
-const createStaff = async (req, res) => {
+// Ranked so a creator can only grant roles at or below their own. Without this an
+// 'admin' could mint a 'super_admin' and then revoke the original admin's session.
+const ROLE_RANK = { waiter: 1, chef: 1, barista: 1, admin: 2, super_admin: 3 };
+
+const createStaff = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
-    if (req.user.role !== 'super_admin' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Only super admins can create staff.' });
+
+    // The route already applies requireRole(MANAGEMENT_ROLES); this is the finer
+    // check that stops an admin promoting somebody past their own level.
+    if (ROLE_RANK[role] > ROLE_RANK[req.user.role]) {
+      return res.status(403).json({
+        success: false,
+        code: ERROR_CODES.AUTH_FORBIDDEN,
+        message: 'You cannot create a staff account with a higher role than your own',
+      });
     }
+
     const existing = await Admin.findOne({ email });
-    if (existing) return res.status(400).json({ success: false, message: 'Email already exists' });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        code: ERROR_CODES.EMAIL_IN_USE,
+        message: 'Email already exists',
+      });
+    }
+
+    // `role` is required by createStaffSchema, so it is always a validated enum
+    // value here — never undefined, and never the model default.
     const staff = await Admin.create({ name, email, password, role });
-    res.status(201).json({ success: true, data: { _id: staff._id, name: staff.name, email: staff.email, role: staff.role } });
+    res.status(201).json({
+      success: true,
+      data: { _id: staff._id, name: staff.name, email: staff.email, role: staff.role },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to create staff' });
+    next(error);
   }
 };
 

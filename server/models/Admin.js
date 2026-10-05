@@ -24,9 +24,13 @@ const adminSchema = new mongoose.Schema(
     resetTokenExpires: Date,
     role: {
       type: String,
-      default: 'super_admin',
       // 'barista' prepares the drink half of an order; see utils/orderStatus.js.
       enum: ['super_admin', 'admin', 'waiter', 'chef', 'barista'],
+      // Least privilege. This used to default to 'super_admin', which meant any
+      // creation path that forgot to set a role produced the most powerful
+      // account in the system. Every real creation path now sets one explicitly
+      // (see validations/auth.schema.js); this is only the safety net.
+      default: 'waiter',
     },
   },
   {

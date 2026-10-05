@@ -833,9 +833,14 @@ const updatePreparationStatus = async (req, res, next) => {
 };
 
 /**
- * @desc    Cancel order (Customer - Allowed ONLY while Pending)
+ * @desc    Cancel order
  * @route   PATCH /api/orders/:id/cancel
- * @access  Public
+ * @access  Customer, but only for an order they placed — or staff.
+ *
+ * The caller must present the `customerSessionId` that was generated on the
+ * device which placed the order (or a valid admin token). Previously this route
+ * took only the shared cafe PIN, so anyone who knew or guessed an order id could
+ * cancel somebody else's pending order.
  */
 const cancelOrder = async (req, res, next) => {
   try {
@@ -843,6 +848,25 @@ const cancelOrder = async (req, res, next) => {
 
     if (!order) {
       return res.status(404).json({ success: false, code: ERROR_CODES.ORDER_NOT_FOUND, message: 'Order not found' });
+    }
+
+    // A signed-in staff member (waiter or management) may cancel on a customer's
+    // behalf; `attachAdminIfAuthenticated` has already populated req.user.
+    const isStaff = Boolean(req.user);
+
+    if (!isStaff) {
+      const presented = String(req.body?.customerSessionId || '').trim();
+      const owned = order.customerSessionId
+        ? presented === order.customerSessionId
+        : presented && presented.toLowerCase() === String(order.customerName || '').trim().toLowerCase();
+
+      if (!owned) {
+        return res.status(403).json({
+          success: false,
+          code: ERROR_CODES.AUTH_FORBIDDEN,
+          message: 'You can only cancel an order placed from this device',
+        });
+      }
     }
 
     // Business Rule: Customers can cancel an order ONLY when the order status is Pending
@@ -854,8 +878,28 @@ const cancelOrder = async (req, res, next) => {
       });
     }
 
-    order.status = 'Cancelled';
-    const cancelledOrder = await order.save();
+    // Compare-and-set on the status we just read, so two simultaneous cancels
+    // cannot both succeed and so this cannot race updateOrderStatus into an
+    // inconsistent document. The preparation tracks are cleared to
+    // 'not_required' because a cancelled order has nothing left to prepare —
+    // the previous plain `order.save()` left a cancelled order reporting
+    // foodStatus: 'ready' to the kitchen.
+    const cancelledOrder = await Order.findOneAndUpdate(
+      { _id: order._id, status: 'Pending' },
+      { $set: { status: 'Cancelled', foodStatus: 'not_required', drinkStatus: 'not_required' } },
+      { new: true },
+    );
+
+    if (!cancelledOrder) {
+      // Another request changed the status between the read and the write.
+      const current = await Order.findById(order._id).select('status').lean();
+      return res.status(409).json({
+        success: false,
+        code: ERROR_CODES.ORDER_CANCEL_NOT_ALLOWED,
+        message: `This order was already updated to ${current?.status || 'another status'}.`,
+      });
+    }
+
     const populatedCancelledOrder = await Order.findById(cancelledOrder._id)
       .populate('table', 'tableNumber tableName');
 

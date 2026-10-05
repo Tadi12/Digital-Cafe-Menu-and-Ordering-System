@@ -28,9 +28,24 @@ const updateProfileSchema = z.object({
   }),
 });
 
+// The role is validated as a closed enum rather than passed through. Before this
+// existed, `createStaff` forwarded req.body.role straight to Admin.create, so a
+// request that simply OMITTED the field fell through to the model default of
+// 'super_admin' — an 'admin' could mint a super admin by accident, and could also
+// simply ask for one outright.
+const createStaffSchema = z.object({
+  body: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').trim(),
+    email: z.string().email('Invalid email format').trim(),
+    password: z.string().min(8, 'Password must be at least 8 characters long'),
+    role: z.enum(['super_admin', 'admin', 'waiter', 'chef', 'barista']),
+  }),
+});
+
 module.exports = {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   updateProfileSchema,
+  createStaffSchema,
 };

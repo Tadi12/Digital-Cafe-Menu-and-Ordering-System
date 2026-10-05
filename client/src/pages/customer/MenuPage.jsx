@@ -318,9 +318,9 @@ const MenuPage = () => {
     if (!socket || !customerName || !customerName.trim()) return;
 
     customerOrderHistory.forEach((order) => {
-      if (order?._id) joinOrderRoom(order._id);
+      if (order?._id) joinOrderRoom(order._id, customerSessionId);
     });
-  }, [socket, customerOrderHistory, customerName, joinOrderRoom]);
+  }, [socket, customerOrderHistory, customerName, customerSessionId, joinOrderRoom]);
 
   useEffect(() => {
     if (!socket || !customerName || !customerName.trim()) return;

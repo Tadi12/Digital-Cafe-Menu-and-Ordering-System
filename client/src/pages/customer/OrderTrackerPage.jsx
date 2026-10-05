@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageContext } from "../../context/LanguageContext";
 import { useSocket } from "../../hooks/useSocket";
+import { useCart } from "../../hooks/useCart";
 import { getOrderByIdApi, cancelOrderApi } from "../../api/orderApi";
 import Header from "../../components/common/Header";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -29,6 +30,7 @@ const OrderTrackerPage = () => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
   const { socket, joinOrderRoom, playNotificationSound } = useSocket();
+  const { customerSessionId } = useCart();
 
   const previousReadyStatusRef = useRef(false);
   const getNotifiedReadyOrders = () => {
@@ -89,7 +91,9 @@ const OrderTrackerPage = () => {
   // Socket.IO Subscription to real-time status updates for this order
   useEffect(() => {
     if (orderId) {
-      joinOrderRoom(orderId);
+      // The server checks this session id against the one stored on the order, so
+      // an order id alone is not enough to watch somebody else's order.
+      joinOrderRoom(orderId, customerSessionId);
     }
 
     if (socket) {
@@ -113,7 +117,7 @@ const OrderTrackerPage = () => {
         socket.off("order_status_updated", handleStatusUpdate);
       };
     }
-  }, [socket, orderId, joinOrderRoom]);
+  }, [socket, orderId, customerSessionId, joinOrderRoom]);
 
   const dismissReadyToast = () => {
     setReadyToastVisible(false);
@@ -443,7 +447,7 @@ const OrderTrackerPage = () => {
         onConfirm={() => {
           setCancelling(true);
           setErrorMsg("");
-          cancelOrderApi(orderId)
+          cancelOrderApi(orderId, customerSessionId)
             .then(res => {
               if (res.success) setOrder(res.data);
             })

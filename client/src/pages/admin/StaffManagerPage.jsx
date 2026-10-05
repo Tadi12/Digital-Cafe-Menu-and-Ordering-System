@@ -4,6 +4,7 @@ import axiosClient from '../../api/axiosClient';
 import { resolveApiError } from '../../utils/apiError';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ActionButton from '../../components/common/ActionButton';
+import { useAuth } from '../../hooks/useAuth';
 
 const StaffManagerPage = () => {
   const [staff, setStaff] = useState([]);
@@ -17,6 +18,13 @@ const StaffManagerPage = () => {
   const [creating, setCreating] = useState(false);
   const creatingRef = useRef(false);
   const { t } = useTranslation();
+  const { admin } = useAuth();
+
+  // The server refuses to let an admin create a super_admin (see ROLE_RANK in
+  // server/controllers/authController.js), so only offer the option to somebody
+  // who could actually create one — otherwise the form presents a choice that
+  // always fails.
+  const canAssignSuperAdmin = admin?.role === 'super_admin';
 
   const fetchStaff = async () => {
     try {
@@ -92,7 +100,8 @@ const StaffManagerPage = () => {
                 <option value="waiter">{t('role_waiter')}</option>
                 <option value="chef">{t('role_chef')}</option>
                 <option value="barista">{t('role_barista')}</option>
-                <option value="super_admin">{t('role_super_admin')}</option>
+                {canAssignSuperAdmin && <option value="super_admin">{t('role_super_admin')}</option>}
+                {canAssignSuperAdmin && <option value="admin">{t('role_admin')}</option>}
               </select>
             </div>
           </div>

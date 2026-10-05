@@ -52,7 +52,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('cafe_admin_token', token);
         setAdmin(adminProfile);
         window.dispatchEvent(new Event('admin-session-changed'));
-        return { success: true };
+        // The profile is returned as well as stored: the caller navigates on
+        // `data.role` straight after login, so returning only `success` left that
+        // read undefined and bounced every chef/barista/waiter off the generic
+        // dashboard through ProtectedRoute.
+        return { success: true, data: adminProfile };
       }
       return { success: false, message: res.message };
     } catch (err) {

@@ -42,7 +42,11 @@ router.patch('/:id/status', protectAdmin, validate(updateOrderStatusSchema), upd
 router.patch('/:id/:trackSegment(food-status|drink-status)', protectAdmin, validate(updatePreparationSchema), updatePreparationStatus);
 router.patch('/:id/preparation', protectAdmin, validate(updatePreparationSchema), updatePreparationStatus);
 
-router.patch('/:id/cancel', requirePinAccess, cancelOrder);
+// Cancelling needs proof that the caller placed the order: attachAdminIfAuthenticated
+// lets signed-in staff cancel on a customer's behalf, and cancelOrder requires the
+// customerSessionId otherwise. This used to be reachable by anyone holding the
+// shared cafe PIN, which let any customer cancel another customer's pending order.
+router.patch('/:id/cancel', attachAdminIfAuthenticated, requirePinAccess, cancelOrder);
 
 module.exports = router;
 

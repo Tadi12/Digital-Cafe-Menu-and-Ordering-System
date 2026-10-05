@@ -121,7 +121,7 @@ const getNotificationDetails = (order, type, t, extraData) => {
 
 const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   const { admin } = useAuth();
-  const { socket, connected, joinStationRoom, joinWaiterRoom, playWaiterNotificationSound } = useSocket();
+  const { socket, connected, joinAdminRoom, joinStationRoom, joinWaiterRoom, playWaiterNotificationSound } = useSocket();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -220,7 +220,8 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
     } else if (role === 'waiter') {
       joinWaiterRoom();
     } else {
-      socket.emit('join_admin_room');
+      // The server verifies this token and allows only management roles.
+      joinAdminRoom();
     }
 
     return () => {
@@ -229,7 +230,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
       socket.off('order_cancelled', handleOrderCancelled);
       socket.off('waiter_called', handleWaiterCalled);
     };
-  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled, role, joinStationRoom, joinWaiterRoom]);
+  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled, role, joinAdminRoom, joinStationRoom, joinWaiterRoom]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;

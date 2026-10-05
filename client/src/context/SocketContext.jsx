@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import {
   playNotificationSound,
@@ -59,56 +59,85 @@ export const SocketProvider = ({ children }) => {
     };
   }, []);
 
-  const joinAdminRoom = () => {
-    if (socket && connected) {
-      socket.emit('join_admin_room');
+  /**
+   * Join the whole-cafe order feed. The server verifies the token, checks the
+   * session is still live, and allows only management roles, so this cannot be
+   * used to read another cafe's traffic. The token is read here rather than taken
+   * as an argument so every caller gets it right.
+   */
+  const joinAdminRoom = useCallback(() => {
+    const token = localStorage.getItem('cafe_admin_token');
+    if (socket && connected && token) {
+      socket.emit('join_admin_room', token);
     }
-  };
+  }, [socket, connected]);
 
   /**
    * Join the room for the half of the order this staff member prepares (the chef's
    * food tickets, the barista's drink tickets). The server derives the room from the
    * token, so this cannot be used to subscribe to the other station's items.
    */
-  const joinStationRoom = () => {
+  const joinStationRoom = useCallback(() => {
     const token = localStorage.getItem('cafe_admin_token');
     if (socket && connected && token) {
       socket.emit('join_station_room', token);
     }
-  };
+  }, [socket, connected]);
 
   /**
    * Join the private feed for the signed-in waiter's own tables. The server
    * verifies the token, checks the role is 'waiter', and derives the room from the
    * user id — so no unrelated table updates are ever delivered.
    */
-  const joinWaiterRoom = () => {
+  const joinWaiterRoom = useCallback(() => {
     const token = localStorage.getItem('cafe_admin_token');
     if (socket && connected && token) {
       socket.emit('join_waiter_room', token);
     }
-  };
+  }, [socket, connected]);
 
-  const joinOrderRoom = (orderId) => {
-    if (socket && connected && orderId) {
-      socket.emit('join_order_room', orderId);
-    }
-  };
-
-  return (
-    <SocketContext.Provider
-      value={{
-        socket,
-        connected,
-        joinAdminRoom,
-        joinStationRoom,
-        joinWaiterRoom,
-        joinOrderRoom,
-        playNotificationSound,
-        playWaiterNotificationSound,
-      }}
-    >
-      {children}
-    </SocketContext.Provider>
+  /**
+   * Join the live feed for one order the customer placed.
+   *
+   * The server checks the presented `customerSessionId` against the value stored on
+   * the order, so an order id alone is not enough to subscribe to somebody else's
+   * tracking screen. The id is stored per device in the cart store.
+   *
+   * @param {string} orderId
+   * @param {string} customerSessionId
+   */
+  const joinOrderRoom = useCallback(
+    (orderId, customerSessionId) => {
+      if (socket && connected && orderId) {
+        socket.emit('join_order_room', orderId, customerSessionId);
+      }
+    },
+    [socket, connected],
   );
+
+  // Memoized so a context consumer does not re-render on every provider render —
+  // these callbacks also appear in effect dependency arrays downstream, where an
+  // unstable identity would tear down and re-register socket listeners.
+  const value = useMemo(
+    () => ({
+      socket,
+      connected,
+      joinAdminRoom,
+      joinStationRoom,
+      joinWaiterRoom,
+      joinOrderRoom,
+      playNotificationSound,
+      playWaiterNotificationSound,
+    }),
+    [
+      socket,
+      connected,
+      joinAdminRoom,
+      joinStationRoom,
+      joinWaiterRoom,
+      joinOrderRoom,
+    ],
+  );
+
+  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 };

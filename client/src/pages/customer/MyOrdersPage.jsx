@@ -42,11 +42,9 @@ const MyOrdersPage = () => {
     const lastOrder = orders[0];
     const tableNumber = lastOrder?.tableNumberSnapshot || lastOrder?.table?.tableNumber;
 
-    console.log("Emitting call_waiter for table:", tableNumber);
-    socket.emit('call_waiter', {
-      tableNumber,
-      message: 'Customer requested the bill',
-    });
+    // Only the table number is sent: the server validates it and generates the
+    // message the staff sees, so customer text cannot reach an admin screen.
+    socket.emit('call_waiter', { tableNumber });
 
     setTimeout(() => {
       setCallingWaiter(false);

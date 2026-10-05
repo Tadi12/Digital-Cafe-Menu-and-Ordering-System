@@ -149,6 +149,48 @@ const PREPARATION_ACTION_KEYS = {
 export const preparationFlow = (preparationStatus) => PREPARATION_FLOW[preparationStatus];
 
 /**
+ * Preparation track status (as stored) -> translation key.
+ *
+ * SEPARATE from ORDER_STATUS_KEYS on purpose. A preparation track is stored
+ * lower-case ('pending', 'preparing', 'ready') while the overall customer order is
+ * stored capitalised ('Pending', 'Preparing', 'Ready'). They used to be looked up in
+ * the same table, so every kitchen and waiter label silently resolved to "Unknown",
+ * because 'pending' never matched the key 'Pending'.
+ *
+ * Mirrors the enum in server/models/Order.js.
+ */
+const PREPARATION_STATUS_KEYS = {
+  pending: 'status_pending',
+  preparing: 'status_preparing',
+  ready: 'status_ready',
+  // Legacy value, written before preparation stopped at 'ready'. The server reads
+  // it as 'ready' too (normalizeTrackStatus) — see normalizePreparationTrack.
+  completed: 'status_ready',
+};
+
+/**
+ * Interpret a stored track value the same way the server does.
+ *
+ * A track of 'completed' means the kitchen finished, which is what 'ready' means
+ * now. Without this, a legacy order shows the waiter a permanent "waiting for food"
+ * message and is never offered the complete action, even though the API reports it
+ * as ready.
+ *
+ * @param {string} status stored track status
+ * @returns {'not_required'|'pending'|'preparing'|'ready'}
+ */
+const normalizePreparationTrack = (status) => {
+  if (!status) return 'not_required';
+  return status === 'completed' ? 'ready' : status;
+};
+
+/** @returns true when one track has nothing left outstanding. */
+const isTrackSettled = (value) => {
+  const normalized = normalizePreparationTrack(value);
+  return normalized === 'not_required' || normalized === 'ready';
+};
+
+/**
  * Human copy for a preparation status.
  *
  * 'ready' is the kitchen's finished state and reads as "Ready"; 'not_required'
@@ -156,7 +198,7 @@ export const preparationFlow = (preparationStatus) => PREPARATION_FLOW[preparati
  */
 export const preparationStatusLabel = (preparationStatus, t) => {
   if (preparationStatus === 'not_required') return t('preparation_not_required');
-  const key = ORDER_STATUS_KEYS[preparationStatus];
+  const key = PREPARATION_STATUS_KEYS[normalizePreparationTrack(preparationStatus)];
   return key ? t(key) : t('status_unknown');
 };
 
@@ -169,20 +211,18 @@ export const preparationStatusLabel = (preparationStatus, t) => {
  * @param {{foodStatus?: string, drinkStatus?: string}} tracks
  * @returns {boolean}
  */
-export const canCompleteOrder = (tracks = {}) => {
-  const done = (value) => value === 'not_required' || value === 'ready';
-  return done(tracks.foodStatus) && done(tracks.drinkStatus);
-};
+export const canCompleteOrder = (tracks = {}) =>
+  isTrackSettled(tracks.foodStatus) && isTrackSettled(tracks.drinkStatus);
 
 /**
- * Which half an order is still waiting on, for the waiter's passive message.
+ * Which half of an order is still waiting on, for the waiter's passive message.
  *
  * @param {{foodStatus?: string, drinkStatus?: string}} tracks
  * @returns {'food'|'drink'|null} null when nothing is outstanding
  */
 export const pendingPreparationTrack = (tracks = {}) => {
-  if (tracks.foodStatus !== 'not_required' && tracks.foodStatus !== 'ready') return 'food';
-  if (tracks.drinkStatus !== 'not_required' && tracks.drinkStatus !== 'ready') return 'drink';
+  if (!isTrackSettled(tracks.foodStatus)) return 'food';
+  if (!isTrackSettled(tracks.drinkStatus)) return 'drink';
   return null;
 };
 
@@ -191,5 +231,7 @@ export {
   ORDER_STATUS_FLOW,
   PREPARATION_FLOW,
   PREPARATION_ACTION_KEYS,
+  PREPARATION_STATUS_KEYS,
+  normalizePreparationTrack,
 };
 export default orderStatusLabel;

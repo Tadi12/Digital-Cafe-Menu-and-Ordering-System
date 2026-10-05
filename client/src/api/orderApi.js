@@ -49,8 +49,14 @@ export const updatePreparationStatusApi = async (id, { track, status }) => {
   return response.data;
 };
 
-export const cancelOrderApi = async (id) => {
-  const response = await axiosClient.patch(`/orders/${id}/cancel`);
+/**
+ * Cancel an order, while it is still Pending.
+ *
+ * The server requires proof the caller placed it, so the device's customer session
+ * id travels with the request. Staff tokens are allowed through without it.
+ */
+export const cancelOrderApi = async (id, customerSessionId) => {
+  const response = await axiosClient.patch(`/orders/${id}/cancel`, { customerSessionId });
   return response.data;
 };
 
