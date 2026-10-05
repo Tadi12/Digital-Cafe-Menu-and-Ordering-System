@@ -108,11 +108,123 @@ const staffHomePath = (role) => {
 /** @returns {boolean} true when the role prepares one half of a shared order. */
 const isStationRole = (role) => Boolean(ROLE_TRACK[role]);
 
+/**
+ * The two branding lines a role's chrome shows: the product name and the portal it
+ * belongs to.
+ *
+ * This is the single source for the sidebar brand AND the navbar's role badge, so
+ * the two cannot disagree about what to call somebody. Before this, the sidebar
+ * answered it with two chains of ternaries; adding a fourth kitchen role meant
+ * editing both, and forgetting one produced a chef greeted as "Hable Cafe Admin".
+ */
+const STAFF_BRAND_KEYS = {
+  super_admin: { brand: 'admin_sidebar_title', portal: 'management_portal' },
+  admin: { brand: 'admin_sidebar_title', portal: 'management_portal' },
+  waiter: { brand: 'admin_sidebar_title_waiter', portal: 'service_portal' },
+  chef: { brand: 'admin_sidebar_title_chef', portal: 'kitchen_portal' },
+  barista: { brand: 'admin_sidebar_title_barista', portal: 'barista_portal' },
+};
+
+/**
+ * The areas of the staff app a page can be. Matches the paths in
+ * routes/AppRoutes.jsx and the sections in AdminSidebar.jsx.
+ */
+const STAFF_AREAS = [
+  'dashboard',
+  'orders',
+  'foods',
+  'drinks',
+  'categories',
+  'tables',
+  'analytics',
+  'staff',
+  'settings',
+  'devices',
+  'profile',
+];
+
+/**
+ * Default title per area — what management sees, and the fallback for any area a
+ * role has no specific wording for.
+ *
+ * Areas only management can reach (foods, analytics, settings, ...) deliberately
+ * have no per-role entry: a chef can never navigate to them, so a "Kitchen Food
+ * Menu Management" heading would be a title for a screen that does not exist.
+ */
+const AREA_TITLE_KEYS = {
+  dashboard: 'admin_page_dashboard',
+  orders: 'admin_page_orders',
+  foods: 'admin_page_foods',
+  drinks: 'admin_page_drinks',
+  categories: 'admin_page_categories',
+  tables: 'admin_page_tables',
+  analytics: 'admin_page_analytics',
+  staff: 'staff_management',
+  settings: 'settings_title',
+  devices: 'admin_page_devices',
+  profile: 'profile',
+};
+
+/**
+ * Per-role overrides for the areas more than one role can actually open.
+ *
+ * A chef and a barista both work an order queue, but they are not looking at the
+ * same queue: the chef sees food tickets, the barista sees drink tickets. Calling
+ * both screens "Live Orders Queue" makes each of them doubt they are on the right
+ * one, so the area is named for the station instead.
+ */
+const ROLE_AREA_TITLE_KEYS = {
+  chef: { dashboard: 'chef_page_dashboard', orders: 'chef_page_orders' },
+  barista: { dashboard: 'barista_page_dashboard', orders: 'barista_page_orders' },
+  waiter: { dashboard: 'waiter_page_dashboard', orders: 'waiter_page_orders' },
+};
+
+/** @returns {{brand: string, portal: string}} translation keys for a role's branding. */
+const staffBrandKeys = (role) => STAFF_BRAND_KEYS[role] || STAFF_BRAND_KEYS.super_admin;
+
+/** @returns {string} translated product name for a role ("Hable Cafe Chef"). */
+const staffBrandLabel = (role, t) => t(staffBrandKeys(role).brand);
+
+/** @returns {string} translated portal name for a role ("Kitchen Portal"). */
+const staffPortalLabel = (role, t) => t(staffBrandKeys(role).portal);
+
+/** @returns {string} the translation key naming `area` for `role`. */
+const staffAreaTitleKey = (role, area) =>
+  ROLE_AREA_TITLE_KEYS[role]?.[area] || AREA_TITLE_KEYS[area] || 'admin_portal';
+
+/**
+ * The heading for an area, worded for the signed-in role.
+ *
+ * Management keeps the plain `admin_page_*` wording it has always had. A chef,
+ * barista or waiter gets the station-specific name where one exists and the
+ * default otherwise — which is why the waiter's table screen is still just
+ * "My Tables" and the profile screen is composed from the role name rather than
+ * needing a key per role.
+ *
+ * @param {string}   role stored role value
+ * @param {string}   area one of STAFF_AREAS, or null for an unmatched path
+ * @param {Function} t    i18next `t`
+ * @returns {string} translated heading
+ */
+const staffAreaTitle = (role, area, t) => {
+  if (area === 'profile') return staffProfileTitle(role, t);
+  return t(staffAreaTitleKey(role, area));
+};
+
 export {
   STAFF_ROLE_LABEL_KEYS,
+  STAFF_BRAND_KEYS,
+  STAFF_AREAS,
+  AREA_TITLE_KEYS,
+  ROLE_AREA_TITLE_KEYS,
   ROLE_TRACK,
   staffBasePath,
   staffHomePath,
+  staffBrandKeys,
+  staffBrandLabel,
+  staffPortalLabel,
+  staffAreaTitleKey,
+  staffAreaTitle,
   isFloorStaffRole,
   roleTrack,
   isStationRole,

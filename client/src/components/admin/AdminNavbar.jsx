@@ -119,7 +119,7 @@ const getNotificationDetails = (order, type, t, extraData) => {
   };
 };
 
-const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
+const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
   const { admin } = useAuth();
   const { socket, connected, joinAdminRoom, joinStationRoom, joinWaiterRoom, playWaiterNotificationSound } = useSocket();
   const { t } = useTranslation();
@@ -262,16 +262,28 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle }) => {
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-cafe-200 px-4 py-3 shadow-xs">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onOpenSidebar}
-            className="lg:hidden min-h-10 min-w-10 rounded-lg text-cafe-700 hover:bg-cafe-100 transition-colors"
+            aria-label={t('open_menu')}
+            className="lg:hidden min-h-10 min-w-10 shrink-0 rounded-lg text-cafe-700 hover:bg-cafe-100 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="font-display text-xl font-bold text-cafe-900 tracking-tight">
-            {pageTitle}
-          </h1>
+          <div className="min-w-0">
+            <h1 className="font-display text-xl font-bold text-cafe-900 tracking-tight truncate">
+              {pageTitle}
+            </h1>
+            {/* Which portal you are signed into. The sidebar's brand block is
+                `lg:block` only, so below that width this is the ONLY place the
+                signed-in role is named — without it a chef on a shared tablet sees
+                no indication they are in the kitchen, not management. */}
+            {roleLabel && (
+              <p className="truncate text-[10px] font-bold uppercase tracking-wider text-cafe-500">
+                {roleLabel}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

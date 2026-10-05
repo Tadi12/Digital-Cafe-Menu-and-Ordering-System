@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { staffBasePath } from "../../utils/staffRoles";
+import { staffBasePath, staffBrandLabel, staffPortalLabel } from "../../utils/staffRoles";
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
@@ -95,11 +95,14 @@ const AdminSidebar = ({ isOpen, onClose }) => {
               className="h-9 w-9 shrink-0 rounded-full object-cover shadow"
             />
             <div className="md:hidden lg:block">
+              {/* Both lines come from the role registry in utils/staffRoles.js, the
+                  same source the navbar heading uses. This used to be two chains of
+                  ternaries, so branding and page titles could disagree. */}
               <h2 className="font-display text-sm font-bold tracking-tight text-white">
-                {role === 'chef' ? t('admin_sidebar_title_chef') : role === 'barista' ? t('admin_sidebar_title_barista') : role === 'waiter' ? t('admin_sidebar_title_waiter') : t("admin_sidebar_title")}
+                {staffBrandLabel(role, t)}
               </h2>
               <p className="text-[10px] text-cafe-300 uppercase tracking-wider font-semibold">
-                {role === 'chef' ? t('kitchen_portal') : role === 'barista' ? t('barista_portal') : role === 'waiter' ? t('service_portal') : t("management_portal")}
+                {staffPortalLabel(role, t)}
               </p>
             </div>
           </div>
