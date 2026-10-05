@@ -7,7 +7,7 @@ import LanguageSwitcher from '../common/LanguageSwitcher';
 import ThemeToggle from '../common/ThemeToggle';
 import { Bell, CheckCheck, ClipboardList, Menu, Radio, X } from 'lucide-react';
 import { useSoundEnabled } from '../../hooks/useSoundEnabled';
-import { staffBasePath, isFloorStaffRole, isStationRole } from '../../utils/staffRoles';
+import { staffBasePath, isStationRole } from '../../utils/staffRoles';
 
 const MAX_NOTIFICATIONS = 30;
 
@@ -121,7 +121,7 @@ const getNotificationDetails = (order, type, t, extraData) => {
 
 const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
   const { admin } = useAuth();
-  const { socket, connected, joinAdminRoom, joinStationRoom, joinWaiterRoom, playWaiterNotificationSound } = useSocket();
+  const { socket, connected, joinAdminRoom, joinStationRoom, joinWaiterRoom, playEventSound } = useSocket();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -131,11 +131,14 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
   );
   const notificationsRef = useRef(null);
 
-  // The floor alerts only mean something to someone who can act on them. The
-  // mute button itself lives on the order screen, so this only reads the shared
-  // preference — muting there silences these alerts too, without a reload.
+  // The mute button itself lives on the order screen, so this only reads the
+  // shared preference — muting there silences these alerts too, without a reload.
+  //
+  // Whether a sound plays AT ALL for a given event is the sound matrix's decision
+  // (playEventSound), not this component's: it already knows which roles are
+  // entitled to hear the floor, so there is no role check here to drift out of
+  // step with it.
   const role = admin?.role;
-  const hearsFloorAlerts = isFloorStaffRole(role);
   const ordersPath = `${staffBasePath(role)}/orders`;
   const [soundEnabled] = useSoundEnabled();
 
@@ -190,8 +193,11 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
       const justBecameReady = order?.status === 'Ready' && previousStatus !== 'Ready';
       addNotification(order, justBecameReady ? 'order_ready' : 'updated');
 
-      if (justBecameReady && hearsFloorAlerts && soundEnabled) {
-        playWaiterNotificationSound();
+      // Which clip plays is the matrix's decision, not this handler's: a plate
+      // becoming ready is the `waiter` clip, and a guest pressing the bell is a
+      // different one. Both repeat, because the floor is usually out of sight.
+      if (justBecameReady && soundEnabled) {
+        playEventSound('order_ready', role);
       }
     };
 
@@ -202,8 +208,8 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
 
     const handleWaiterCalled = (data) => {
       addNotification(null, 'waiter_called', data);
-      if (hearsFloorAlerts && soundEnabled) {
-        playWaiterNotificationSound();
+      if (soundEnabled) {
+        playEventSound('customer_called', role);
       }
     };
 
@@ -230,7 +236,7 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
       socket.off('order_cancelled', handleOrderCancelled);
       socket.off('waiter_called', handleWaiterCalled);
     };
-  }, [socket, connected, t, playWaiterNotificationSound, hearsFloorAlerts, soundEnabled, role, joinAdminRoom, joinStationRoom, joinWaiterRoom]);
+  }, [socket, connected, t, playEventSound, soundEnabled, role, joinAdminRoom, joinStationRoom, joinWaiterRoom]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;

@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import {
   playNotificationSound,
   playWaiterNotificationSound,
+  playEventSound,
 } from '../utils/soundPlayer';
 
 export const SocketContext = createContext();
@@ -138,6 +139,7 @@ export const SocketProvider = ({ children }) => {
       joinOrderRoom,
       playNotificationSound,
       playWaiterNotificationSound,
+      playEventSound,
     }),
     [
       socket,

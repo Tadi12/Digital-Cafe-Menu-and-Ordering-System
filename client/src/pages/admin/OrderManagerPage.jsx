@@ -32,7 +32,7 @@ const orderLabel = (order) =>
 const OrderManagerPage = () => {
   const { t } = useTranslation();
   const { admin } = useAuth();
-  const { socket, joinAdminRoom, joinStationRoom, joinWaiterRoom, playNotificationSound } = useSocket();
+  const { socket, joinAdminRoom, joinStationRoom, joinWaiterRoom, playEventSound } = useSocket();
   const [soundEnabled, setSoundEnabled] = useSoundEnabled();
 
   const [orders, setOrders] = useState([]);
@@ -47,15 +47,19 @@ const OrderManagerPage = () => {
   // rather than on every order_updated echo.
   const statusRef = useRef({});
 
-  const isFloorStaff = isFloorStaffRole(admin?.role);
+  // The signed-in role, read once here and handed to the sound matrix so it can
+  // decide which clip (if any) this device should hear.
+  const role = admin?.role;
+
+  const isFloorStaff = isFloorStaffRole(role);
   // True for a chef or a barista: the API returns only that station's items and
   // the page must therefore use the per-track status button instead of the single
   // overall-status one.
-  const stationOnly = isStationRole(admin?.role);
+  const stationOnly = isStationRole(role);
   // A waiter only ever receives orders for the tables assigned to them; the API
   // filters them server-side, so this flag exists purely to pick the right socket
   // room and to mark the screen as table-scoped.
-  const isWaiterRole = admin?.role === 'waiter';
+  const isWaiterRole = role === 'waiter';
 
   const fetchOrders = async () => {
     try {
@@ -131,10 +135,10 @@ const OrderManagerPage = () => {
           }),
         );
 
-        // The kitchen is who acts on a new order, so both the chef and the
-        // counter hear it here.
+        // The kitchen is who acts on a new ticket, so the sound matrix sends this
+        // to the chef and the barista. This handler does not decide who hears it.
         if (soundEnabled) {
-          playNotificationSound('newOrder');
+          playEventSound('new_order', role);
         }
       };
 
@@ -192,7 +196,7 @@ const OrderManagerPage = () => {
         socket.off("waiter_called", handleWaiterCalled);
       };
     }
-  }, [socket, soundEnabled, isFloorStaff, stationOnly, isWaiterRole, joinAdminRoom, joinStationRoom, joinWaiterRoom, playNotificationSound, showAlert, t]);
+  }, [socket, soundEnabled, role, isFloorStaff, stationOnly, isWaiterRole, joinAdminRoom, joinStationRoom, joinWaiterRoom, playEventSound, showAlert, t]);
 
   // Replace the order in place once the server has confirmed the new status.
   // Keyed by _id so several orders can be updated independently.

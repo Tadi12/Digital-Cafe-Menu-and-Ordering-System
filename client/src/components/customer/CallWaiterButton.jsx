@@ -83,6 +83,13 @@ const CallWaiterButton = ({ tableNumber, ringClassName = 'ring-cafe-900' }) => {
     setRinging(true);
 
     socket.emit('call_waiter', { tableNumber });
+
+    // SILENT by design. A guest pressing the bell hears nothing on their own
+    // device: the bell is a request for attention from staff, and playing the
+    // confirmation back at the person who already knows they asked for it just
+    // adds noise to a table conversation. The confirmation is the toast and the
+    // spinner, both visual. The audible part is on the STAFF side, which is a
+    // different device and a different clip — see SOUND_MATRIX.
     toast.success(t('call_waiter_sent', { number: tableNumber }));
 
     timerRef.current = window.setTimeout(() => {
