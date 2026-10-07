@@ -51,7 +51,11 @@ const PreparationStatusButton = ({
 
   // The station status travels on the order as `stationStatus`, which the API sets
   // when it narrows the order to this role's items.
-  const currentStatus = order?.stationStatus;
+  // A missing stationStatus is treated as 'pending', matching stationStatusLabel and
+  // StationDashboard's statusOf. Left undefined it would normalise to 'not_required',
+  // which has no preparation button at all — a brand-new ticket would show the
+  // station no way to start it.
+  const currentStatus = order?.stationStatus || 'pending';
   const flow = preparationFlow(currentStatus);
 
   // A closed order has nothing left to press, whichever way it closed.
@@ -96,7 +100,11 @@ const PreparationStatusButton = ({
         <span className="truncate">
           {done
             ? t('preparation_ready_label')
-            : preparationStatusLabel(currentStatus, t)}
+            // The `|| 'pending'` is the same guard stationStatusLabel applies: an
+            // order whose stationStatus has not arrived yet normalises to
+            // 'not_required', which reads "Not required" on a ticket this station
+            // demonstrably has work for.
+            : preparationStatusLabel(currentStatus || 'pending', t)}
         </span>
       </div>
     );

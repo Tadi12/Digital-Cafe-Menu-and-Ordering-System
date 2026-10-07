@@ -15,6 +15,7 @@ import {
   pendingPreparationTrack,
   activePreparationTracks,
   isOrderClosed,
+  stationStatusLabel,
 } from '../../utils/orderStatus';
 import { roleTrack, isStationRole } from '../../utils/staffRoles';
 import PreparationProgress from './PreparationProgress';
@@ -75,7 +76,10 @@ const OrderCard = ({ order, onUpdateStatus, pendingTarget, succeededStatus, onUp
           // actually waiting to hear.
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-cafe-100 text-cafe-800">
             <StationIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>{preparationStatusLabel(order.stationStatus, t)}</span>
+            {/* stationStatusLabel, not a direct preparationStatusLabel call: it owns
+                the '|| pending' fallback for a ticket whose stationStatus has not
+                arrived yet, which is what a fresh order looks like here. */}
+            <span>{stationStatusLabel(order, t)}</span>
           </span>
         ) : (
           <OrderStatusBadge status={order.status} />

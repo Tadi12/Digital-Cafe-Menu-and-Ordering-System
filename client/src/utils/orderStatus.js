@@ -195,10 +195,18 @@ const isTrackSettled = (value) => {
  *
  * 'ready' is the kitchen's finished state and reads as "Ready"; 'not_required'
  * means the order contains none of these items.
+ *
+ * Normalised BEFORE the 'not_required' test, which is what makes a missing value
+ * behave. normalizePreparationTrack maps an absent status to 'not_required', so
+ * checking the raw argument first let `undefined` skip past that test, miss the key
+ * table entirely and resolve to "Unknown" — on a fresh ticket with no `stationStatus`
+ * yet, or on a legacy order written before the split existed. Every station badge
+ * read "Unknown" for a brand-new order until the value was normalised first.
  */
 export const preparationStatusLabel = (preparationStatus, t) => {
-  if (preparationStatus === 'not_required') return t('preparation_not_required');
-  const key = PREPARATION_STATUS_KEYS[normalizePreparationTrack(preparationStatus)];
+  const normalized = normalizePreparationTrack(preparationStatus);
+  if (normalized === 'not_required') return t('preparation_not_required');
+  const key = PREPARATION_STATUS_KEYS[normalized];
   return key ? t(key) : t('status_unknown');
 };
 
