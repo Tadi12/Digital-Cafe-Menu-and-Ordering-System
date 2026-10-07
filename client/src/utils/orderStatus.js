@@ -287,10 +287,12 @@ export const isOrderClosed = (status) =>
 export const stationStatusLabel = (order, t) =>
   isOrderClosed(order?.status)
     ? orderStatusLabel(order.status, t)
-    // The `|| 'pending'` matters: a missing stationStatus normalises to
-    // 'not_required', which has no label, so without this the helper would report
-    // "Unknown" for a fresh ticket — and would disagree with the equivalent
-    // fallback in StationDashboard's own statusOf().
+    // The `|| 'pending'` is safe HERE and only here: this helper returns a string, so
+    // a missing stationStatus can mislabel at worst. It must not be copied into a
+    // component that decides the NEXT ACTION from the same value — defaulting the
+    // current step there fabricates a transition the server will refuse. The API
+    // always sends stationStatus for a station role, so this is only a guard against
+    // a payload that predates the food/drink split.
     : preparationStatusLabel(order?.stationStatus || 'pending', t);
 
 /**

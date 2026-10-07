@@ -51,11 +51,13 @@ const PreparationStatusButton = ({
 
   // The station status travels on the order as `stationStatus`, which the API sets
   // when it narrows the order to this role's items.
-  // A missing stationStatus is treated as 'pending', matching stationStatusLabel and
-  // StationDashboard's statusOf. Left undefined it would normalise to 'not_required',
-  // which has no preparation button at all — a brand-new ticket would show the
-  // station no way to start it.
-  const currentStatus = order?.stationStatus || 'pending';
+  //
+  // No fallback here on purpose. A previous fix defaulted a missing value to
+  // 'pending', which looked harmless but invented a current step that was not the
+  // order's real state: the button then offered a transition the server had
+  // already applied, and pressing it was refused as an invalid status change. An
+  // absent status must render as no action at all rather than a fabricated one.
+  const currentStatus = order?.stationStatus;
   const flow = preparationFlow(currentStatus);
 
   // A closed order has nothing left to press, whichever way it closed.
@@ -100,11 +102,7 @@ const PreparationStatusButton = ({
         <span className="truncate">
           {done
             ? t('preparation_ready_label')
-            // The `|| 'pending'` is the same guard stationStatusLabel applies: an
-            // order whose stationStatus has not arrived yet normalises to
-            // 'not_required', which reads "Not required" on a ticket this station
-            // demonstrably has work for.
-            : preparationStatusLabel(currentStatus || 'pending', t)}
+            : preparationStatusLabel(currentStatus, t)}
         </span>
       </div>
     );

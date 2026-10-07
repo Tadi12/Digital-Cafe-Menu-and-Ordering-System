@@ -802,6 +802,24 @@ const updatePreparationStatus = async (req, res, next) => {
     const populatedUpdatedOrder = await Order.findById(updatedOrder._id)
       .populate('table', 'tableNumber tableName');
 
+    // The response a station receives must be scoped exactly like the one it gets
+    // over the socket, and that includes `stationStatus`.
+    //
+    // This was the real defect behind the "Unknown" badge: the socket emit carried
+    // stationStatus but this JSON response did not, and the client replaces its card
+    // with this body the moment the request succeeds. So a chef's own click silently
+    // stripped stationStatus off their card — the status label fell back to
+    // 'not_required' (rendered "Unknown") and the preparation button had no current
+    // step to advance from, so the next click re-sent a transition the server had
+    // already applied and was refused as INVALID_STATUS_TRANSITION.
+    //
+    // Both paths now go through scopeForStation, so the HTTP body and the socket
+    // push are built by the same code and cannot drift apart again.
+    const stationTrack = ROLE_TRACK[role];
+    const responseOrder = stationTrack
+      ? scopeForStation(populatedUpdatedOrder, stationTrack)
+      : populatedUpdatedOrder;
+
     // Real-time: the customer room and the admin room already receive the whole
     // order. The station room receives it too, but narrowed to its own items, so
     // the barista is never handed the kitchen's tickets (and vice versa).
@@ -810,13 +828,8 @@ const updatePreparationStatus = async (req, res, next) => {
       io.to(`order_${updatedOrder._id}`).emit('order_status_updated', populatedUpdatedOrder);
       io.to('admin_room').emit('order_updated', populatedUpdatedOrder);
 
-      if (ROLE_TRACK[role]) {
-        io.to(`${ROLE_TRACK[role]}_room`).emit('order_updated', {
-          ...toSocketPayload(populatedUpdatedOrder),
-          items: itemsForTrack(populatedUpdatedOrder.items, ROLE_TRACK[role]),
-          station: ROLE_TRACK[role],
-          stationStatus: populatedUpdatedOrder[trackStatusField(ROLE_TRACK[role])],
-        });
+      if (stationTrack) {
+        io.to(`${stationTrack}_room`).emit('order_updated', toSocketPayload(responseOrder));
       }
 
       // The chef/barista moving a track is exactly the moment the assigned waiter
@@ -829,7 +842,7 @@ const updatePreparationStatus = async (req, res, next) => {
     return res.json({
       success: true,
       message: `${track === 'food' ? 'Food' : 'Drink'} preparation status updated to ${status}`,
-      data: populatedUpdatedOrder,
+      data: toSocketPayload(responseOrder),
     });
   } catch (error) {
     next(error);

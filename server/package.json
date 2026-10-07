@@ -10,6 +10,7 @@
     "seed": "node utils/seedData.js",
     "migrate:barista": "node utils/migrateBarista.js",
     "test:barista": "node utils/orderStatus.test.js",
+    "test:station": "node utils/stationResponse.test.js",
     "test:tables": "node utils/tableAssignment.test.js",
     "test:orders": "node utils/orderListBug.test.js",
     "test:staff": "node utils/staffAccess.test.js",

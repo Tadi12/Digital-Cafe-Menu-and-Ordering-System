@@ -19,7 +19,7 @@ const MAX_CALLS_PER_SOCKET = 5;
  * create or duplicate a customer order.
  */
 const scopeForStation = (order, track) => ({
-  ...order.toObject(),
+  ...(order.toObject ? order.toObject() : order),
   items: itemsForTrack(order.items, track),
   station: track,
   stationStatus: order[trackStatusField(track)],
@@ -31,9 +31,13 @@ const scopeForStation = (order, track) => ({
  * Both preparation tracks and the derived overall status travel with EVERY event,
  * so a waiter watching a combined order sees the chef's and the barista's progress
  * update together and never has to guess whether it received a partial payload.
+ *
+ * Accepts either a Mongoose document or an already-plain object, because
+ * `scopeForStation` returns the latter and the two are combined before this runs.
+ * Calling toObject() unconditionally threw on the plain form.
  */
 const toSocketPayload = (order) => ({
-  ...order.toObject(),
+  ...(order.toObject ? order.toObject() : order),
   ...toStatusPayload(order),
   ...groupItemsByTrack(order.items || []),
 });
