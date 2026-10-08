@@ -195,9 +195,10 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
 
       // Which clip plays is the matrix's decision, not this handler's: a plate
       // becoming ready is the `waiter` clip, and a guest pressing the bell is a
-      // different one. Both repeat, because the floor is usually out of sight.
+      // different one. The order id is passed as the de-duplication key so one
+      // order going ready cannot be announced twice by two open console tabs.
       if (justBecameReady && soundEnabled) {
-        playEventSound('order_ready', role);
+        playEventSound('order_ready', role, { dedupeKey: order?._id });
       }
     };
 
@@ -208,8 +209,12 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
 
     const handleWaiterCalled = (data) => {
       addNotification(null, 'waiter_called', data);
+      // ONE bell press must make ONE noise on a device, however many console
+      // tabs are open: every tab has its own socket, so this event lands in each
+      // of them. The table number is the de-duplication key, which keeps a
+      // different table calling moments later fully audible.
       if (soundEnabled) {
-        playEventSound('customer_called', role);
+        playEventSound('customer_called', role, { dedupeKey: data?.tableNumber });
       }
     };
 

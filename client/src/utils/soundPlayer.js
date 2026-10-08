@@ -56,18 +56,58 @@ const SOUND_ENV_KEYS = {
 const LEGACY_SOUND_ENV_KEY = 'VITE_NOTIFICATION_SOUND_URL';
 
 /**
- * The waiter call repeats: a waiter is usually across the room, past the
- * grinder, with no screen in sight. One short clip gets missed.
+ * How long one floor alert stays claimed, in ms.
+ *
+ * A guest ringing the bell once must produce ONE announcement per device. The
+ * staff console is normally left open in more than one tab (dashboard, orders,
+ * tables), and every tab holds its own socket and its own handler, so the same
+ * `waiter_called` event lands in each of them: three tabs meant the same bell was
+ * announced three times, which a waiter hears as the sound repeating itself.
+ *
+ * The claim lives in localStorage rather than in a module variable precisely
+ * because of that: a module variable is per-tab and would collapse nothing.
+ *
+ * It is deliberately shorter than the guest's own 15s cooldown between rings
+ * (RING_COOLDOWN_MS in CallWaiterButton.jsx), so a guest who rings again because
+ * nobody came is never silenced, and it is keyed per table, so two different
+ * tables calling within the same second are both announced.
  */
-const WAITER_SOUND_TIMES = 3;
-const WAITER_SOUND_GAP_MS = 1800;
+const EVENT_DEDUPE_MS = 5000;
+const EVENT_DEDUPE_STORAGE_KEY = 'cafe_last_announced_alert';
 
 /**
- * Upper bound on how long one clip is assumed to run before the repeat chain stops
- * waiting for it. Generous — the longest bundled clip is under 6s — because this
- * only ever fires when `ended` never arrives, and it must not cut a real clip short.
+ * Claim the right to announce one event, or report that it was already announced.
+ *
+ * Deliberately fails OPEN: if localStorage is unavailable (private mode, quota,
+ * a locked-down browser) the alert still plays, because a missing announcement is
+ * a worse failure than a repeated one.
+ *
+ * @param {string} key identifies the alert — event name plus its own id
+ * @returns {boolean} true when this caller is the one that should make the noise
  */
-const MAX_CLIP_MS = 30000;
+const claimEventAnnouncement = (key) => {
+  if (typeof window === 'undefined') return true;
+  const now = Date.now();
+
+  let claimed = {};
+  try {
+    const raw = window.localStorage.getItem(EVENT_DEDUPE_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && typeof parsed === 'object') claimed = parsed;
+  } catch {
+    claimed = {};
+  }
+
+  if (now - (Number(claimed[key]) || 0) < EVENT_DEDUPE_MS) return false;
+
+  claimed[key] = now;
+  try {
+    window.localStorage.setItem(EVENT_DEDUPE_STORAGE_KEY, JSON.stringify(claimed));
+  } catch {
+    // Nothing to do: see the note above about failing open.
+  }
+  return true;
+};
 
 // ---------------------------------------------------------------------------
 // Autoplay unlocking
@@ -119,31 +159,28 @@ const CHIME_TONES = [
   { freq: 783.99, type: 'sine', offset: 0.3, duration: 0.4 },
 ];
 
-const playDefaultChime = ({ times = 1, gapMs = 0 } = {}) => {
+const playDefaultChime = () => {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
-    for (let pass = 0; pass < times; pass += 1) {
-      const passOffset = (pass * gapMs) / 1000;
-      CHIME_TONES.forEach(({ freq, type, offset, duration }) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        const startAt = ctx.currentTime + passOffset + offset;
+    CHIME_TONES.forEach(({ freq, type, offset, duration }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const startAt = ctx.currentTime + offset;
 
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, startAt);
-        gain.gain.setValueAtTime(0.15, startAt);
-        gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startAt);
+      gain.gain.setValueAtTime(0.15, startAt);
+      gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
 
-        osc.start(startAt);
-        osc.stop(startAt + duration);
-      });
-    }
+      osc.start(startAt);
+      osc.stop(startAt + duration);
+    });
   } catch (error) {
     console.warn('[Sound Notification Warning]:', error.message);
   }
@@ -164,100 +201,61 @@ const resolveSoundUrl = (target) => {
 };
 
 /**
- * Plays `soundUrl`, optionally repeating it.
+ * Plays `soundUrl` exactly once.
  *
- * Repeats are SEQUENCED ON THE `ended` EVENT, never on a fixed timer. This used to
- * be `setTimeout(pass * gapMs)`, which assumed every clip was shorter than the gap.
- * None of them are: the shortest bundled clip is 2.97s against a 1.8s gap, and the
- * spoken customer-call clip is 4.65s — so the second copy started while the first was
- * still speaking and the two played on top of each other. That is the "echoing" a
- * caller hears: not two events, but one event's own repeats colliding. Waiting for
- * `ended` makes the mechanism correct for any clip length, present or future.
+ * It used to be able to repeat the clip, sequenced on the `ended` event with a gap
+ * between passes, because a waiter is usually across the room and a short attention
+ * chime can be missed. Repeating turned out to be the wrong answer twice over: the
+ * gap was shorter than every bundled clip, so copies overlapped into an unintelligible
+ * pile, and a second event arriving during the repeats stacked on top of them. What
+ * a waiter actually needs is the notification itself and the on-screen banner, which
+ * persist — so no alert repeats any more, and the mechanism went with it.
  *
- * Chimes once (not per repeat) when the browser refuses playback, so a blocked alert
- * still makes some noise.
+ * Chimes once when the browser refuses playback, so a blocked alert still makes some
+ * noise instead of failing silently.
  */
-const playAudioFile = (soundUrl, { volume = 0.8, times = 1, gapMs = 0 } = {}) => {
-  let failures = 0;
+const playAudioFile = (soundUrl, { volume = 0.8 } = {}) => {
+  let chimed = false;
 
+  /** Prove the device can make a sound at all, exactly once per failed request. */
   const chimeOnce = (error) => {
-    failures += 1;
+    if (chimed) return;
+    chimed = true;
     console.warn('[Sound Notification Warning]:', error.message);
-    // Once, not `times` times: the fallback exists to prove the device can make a
-    // sound at all, and the whole point of this function is to stop stacking copies.
-    if (failures === 1) playDefaultChime();
+    playDefaultChime();
   };
 
-  /** Play the clip once, then call `done`. `done` always runs exactly once. */
-  const playOnce = (done) => {
-    let settled = false;
-    const finish = () => {
-      if (settled) return;
-      settled = true;
-      done();
-    };
+  try {
+    const audio = new Audio(soundUrl);
+    audio.volume = volume;
 
-    // Safety net for the case `ended` never arrives — an undecodable file, a codec
-    // the browser will not measure, or playback that never starts. Without it a
-    // single silent failure would swallow every remaining repeat.
-    const guard = window.setTimeout(finish, MAX_CLIP_MS);
-
-    try {
-      const audio = new Audio(soundUrl);
-      audio.volume = volume;
-
-      audio.addEventListener('ended', () => {
-        window.clearTimeout(guard);
-        finish();
-      });
-      audio.addEventListener('error', () => {
-        window.clearTimeout(guard);
-        chimeOnce(new Error(`could not play ${soundUrl}`));
-        finish();
-      });
-
-      const played = audio.play();
-      if (played && typeof played.catch === 'function') {
-        played.catch((error) => {
-          window.clearTimeout(guard);
-          chimeOnce(error);
-          finish();
-        });
-      }
-    } catch (error) {
-      window.clearTimeout(guard);
-      chimeOnce(error);
-      finish();
-    }
-  };
-
-  const runPass = (pass) => {
-    if (pass >= times) return;
-    playOnce(() => {
-      if (pass + 1 >= times) return;
-      // Measured from the END of the clip, so the gap is silence between repeats
-      // rather than a deadline that a long clip sails straight past.
-      window.setTimeout(() => runPass(pass + 1), gapMs);
+    audio.addEventListener('error', () => {
+      chimeOnce(new Error(`could not play ${soundUrl}`));
     });
-  };
 
-  runPass(0);
+    const played = audio.play();
+    if (played && typeof played.catch === 'function') {
+      played.catch(chimeOnce);
+    }
+  } catch (error) {
+    chimeOnce(error);
+  }
 };
 
 /**
  * Play a notification sound.
  *
- * @param {string} [target] 'newOrder' | 'customer' | 'waiter', a URL, or nothing
- *                            for the legacy default. Pass 'false' (or set the
- *                            env var to it) to force the chime only.
- * @param {{volume?: number, times?: number, gapMs?: number}} [options]
+ * @param {string} [target] 'newOrder' | 'customer' | 'waiter' | 'callWaiter', a URL,
+ *                            or nothing for the legacy default. Pass 'false' (or set
+ *                            the env var to it) to force the chime only.
+ * @param {{volume?: number}} [options]
  */
 export const playNotificationSound = (target, options) => {
   ensureAudioUnlocked();
 
   const soundUrl = resolveSoundUrl(target);
   if (!soundUrl || soundUrl === 'false') {
-    playDefaultChime(options);
+    playDefaultChime();
     return;
   }
 
@@ -283,18 +281,26 @@ const KITCHEN_ROLES = ['chef', 'barista'];
  * the kitchen announcing a plate was ready. Two different jobs, one sound, and a
  * waiter cannot tell them apart by ear.
  *
- *   event             clip           repeat  who hears it
- *   ----------------  -------------  ------  ------------------------------------------------
- *   order_ready       waiter         3       the floor: the chef/barista finished a track
- *   customer_called   callWaiter     1       the floor: a guest pressed the bell
- *   new_order         newOrder       1       the kitchen: a new ticket to prepare
+ *   event             clip           who hears it
+ *   ----------------  -------------  ------------------------------------------------
+ *   order_ready       waiter         the floor: the chef/barista finished a track
+ *   customer_called   callWaiter     the floor: a guest pressed the bell
+ *   new_order         newOrder       the kitchen: a new ticket to prepare
  *
- * Only the short attention chime repeats. `customer_called` is a 4.65s SPOKEN
- * announcement, and repeating it is not "being heard more often" — it is three
- * overlapping sentences or nine near-identical ones, which is unintelligible and
- * sounds like a fault. Speech is self-evidently an announcement, so it plays once and
- * is heard once. The repeats exist for a chime that can be missed across a room, not
- * for someone talking.
+ * NO EVENT REPEATS. Each one plays once, once per device.
+ *
+ * The repeats were only ever justified for the short attention chime, on the theory
+ * that a waiter across the room would miss it. In practice they cost more than they
+ * bought: every bundled clip is longer than the gap between passes, so the copies
+ * overlapped into noise; and the two events a busy table generates in a few seconds
+ * stacked on top of each other, which is the repetitive ringing that prompted this.
+ * A dropped alert is recoverable — the notification badge and the banner stay until
+ * they are acted on — whereas a sound that repeats three times is indistinguishable
+ * from a fault and gets tuned out, which is the worse failure.
+ *
+ * One play per event is necessary but not sufficient for "one event, one sound": the
+ * same event reaches every open console tab, and each tab holds its own handler.
+ * playEventSound therefore also claims the event per device — see EVENT_DEDUPE_MS.
  *
  * `new_order` also lists management, which is not in the stated rule. They already
  * received it before this table existed — they join `admin_room`, which the order
@@ -302,9 +308,9 @@ const KITCHEN_ROLES = ['chef', 'barista'];
  * product decision rather than a refactor. Say the word and it comes out.
  */
 const SOUND_MATRIX = {
-  order_ready: { clip: 'waiter', repeat: WAITER_SOUND_TIMES, recipients: FLOOR_ROLES },
-  customer_called: { clip: 'callWaiter', repeat: 1, recipients: FLOOR_ROLES },
-  new_order: { clip: 'newOrder', repeat: 1, recipients: [...KITCHEN_ROLES, 'admin', 'super_admin'] },
+  order_ready: { clip: 'waiter', recipients: FLOOR_ROLES },
+  customer_called: { clip: 'callWaiter', recipients: FLOOR_ROLES },
+  new_order: { clip: 'newOrder', recipients: [...KITCHEN_ROLES, 'admin', 'super_admin'] },
 };
 
 /**
@@ -312,13 +318,13 @@ const SOUND_MATRIX = {
  *
  * @param {string} event one of the SOUND_MATRIX keys
  * @param {string} role  the signed-in staff role
- * @returns {{clip: string, repeat: number}|null}
+ * @returns {{clip: string}|null}
  */
 export const soundForEvent = (event, role) => {
   const rule = SOUND_MATRIX[event];
   if (!rule) return null;
   if (!rule.recipients.includes(role)) return null;
-  return { clip: rule.clip, repeat: rule.repeat };
+  return { clip: rule.clip };
 };
 
 /**
@@ -328,20 +334,26 @@ export const soundForEvent = (event, role) => {
  * what happened and let the table answer. An unknown event, or one this role is not
  * a recipient of, is a silent no-op rather than a wrong noise.
  *
+ * The event is announced at most once per device per EVENT_DEDUPE_MS, which is what
+ * makes one guest bell press produce one announcement rather than one per open
+ * console tab. `dedupeKey` is the event's own id (a table number, an order id), so
+ * that claim never swallows a DIFFERENT alert that happens to arrive moments later.
+ *
  * @param {string} event
  * @param {string} role
- * @param {{volume?: number, times?: number, gapMs?: number}} [options]
+ * @param {{volume?: number, dedupeKey?: string|number}} [options]
  * @returns {boolean} whether anything was played
  */
 export const playEventSound = (event, role, options = {}) => {
   const rule = soundForEvent(event, role);
   if (!rule) return false;
 
+  const { dedupeKey, ...playOptions } = options;
+  if (!claimEventAnnouncement(`${event}:${dedupeKey ?? ''}`)) return false;
+
   playNotificationSound(rule.clip, {
     volume: rule.clip === 'newOrder' ? 0.8 : 1,
-    times: rule.repeat,
-    gapMs: rule.repeat > 1 ? WAITER_SOUND_GAP_MS : 0,
-    ...options,
+    ...playOptions,
   });
   return true;
 };

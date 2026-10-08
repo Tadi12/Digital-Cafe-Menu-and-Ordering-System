@@ -137,8 +137,10 @@ const OrderManagerPage = () => {
 
         // The kitchen is who acts on a new ticket, so the sound matrix sends this
         // to the chef and the barista. This handler does not decide who hears it.
+        // The order id keys the de-duplication, so a ticket is announced once per
+        // device no matter how many console tabs are open.
         if (soundEnabled) {
-          playEventSound('new_order', role);
+          playEventSound('new_order', role, { dedupeKey: newOrder?._id });
         }
       };
 

@@ -132,7 +132,7 @@ const emitToOrderWaiter = async (order) => {
 };
 
 /**
- * Ring the waiter who is responsible for a table.
+ * The waiter currently responsible for a table, or null when nobody owns it.
  *
  * `call_waiter` used to reach `admin_room` only, which is a real hole: a waiter
  * joins their own private room via `join_waiter_room` and never joins the admin
@@ -143,25 +143,22 @@ const emitToOrderWaiter = async (order) => {
  * snapshotted by the caller — the same Table -> assignedWaiter walk
  * `emitToOrderWaiter` uses, so one source of truth decides who owns a floor.
  *
- * Silently does nothing for an unassigned table: there is nobody to notify, and
- * management still sees the call through the `admin_room` broadcast.
+ * Returns null for an unassigned table: there is nobody to notify, and management
+ * still sees the call through the `admin_room` broadcast.
  *
  * @param {number} tableNumber
- * @param {object} payload the event body, forwarded unchanged
+ * @returns {Promise<string|null>} the waiter's id, as a room-safe string
  */
-const notifyTableWaiter = async (tableNumber, payload) => {
+const resolveTableWaiter = async (tableNumber) => {
   try {
     const Table = require('../models/Table');
     const table = await Table.findOne({ tableNumber }).select('assignedWaiter');
-    const assignedWaiter = table?.assignedWaiter;
-    if (!assignedWaiter) return;
-
-    getIO()
-      .to(waiterRoom(assignedWaiter))
-      .emit('waiter_called', payload);
+    return table?.assignedWaiter ? table.assignedWaiter.toString() : null;
   } catch (error) {
-    // A realtime nicety must never break the request that triggered it.
-    console.warn('[Socket Warning]: Could not notify the table waiter:', error.message);
+    // A realtime nicety must never break the request that triggered it, and the
+    // admin broadcast still has to go out.
+    console.warn('[Socket Warning]: Could not resolve the table waiter:', error.message);
+    return null;
   }
 };
 
@@ -284,16 +281,22 @@ const initSocket = (io) => {
         message: `Table ${tableNumber} is requesting assistance`,
       };
 
+      // ONE press, ONE broadcast. Socket.IO delivers an event once per socket
+      // even when that socket sits in several of the targeted rooms, so a device
+      // that is both management and the assigned waiter is told once. Two
+      // separate `.emit()` calls — one for `admin_room`, one for the waiter's own
+      // room — could not offer that guarantee: they are two sends, and a device
+      // that ends up in both rooms would ring the floor sound twice for a single
+      // press. Management is always targeted, so an unassigned table is covered.
+      const targets = io.to('admin_room');
+      const assignedWaiter = await resolveTableWaiter(tableNumber);
+      if (assignedWaiter) targets.to(waiterRoom(assignedWaiter));
+
       try {
-        // Management sees every call, so an unassigned table is still covered.
-        io.to('admin_room').emit('waiter_called', payload);
+        targets.emit('waiter_called', payload);
       } catch (error) {
         // A realtime nicety must never break the socket.
       }
-
-      // And the waiter who actually owns the table hears it directly — see
-      // notifyTableWaiter for why the admin room alone is not enough.
-      await notifyTableWaiter(tableNumber, payload);
     });
 
     socket.on('disconnect', () => {
@@ -310,4 +313,4 @@ const getIO = () => {
   return ioInstance;
 };
 
-module.exports = { initSocket, getIO, scopeForStation, toSocketPayload, waiterRoom, emitToOrderWaiter, notifyTableWaiter, MAX_CALLS_PER_SOCKET };
+module.exports = { initSocket, getIO, scopeForStation, toSocketPayload, waiterRoom, emitToOrderWaiter, resolveTableWaiter, MAX_CALLS_PER_SOCKET };
