@@ -3,7 +3,12 @@ import { useTranslation } from "react-i18next";
 import { LanguageContext } from "../../context/LanguageContext";
 import { Utensils } from "lucide-react";
 
-const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
+const CategoryFilter = ({
+  categories,
+  selectedCategory,
+  onSelectCategory,
+  allLabelKey = "all_categories",
+}) => {
   const { t } = useTranslation();
   const { currentLang } = useContext(LanguageContext);
 
@@ -18,7 +23,7 @@ const CategoryFilter = ({ categories, selectedCategory, onSelectCategory }) => {
         }`}
       >
         <Utensils className="w-3.5 h-3.5" />
-        <span>{t("all_categories")}</span>
+        <span>{t(allLabelKey)}</span>
         <span
           className={`min-w-4 h-4 px-1 text-[10px] rounded-full flex items-center justify-center ${
             selectedCategory === null

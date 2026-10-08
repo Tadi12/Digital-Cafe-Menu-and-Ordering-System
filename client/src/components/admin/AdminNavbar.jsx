@@ -5,7 +5,7 @@ import { useSocket } from '../../hooks/useSocket';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 import ThemeToggle from '../common/ThemeToggle';
-import { Bell, CheckCheck, ClipboardList, Menu, Radio, X } from 'lucide-react';
+import { Bell, CheckCheck, ClipboardList, Menu, Radio, Volume2, VolumeX, X } from 'lucide-react';
 import { useSoundEnabled } from '../../hooks/useSoundEnabled';
 import { staffBasePath, isStationRole } from '../../utils/staffRoles';
 
@@ -134,13 +134,20 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
   // The mute button itself lives on the order screen, so this only reads the
   // shared preference — muting there silences these alerts too, without a reload.
   //
+  // That made "muted" a state with no way out from here: a waiter lands on the
+  // dashboard, where the only control that sets this lives two routes away, so a
+  // console that had been muted anywhere else stayed silently muted forever and
+  // every alert arrived as a notification with no sound attached. The indicator
+  // below exists so that state is visible from every staff screen and one click
+  // from being undone.
+  //
   // Whether a sound plays AT ALL for a given event is the sound matrix's decision
   // (playEventSound), not this component's: it already knows which roles are
   // entitled to hear the floor, so there is no role check here to drift out of
   // step with it.
   const role = admin?.role;
   const ordersPath = `${staffBasePath(role)}/orders`;
-  const [soundEnabled] = useSoundEnabled();
+  const [soundEnabled, setSoundEnabled] = useSoundEnabled();
 
   // The socket has no "transitioned to Ready" event — it just re-sends the whole
   // order — so the previous status is tracked here to fire the call once per
@@ -312,10 +319,34 @@ const AdminNavbar = ({ onOpenSidebar, pageTitle, roleLabel }) => {
             }
           >
             <Radio
-              className={`w-3 h-3 ${connected ? "animate-pulse text-emerald-600" : ""}`}
+              className={`h-3 w-3 ${connected ? "animate-pulse text-emerald-600" : ""}`}
             />
             <span>{connected ? "Live Sync" : "Offline"}</span>
           </div>
+
+          {/* Muted is the one alert state that is completely invisible on every
+              screen but this one, so it is stated here rather than left to be
+              inferred from the absence of a noise. */}
+          <button
+            type="button"
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            aria-pressed={soundEnabled}
+            className={`hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 sm:flex ${
+              soundEnabled
+                ? "bg-emerald-50 text-emerald-700 ring-emerald-200 hover:bg-emerald-100"
+                : "bg-amber-50 text-amber-800 ring-amber-300 hover:bg-amber-100"
+            }`}
+            title={
+              soundEnabled
+                ? 'Click to mute notification sounds'
+                : 'Notification sounds are muted. Click to turn them back on.'
+            }
+          >
+            {soundEnabled ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+            <span>
+              {soundEnabled ? t('sound_alert_enabled') : t('sound_alert_muted')}
+            </span>
+          </button>
 
           <div className="relative" ref={notificationsRef}>
             <button

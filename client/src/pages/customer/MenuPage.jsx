@@ -553,6 +553,7 @@ const MenuPage = () => {
                   categories={foodCategoryList}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
+                  allLabelKey="all_foods"
                 />
               </div>
             )}
@@ -566,6 +567,7 @@ const MenuPage = () => {
                   categories={drinkCategoryList}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
+                  allLabelKey="all_drinks"
                 />
               </div>
             )}

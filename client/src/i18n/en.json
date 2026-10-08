@@ -8,6 +8,8 @@
   "inactive_table_desc": "Table  {{number}} is currently inactive. Please contact café staff for assistance.",
   "search_placeholder": "Search foods or drinks...",
   "all_categories": "All Items",
+  "all_foods": "All Foods",
+  "all_drinks": "All Drinks",
   "available": "Available",
   "unavailable": "Unavailable",
   "ingredients": "Ingredients",
