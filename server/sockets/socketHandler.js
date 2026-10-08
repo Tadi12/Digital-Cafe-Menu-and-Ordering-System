@@ -288,9 +288,14 @@ const initSocket = (io) => {
       // room — could not offer that guarantee: they are two sends, and a device
       // that ends up in both rooms would ring the floor sound twice for a single
       // press. Management is always targeted, so an unassigned table is covered.
-      const targets = io.to('admin_room');
+      //
+      // `.to()` returns a NEW BroadcastOperator rather than mutating this one
+      // (socket.io/dist/broadcast-operator.js), so the result must be taken back.
+      // Dropping it silently sends the call to management only and leaves the
+      // waiter the bell was aimed at hearing nothing at all.
+      let targets = io.to('admin_room');
       const assignedWaiter = await resolveTableWaiter(tableNumber);
-      if (assignedWaiter) targets.to(waiterRoom(assignedWaiter));
+      if (assignedWaiter) targets = targets.to(waiterRoom(assignedWaiter));
 
       try {
         targets.emit('waiter_called', payload);
