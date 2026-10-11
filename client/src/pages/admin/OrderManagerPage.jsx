@@ -7,7 +7,7 @@ import { getOrdersApi } from "../../api/orderApi";
 import { useOrderStatusActions, usePreparationStatusActions } from "../../hooks/useOrderStatusActions";
 import OrderCard from "../../components/admin/OrderCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { Search, Volume2, VolumeX, Bell, CheckCircle, Hand } from "lucide-react";
+import { Search, Volume2, VolumeX, Bell, CheckCircle, Hand, RefreshCw } from "lucide-react";
 import { orderStatusLabel } from '../../utils/orderStatus';
 import { isFloorStaffRole, isStationRole } from '../../utils/staffRoles';
 
@@ -40,6 +40,9 @@ const OrderManagerPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  // Kept separate from `loading` so a manual refresh spins the icon instead of
+  // replacing the whole grid with the loader — the queue stays readable.
+  const [refreshing, setRefreshing] = useState(false);
   const [alert, setAlert] = useState(null);
 
   const alertTimerRef = useRef(null);
@@ -61,7 +64,7 @@ const OrderManagerPage = () => {
   // room and to mark the screen as table-scoped.
   const isWaiterRole = role === 'waiter';
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const res = await getOrdersApi({
         status: selectedStatus === "All" ? undefined : selectedStatus,
@@ -80,11 +83,24 @@ const OrderManagerPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStatus, searchQuery]);
+
+  // Pull the queue on demand. The socket keeps this page live, but it only
+  // delivers events for rooms this device has joined — a missed frame, a
+  // reconnect, or an edit made from another terminal leaves the list stale
+  // until the next event. Available to every role that can open the queue.
+  const refreshOrders = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchOrders();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchOrders]);
 
   useEffect(() => {
     fetchOrders();
-  }, [selectedStatus, searchQuery]);
+  }, [fetchOrders]);
 
   // Single banner slot: a second event replaces the first rather than stacking.
   const showAlert = useCallback((tone, message) => {
@@ -307,6 +323,21 @@ const OrderManagerPage = () => {
               className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-cafe-200 text-xs focus:border-cafe-600 focus:outline-none"
             />
           </div>
+
+          {/* Manual queue refresh — re-reads the current filter from the server */}
+          <button
+            type="button"
+            onClick={refreshOrders}
+            disabled={refreshing}
+            title={t('refresh')}
+            className="p-2 rounded-xl border border-cafe-200 bg-cafe-50 text-cafe-700 transition-colors flex items-center gap-1.5 text-xs font-bold hover:bg-cafe-100 disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
+              aria-hidden="true"
+            />
+            <span className="hidden sm:inline">{t('refresh')}</span>
+          </button>
 
           {/* Audio Chime Sound Toggle */}
           <button
